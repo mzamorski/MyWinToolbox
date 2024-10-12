@@ -54,4 +54,19 @@ Clipboard_Replicate_120(*)
 	
 	Clipboard_Paste(output)
 }
+
+Clipboard_ToSingleBackslash(*)
+{
+	input := Clipboard_Copy()
+	output := RegExReplace(input, "\\{2,}" , "\")
 	
+	Clipboard_Paste(output)
+}
+
+Clipboard_ToDoubleBackslash(*)
+{
+	input := Clipboard_Copy()
+	output := RegExReplace(input, "(?<!\\)\\(?!\\)" , "\\")
+	
+	Clipboard_Paste(output)
+}
