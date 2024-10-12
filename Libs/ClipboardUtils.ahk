@@ -29,3 +29,11 @@ Clipboard_ToLower(*)
 
 	Clipboard_Paste(output)
 }
+
+Clipboard_ToSingleQuoted(*)
+{
+	input:= Clipboard_Copy()
+	output := RegExReplace(input, "(\b\w+\b)" , "'$1'")
+	
+	Clipboard_Paste(output)
+}

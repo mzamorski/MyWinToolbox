@@ -10,6 +10,7 @@
     formatMenu := Menu()
     formatMenu.Add("To&Upper", Clipboard_ToUpper)
 	formatMenu.Add("To&Lower", Clipboard_ToLower)
+	formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
 	
     formatMenu.Show()
 }
