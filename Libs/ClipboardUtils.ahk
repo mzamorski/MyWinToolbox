@@ -37,3 +37,21 @@ Clipboard_ToSingleQuoted(*)
 	
 	Clipboard_Paste(output)
 }
+
+
+Clipboard_Replicate_80(*)
+{
+	input := Clipboard_Copy()
+	output := StringUtils.Replicate(input, 80)
+	
+	Clipboard_Paste(output)
+}
+
+Clipboard_Replicate_120(*)
+{
+	input := Clipboard_Copy()
+	output := StringUtils.Replicate(input, 120)
+	
+	Clipboard_Paste(output)
+}
+	

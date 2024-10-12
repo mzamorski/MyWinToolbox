@@ -11,6 +11,8 @@
     formatMenu.Add("To&Upper", Clipboard_ToUpper)
 	formatMenu.Add("To&Lower", Clipboard_ToLower)
 	formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
+	formatMenu.Add("Char.Replicate.80", Clipboard_Replicate_80)
+	formatMenu.Add("Char.Replicate.120", Clipboard_Replicate_120)
 	
     formatMenu.Show()
 }
