@@ -27,10 +27,19 @@ Clipboard_ToUpper(*)
 	Clipboard_Paste(output)
 }
 
+Clipboard_ToLower(*) 
+{
+	input:= Clipboard_Copy()
+	output := StrLower(input )
+
+	Clipboard_Paste(output)
+}
+
 #^f::
 {
     formatMenu := Menu()
     formatMenu.Add("To&Upper", Clipboard_ToUpper)
+	formatMenu.Add("To&Lower", Clipboard_ToLower)
 	
     formatMenu.Show()
 }
