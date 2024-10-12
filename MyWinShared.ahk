@@ -15,6 +15,7 @@
 	formatMenu.Add("Char.Replicate.120", Clipboard_Replicate_120)
 	formatMenu.Add("Path.ToSingleBackslash", Clipboard_ToSingleBackslash)
 	formatMenu.Add("Path.ToDoubleBackslash", Clipboard_ToDoubleBackslash)
+	formatMenu.Add("SQL.AddBraket", Clipboard_AddBraket)
 	
     formatMenu.Show()
 }

@@ -70,3 +70,12 @@ Clipboard_ToDoubleBackslash(*)
 	
 	Clipboard_Paste(output)
 }
+
+
+Clipboard_AddBraket(*)
+{
+	input := Clipboard_Copy()
+	output := RegExReplace(input, "\b(?<!\[)(\w+)(?!\[)\b" , "[$1]")
+	
+	Clipboard_Paste(output)
+}
