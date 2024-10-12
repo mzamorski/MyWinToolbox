@@ -2,38 +2,8 @@
 #Warn All, Off
 
 #Include Libs\StringUtils.ahk
+#Include Libs\ClipboardUtils.ahk
 
-Clipboard_Copy() 
-{
-    A_Clipboard := ""
-    Send("^c")
-    ClipWait()
-
-    return A_Clipboard
-}
-
-Clipboard_Paste(value)
-{
-	A_Clipboard := value
-	
-	Send("^v")
-}
-
-Clipboard_ToUpper(*) 
-{
-	input:= Clipboard_Copy()
-	output := StrUpper(input )
-
-	Clipboard_Paste(output)
-}
-
-Clipboard_ToLower(*) 
-{
-	input:= Clipboard_Copy()
-	output := StrLower(input )
-
-	Clipboard_Paste(output)
-}
 
 #^f::
 {
