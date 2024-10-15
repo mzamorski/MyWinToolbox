@@ -3,6 +3,7 @@
 
 #Include Libs\StringUtils.ahk
 #Include Libs\ClipboardUtils.ahk
+#Include Libs\DateTimeUtils.ahk
 
 Menu_StringGenerator_RandomGuid(*)
 {
@@ -10,6 +11,13 @@ Menu_StringGenerator_RandomGuid(*)
     
 	output := StrReplace(guid, "{", "")
     output := StrReplace(output, "}", "")
+
+	Clipboard_Paste(output)
+}
+
+Menu_StringGenerator_CurrentDate(*)
+{
+	output := DateTimeUtils.GetCurrentDate()
 
 	Clipboard_Paste(output)
 }
@@ -42,6 +50,7 @@ Menu_StringGenerator_RandomGuid(*)
 {
 	stringGeneratorMenu := Menu()
     stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
+	stringGeneratorMenu.Add("&Date.Current", Menu_StringGenerator_CurrentDate)
 
 	stringGeneratorMenu.Show()
 }
