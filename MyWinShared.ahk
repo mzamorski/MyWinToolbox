@@ -42,8 +42,6 @@ Menu_StringGenerator_RandomGuid(*)
 {
 	stringGeneratorMenu := Menu()
     stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
-	;stringGeneratorMenu.Add("&Date.Current", Clipboard_ToUpper)
-	;stringGeneratorMenu.Add("&Separator.120", Clipboard_ToUpper)
 
 	stringGeneratorMenu.Show()
 }

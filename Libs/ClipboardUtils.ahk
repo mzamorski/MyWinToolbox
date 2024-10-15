@@ -1,3 +1,7 @@
+#Requires AutoHotkey v2.0
+
+#Include Std.ahk
+
 Clipboard_Copy() 
 {
     A_Clipboard := ""
@@ -9,9 +13,7 @@ Clipboard_Copy()
 
 Clipboard_Paste(value)
 {
-	A_Clipboard := value
-	
-	Send("^v")
+	Std_Paste(value)
 }
 
 Clipboard_ToUpper(*) 
