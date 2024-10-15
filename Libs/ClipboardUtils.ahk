@@ -71,11 +71,18 @@ Clipboard_ToDoubleBackslash(*)
 	Clipboard_Paste(output)
 }
 
-
 Clipboard_AddBraket(*)
 {
 	input := Clipboard_Copy()
 	output := RegExReplace(input, "\b(?<!\[)(\w+)(?!\[)\b" , "[$1]")
 	
+	Clipboard_Paste(output)
+}
+
+Clipboard_AddThousandsSeparators(*)
+{
+	input := Clipboard_Copy()
+	output := RegExReplace(input, "\G\d+?(?=(\d{3})+(?:\D|$))", "$0.")
+
 	Clipboard_Paste(output)
 }

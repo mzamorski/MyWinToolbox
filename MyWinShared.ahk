@@ -11,11 +11,16 @@
     formatMenu.Add("To&Upper", Clipboard_ToUpper)
 	formatMenu.Add("To&Lower", Clipboard_ToLower)
 	formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
+	formatMenu.Add()
 	formatMenu.Add("Char.Replicate.80", Clipboard_Replicate_80)
 	formatMenu.Add("Char.Replicate.120", Clipboard_Replicate_120)
+	formatMenu.Add()
 	formatMenu.Add("Path.ToSingleBackslash", Clipboard_ToSingleBackslash)
 	formatMenu.Add("Path.ToDoubleBackslash", Clipboard_ToDoubleBackslash)
+	formatMenu.Add()
 	formatMenu.Add("SQL.AddBraket", Clipboard_AddBraket)
+	formatMenu.Add()
+	formatMenu.Add("&Number.AddThousandsSeparators", Clipboard_AddThousandsSeparators)
 	
     formatMenu.Show()
 }
