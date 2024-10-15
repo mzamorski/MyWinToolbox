@@ -4,6 +4,15 @@
 #Include Libs\StringUtils.ahk
 #Include Libs\ClipboardUtils.ahk
 
+Menu_StringGenerator_RandomGuid(*)
+{
+	guid := ComObject("Scriptlet.TypeLib").GUID
+    
+	output := StrReplace(guid, "{", "")
+    output := StrReplace(output, "}", "")
+
+	Clipboard_Paste(output)
+}
 
 #^f::
 {
@@ -26,4 +35,15 @@
 	formatMenu.Add("&Number.AddThousandsSeparators", Clipboard_AddThousandsSeparators)
 	
     formatMenu.Show()
+}
+
+
+#^i::
+{
+	stringGeneratorMenu := Menu()
+    stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
+	;stringGeneratorMenu.Add("&Date.Current", Clipboard_ToUpper)
+	;stringGeneratorMenu.Add("&Separator.120", Clipboard_ToUpper)
+
+	stringGeneratorMenu.Show()
 }
