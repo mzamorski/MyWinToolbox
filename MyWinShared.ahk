@@ -11,6 +11,8 @@
     formatMenu.Add("To&Upper", Clipboard_ToUpper)
 	formatMenu.Add("To&Lower", Clipboard_ToLower)
 	formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
+	formatMenu.Add("&BreakLines.80", Clipboard_BreakLines_80)
+	formatMenu.Add("&BreakLines.120", Clipboard_BreakLines_120)
 	formatMenu.Add()
 	formatMenu.Add("Char.Replicate.80", Clipboard_Replicate_80)
 	formatMenu.Add("Char.Replicate.120", Clipboard_Replicate_120)
@@ -19,6 +21,7 @@
 	formatMenu.Add("Path.ToDoubleBackslash", Clipboard_ToDoubleBackslash)
 	formatMenu.Add()
 	formatMenu.Add("SQL.AddBraket", Clipboard_AddBraket)
+	formatMenu.Add("SQL.RemoveBraket", Clipboard_RemoveBraket)
 	formatMenu.Add()
 	formatMenu.Add("&Number.AddThousandsSeparators", Clipboard_AddThousandsSeparators)
 	

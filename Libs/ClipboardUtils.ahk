@@ -79,10 +79,34 @@ Clipboard_AddBraket(*)
 	Clipboard_Paste(output)
 }
 
+Clipboard_RemoveBraket(*)
+{
+	input := Clipboard_Copy()
+	output := RegExReplace(input, "\[(\w+)\]" , "$1")
+	
+	Clipboard_Paste(output)
+}
+
 Clipboard_AddThousandsSeparators(*)
 {
 	input := Clipboard_Copy()
 	output := RegExReplace(input, "\G\d+?(?=(\d{3})+(?:\D|$))", "$0.")
 
+	Clipboard_Paste(output)
+}
+
+Clipboard_BreakLines_80(*)
+{
+	input := Clipboard_Copy()
+	output := StringUtils.BreakLine(input, 80)
+	
+	Clipboard_Paste(output)
+}
+
+Clipboard_BreakLines_120(*)
+{
+	input := Clipboard_Copy()
+	output := StringUtils.BreakLine(input, 120)
+	
 	Clipboard_Paste(output)
 }
