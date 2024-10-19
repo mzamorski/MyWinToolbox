@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 
 #Include Constants.ahk
+#Include Libs\ConfigUtils.ahk
 
 global ConfigFilePath := A_ScriptName . ".config"
 
@@ -12,5 +13,5 @@ Hotstring(":0*:@k=", Config_GetEmail())
 
 Config_GetEmail() 
 {
-	return IniRead(ConfigFilePath, "Settings", "Email", UNKNOWN)
+	return IniReadOrDefault(ConfigFilePath, "Settings", "Email")
 }

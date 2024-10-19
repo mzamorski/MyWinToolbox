@@ -4,6 +4,7 @@
 #Include Libs\StringUtils.ahk
 #Include Libs\ClipboardUtils.ahk
 #Include Libs\DateTimeUtils.ahk
+#Include Libs\ConfigUtils.ahk
 
 global ConfigFilePath := A_ScriptName . ".config"
 
@@ -68,7 +69,7 @@ Hotstring(":0*:@=", Config_GetEmail())
 
 Config_GetEmail() 
 {
-	return IniRead(ConfigFilePath, "Settings", "Email", UNKNOWN)
+	return IniReadOrDefault(ConfigFilePath, "Settings", "Email")
 }
 
 ;========================================================================================================================
