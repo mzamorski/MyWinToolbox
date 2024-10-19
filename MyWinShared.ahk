@@ -25,6 +25,13 @@ Menu_StringGenerator_CurrentDate(*)
 	Clipboard_Paste(output)
 }
 
+Menu_StringGenerator_Separator_120(*)
+{
+	output := StringUtils.Replicate("-", 120)
+
+	Clipboard_Paste(output)
+}
+
 ;========================================================================================================================
 ; CONTEXT-MENUS
 ;========================================================================================================================
@@ -57,7 +64,8 @@ Menu_StringGenerator_CurrentDate(*)
 	stringGeneratorMenu := Menu()
     stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
 	stringGeneratorMenu.Add("&Date.Current", Menu_StringGenerator_CurrentDate)
-
+	stringGeneratorMenu.Add("&Separator.120", Menu_StringGenerator_Separator_120)
+	
 	stringGeneratorMenu.Show()
 }
 
