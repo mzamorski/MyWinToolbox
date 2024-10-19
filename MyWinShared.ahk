@@ -1,9 +1,13 @@
 #Requires AutoHotkey v2.0
-#Warn All, Off
 
+#Include Constants.ahk
 #Include Libs\StringUtils.ahk
 #Include Libs\ClipboardUtils.ahk
 #Include Libs\DateTimeUtils.ahk
+
+global ConfigFilePath := A_ScriptName . ".config"
+
+MsgBox(ConfigFilePath)
 
 Menu_StringGenerator_RandomGuid(*)
 {
@@ -21,6 +25,10 @@ Menu_StringGenerator_CurrentDate(*)
 
 	Clipboard_Paste(output)
 }
+
+;========================================================================================================================
+; CONTEXT-MENUS
+;========================================================================================================================
 
 #^f::
 {
@@ -45,7 +53,6 @@ Menu_StringGenerator_CurrentDate(*)
     formatMenu.Show()
 }
 
-
 #^i::
 {
 	stringGeneratorMenu := Menu()
@@ -54,3 +61,18 @@ Menu_StringGenerator_CurrentDate(*)
 
 	stringGeneratorMenu.Show()
 }
+
+;========================================================================================================================
+; HOT-STRINGS
+;========================================================================================================================
+
+Hotstring(":0*:@=", Config_GetEmail())
+
+Config_GetEmail() 
+{
+	return IniRead(ConfigFilePath, "Settings", "Email", UNKNOWN)
+}
+
+;========================================================================================================================
+; HOT-KEYS
+;========================================================================================================================
