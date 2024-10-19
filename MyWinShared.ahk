@@ -7,8 +7,6 @@
 
 global ConfigFilePath := A_ScriptName . ".config"
 
-MsgBox(ConfigFilePath)
-
 Menu_StringGenerator_RandomGuid(*)
 {
 	guid := ComObject("Scriptlet.TypeLib").GUID
