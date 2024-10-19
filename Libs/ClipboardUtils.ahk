@@ -6,7 +6,8 @@ Clipboard_Copy()
 {
     A_Clipboard := ""
     Send("^c")
-    ClipWait()
+	Sleep(100)	; Add a short delay to allow the clipboard to update
+    ClipWait(2, 0)
 
     return A_Clipboard
 }
