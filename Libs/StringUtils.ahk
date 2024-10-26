@@ -72,10 +72,17 @@ class StringUtils
 	
 		return output
 	}
+	
+	static Random(length := 16) 
+	{
+		chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,<>.?/"
+		output := ""
+		
+		Loop length {
+			randomIndex := Random(1, StrLen(chars))
+			output .= SubStr(chars, randomIndex, 1)
+		}
+
+		return output
+	}
 }
-
-class ClipboardUtils
-{
-}
-
-

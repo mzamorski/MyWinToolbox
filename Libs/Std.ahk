@@ -4,7 +4,7 @@ Std_Paste(text, inputType := 1)
 {
 	if (inputType = 1)
 	{
-		SendInput(text)
+		SendInput("{Raw}" . text)
 	}
 	else
 	{
