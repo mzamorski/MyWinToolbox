@@ -4,12 +4,7 @@
 
 IniReadOrDefault(filePath, section, key, defaultValue := UNKNOWN) 
 {
-    value := IniRead(filePath, section, key, "")
-
-    if (value = "")
-    {
-        return defaultValue
-    }
+    value := IniRead(filePath, section, key, defaultValue)
 
     return value
 }
