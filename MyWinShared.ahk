@@ -33,6 +33,13 @@ Menu_StringGenerator_CurrentDate(*)
 	Clipboard_Paste(output)
 }
 
+Menu_StringGenerator_CurrentDateTime(*)
+{
+	output := DateTimeUtils.GetCurrentDate(true)
+
+	Clipboard_Paste(output)
+}
+
 Menu_StringGenerator_Separator_120(*)
 {
 	output := StringUtils.Replicate("-", 120)
@@ -73,6 +80,7 @@ Menu_StringGenerator_Separator_120(*)
     stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
 	stringGeneratorMenu.Add("&Random.String", Menu_StringGenerator_RandomString)
 	stringGeneratorMenu.Add("&Date.Current", Menu_StringGenerator_CurrentDate)
+	stringGeneratorMenu.Add("&DateTime.Current", Menu_StringGenerator_CurrentDateTime)
 	stringGeneratorMenu.Add("&Separator.120", Menu_StringGenerator_Separator_120)
 	
 	stringGeneratorMenu.Show()

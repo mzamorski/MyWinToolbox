@@ -2,7 +2,7 @@
 
 class DateTimeUtils
 {
-    static GetCurrentDate()
+    static GetCurrentDate(includeTime := false)
     {
         ; Format: 'YYYYMMDDHHmmSS'.
         currentDateTime := A_Now  
@@ -13,6 +13,18 @@ class DateTimeUtils
         day := SubStr(currentDateTime, 7, 2)
 
         ; Format the date as 'YYYY-MM-DD'.
-        return year . "-" . month . "-" . day
+        formattedDate := year . "-" . month . "-" . day
+
+        if includeTime 
+        {
+            hour := SubStr(currentDateTime, 9, 2)
+            minute := SubStr(currentDateTime, 11, 2)
+            second := SubStr(currentDateTime, 13, 2)
+
+            ; If `includeTime` is true, append the time in format 'HH:mm:SS'.
+            formattedDate .= " " . hour . ":" . minute . ":" . second
+        }
+        
+        return formattedDate
     }
 }
