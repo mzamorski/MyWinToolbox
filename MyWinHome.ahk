@@ -3,18 +3,15 @@
 #Include Constants.ahk
 #Include Libs\ConfigUtils.ahk
 #Include Libs\CryptoUtils.ahk
+#Include Libs\Std.ahk
 
 global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
 global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
+global PasswordEntries := Ini_GetSectionEntries(ConfigFilePath, "Passwords")
 
 ;========================================================================================================================
-; HOT-STRINGS
+; FUNCTIONS
 ;========================================================================================================================
-
-Hotstring(":0*:@a=", Config_GetShippingAddress())
-Hotstring(":0*:@p1", Config_GetPassword("1"))
-Hotstring(":0*:@p2", Config_GetPassword("2"))
-Hotstring(":0*:@p3", Config_GetPassword("3"))
 
 Config_GetShippingAddress() 
 {
@@ -32,3 +29,39 @@ Config_GetPassword(keyName)
 }
 
 ;========================================================================================================================
+; HOTSTRINGS
+;========================================================================================================================
+
+Hotstring(":0*:@a=", Config_GetShippingAddress())
+
+;========================================================================================================================
+; CONTEXT-MENUS
+;========================================================================================================================
+
+OnPasswordMenuHandler(itemName, itemPos, menu)
+{
+    value := PasswordEntries[itemName]
+    output := CryptoUtils.Decrypt(value, Secret)
+
+    Std_Paste(output)
+}
+
+;--------------------------------------------------------------------------------
+; Create menus. 
+;--------------------------------------------------------------------------------
+
+passwordMenu := Menu()
+passwordMenu.SetColor("ffabab")
+for key, value in PasswordEntries
+{
+    passwordMenu.Add(key, OnPasswordMenuHandler, "BarBreak")
+}
+
+;========================================================================================================================
+; HOTKEYS
+;========================================================================================================================
+
+#^p::
+{
+	passwordMenu.Show()
+}

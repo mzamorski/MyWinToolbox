@@ -13,7 +13,7 @@ Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN)
 
 Ini_GetSectionEntries(filePath, section)
 {
-    entries := []
+    entries := Map()
 
     entryLines := IniRead(filePath, section)
     for line in StrSplit(entryLines, "`n")
@@ -21,7 +21,7 @@ Ini_GetSectionEntries(filePath, section)
         key := StrSplit(line, "=")[1]
         value := Ini_ReadOrDefault(filePath, section, key)
 
-        entries.Push({Key: key, Value: value})
+        entries[key] := value
     }
 
     return entries
