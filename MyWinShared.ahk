@@ -5,6 +5,7 @@
 #Include Libs\ClipboardUtils.ahk
 #Include Libs\DateTimeUtils.ahk
 #Include Libs\ConfigUtils.ahk
+#Include Libs\WinAPI.ahk
 
 global ConfigFilePath := A_ScriptName . ".config"
 
