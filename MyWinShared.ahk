@@ -1,12 +1,13 @@
 #Requires AutoHotkey v2.0
 
+#Include Constants.ahk
 #Include Libs\StringUtils.ahk
 #Include Libs\ClipboardUtils.ahk
 #Include Libs\DateTimeUtils.ahk
 #Include Libs\ConfigUtils.ahk
 #Include Libs\WinAPI.ahk
 
-global ConfigFilePath := A_ScriptName . ".config"
+global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
 
 Menu_StringGenerator_RandomGuid(*)
 {

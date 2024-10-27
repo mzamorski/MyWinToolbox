@@ -1,7 +1,8 @@
 #Requires AutoHotkey v2.0
 
-#Include Constants.ahk
 #Include StringUtils.ahk
+
+global UNKNOWN := "<unknown>"
 
 Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN) 
 {

@@ -3,7 +3,7 @@
 #Include Constants.ahk
 #Include Libs\ConfigUtils.ahk
 
-global ConfigFilePath := A_ScriptName . ".config"
+global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
 
 Config_GetEmail() 
 {

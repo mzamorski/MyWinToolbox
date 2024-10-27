@@ -1,9 +1,10 @@
 #Requires AutoHotkey v2.0
 
+#Include Constants.ahk
 #Include Libs\ConfigUtils.ahk
 #Include Libs\CryptoUtils.ahk
 
-global ConfigFilePath := A_ScriptName . ".config"
+global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
 global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 
 ;========================================================================================================================
