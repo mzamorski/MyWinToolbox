@@ -58,71 +58,81 @@ Menu_StringGenerator_Separator_120(*)
 ; CONTEXT-MENUS
 ;========================================================================================================================
 
+;--------------------------------------------------------------------------------
+; Create menus. 
+;--------------------------------------------------------------------------------
+
+formatMenu := Menu()
+formatMenu.SetColor("cbe7b6", true)
+formatMenu.Add("To&Upper", Clipboard_ToUpper)
+formatMenu.Add("To&Lower", Clipboard_ToLower)
+formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
+
+subMenu := Menu()
+subMenu.Add("80", Clipboard_BreakLines_80)
+subMenu.Add("120", Clipboard_BreakLines_120)
+formatMenu.Add("&BreakLines", subMenu)
+
+formatMenu.Add()
+
+subMenu := Menu()
+subMenu.Add("80", Clipboard_Replicate_80)
+subMenu.Add("120", Clipboard_Replicate_120)
+formatMenu.Add("Char.Replicate", subMenu)
+
+formatMenu.Add()
+
+formatMenu.Add("Path.ToSingleBackslash", Clipboard_ToSingleBackslash)
+formatMenu.Add("Path.ToDoubleBackslash", Clipboard_ToDoubleBackslash)
+
+formatMenu.Add()
+
+formatMenu.Add("SQL.AddBraket", Clipboard_AddBraket)
+formatMenu.Add("SQL.RemoveBraket", Clipboard_RemoveBraket)
+
+formatMenu.Add()
+
+formatMenu.Add("&Number.AddThousandsSeparators", Clipboard_AddThousandsSeparators)
+
+;--------------------------------------------------------------------------------
+
+stringGeneratorMenu := Menu()
+stringGeneratorMenu.SetColor("cee1f8", true)
+stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
+
+subMenu := Menu()
+subMenu.Add("16", Menu_StringGenerator_RandomString_16)
+subMenu.Add("32", Menu_StringGenerator_RandomString_32)
+stringGeneratorMenu.Add("&Random.String", subMenu)
+
+stringGeneratorMenu.Add()
+
+stringGeneratorMenu.Add("&Date.Current", Menu_StringGenerator_CurrentDate)
+stringGeneratorMenu.Add("&DateTime.Current", Menu_StringGenerator_CurrentDateTime)
+stringGeneratorMenu.Add()
+
+subMenu := Menu()
+subMenu.Add("120", Menu_StringGenerator_Separator_120)
+
+stringGeneratorMenu.Add("&Separator", subMenu)
+
+;========================================================================================================================
+; HOTKEYS
+;========================================================================================================================
+
 #^f::
 {
-    formatMenu := Menu()
-	formatMenu.SetColor("cbe7b6", true)
-    formatMenu.Add("To&Upper", Clipboard_ToUpper)
-	formatMenu.Add("To&Lower", Clipboard_ToLower)
-	formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
-
-	subMenu := Menu()
-	subMenu.Add("80", Clipboard_BreakLines_80)
-	subMenu.Add("120", Clipboard_BreakLines_120)
-	formatMenu.Add("&BreakLines", subMenu)
-
-	formatMenu.Add()
-
-	subMenu := Menu()
-	subMenu.Add("80", Clipboard_Replicate_80)
-	subMenu.Add("120", Clipboard_Replicate_120)
-	formatMenu.Add("Char.Replicate", subMenu)
-
-	formatMenu.Add()
-
-	formatMenu.Add("Path.ToSingleBackslash", Clipboard_ToSingleBackslash)
-	formatMenu.Add("Path.ToDoubleBackslash", Clipboard_ToDoubleBackslash)
-
-	formatMenu.Add()
-
-	formatMenu.Add("SQL.AddBraket", Clipboard_AddBraket)
-	formatMenu.Add("SQL.RemoveBraket", Clipboard_RemoveBraket)
-
-	formatMenu.Add()
-
-	formatMenu.Add("&Number.AddThousandsSeparators", Clipboard_AddThousandsSeparators)
-	
     formatMenu.Show()
 }
 
 
 #^i::
 {
-	stringGeneratorMenu := Menu()
-	stringGeneratorMenu.SetColor("cee1f8", true)
-	stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
-
-	subMenu := Menu()
-	subMenu.Add("16", Menu_StringGenerator_RandomString_16)
-	subMenu.Add("32", Menu_StringGenerator_RandomString_32)
-	stringGeneratorMenu.Add("&Random.String", subMenu)
-
-	stringGeneratorMenu.Add()
-
-	stringGeneratorMenu.Add("&Date.Current", Menu_StringGenerator_CurrentDate)
-	stringGeneratorMenu.Add("&DateTime.Current", Menu_StringGenerator_CurrentDateTime)
-	stringGeneratorMenu.Add()
-
-	subMenu := Menu()
-	subMenu.Add("120", Menu_StringGenerator_Separator_120)
-
-	stringGeneratorMenu.Add("&Separator", subMenu)
-	
 	stringGeneratorMenu.Show()
 }
 
 ;========================================================================================================================
-; HOT-STRINGS
+; HOTSTRINGS
 ;========================================================================================================================
 
 Hotstring(":0*:@=", Config_GetEmail())
@@ -133,5 +143,5 @@ Config_GetEmail()
 }
 
 ;========================================================================================================================
-; HOT-KEYS
+; HOTKEYS
 ;========================================================================================================================
