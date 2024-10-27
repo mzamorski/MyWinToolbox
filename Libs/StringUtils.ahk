@@ -75,7 +75,7 @@ class StringUtils
 	
 	static Random(length := 16) 
 	{
-		chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,<>.?/"
+		static chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,<>.?/"
 		output := ""
 		
 		Loop length {
@@ -84,5 +84,10 @@ class StringUtils
 		}
 
 		return output
+	}
+
+	static RemoveComments(value, commentChars := ";#")
+	{
+		return RegExReplace(value, "\s*[" . commentChars . "].*$", "")
 	}
 }

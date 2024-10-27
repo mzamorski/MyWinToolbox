@@ -1,11 +1,10 @@
 #Requires AutoHotkey v2.0
 
-#Include Constants.ahk
 #Include Libs\ConfigUtils.ahk
 #Include Libs\CryptoUtils.ahk
 
 global ConfigFilePath := A_ScriptName . ".config"
-global Secret := IniReadOrDefault(ConfigFilePath, "Settings", "Secret")
+global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 
 ;========================================================================================================================
 ; HOT-STRINGS
@@ -18,15 +17,17 @@ Hotstring(":0*:@p3", Config_GetPassword("3"))
 
 Config_GetShippingAddress() 
 {
-	value := IniReadOrDefault(ConfigFilePath, "Settings", "ShippingAddress")
+	value := Ini_ReadOrDefault(ConfigFilePath, "Settings", "ShippingAddress")
 
     return StrReplace(value, "\n", "`n")
 }
 
 Config_GetPassword(keyName) 
 {
-    value := IniReadOrDefault(ConfigFilePath, "Passwords", keyName)
+    value := Ini_ReadOrDefault(ConfigFilePath, "Passwords", keyName)
     ;InputBox(, , , CryptoUtils.Encrypt(value, Secret))
 
     return CryptoUtils.Decrypt(value, Secret)
 }
+
+;========================================================================================================================

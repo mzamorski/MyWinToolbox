@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2.0
 
-#Include Constants.ahk
 #Include Libs\StringUtils.ahk
 #Include Libs\ClipboardUtils.ahk
 #Include Libs\DateTimeUtils.ahk
@@ -61,6 +60,7 @@ Menu_StringGenerator_Separator_120(*)
 #^f::
 {
     formatMenu := Menu()
+	formatMenu.SetColor("cbe7b6", true)
     formatMenu.Add("To&Upper", Clipboard_ToUpper)
 	formatMenu.Add("To&Lower", Clipboard_ToLower)
 	formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
@@ -94,9 +94,11 @@ Menu_StringGenerator_Separator_120(*)
     formatMenu.Show()
 }
 
+
 #^i::
 {
 	stringGeneratorMenu := Menu()
+	stringGeneratorMenu.SetColor("cee1f8", true)
 	stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
 
 	subMenu := Menu()
@@ -126,7 +128,7 @@ Hotstring(":0*:@=", Config_GetEmail())
 
 Config_GetEmail() 
 {
-	return IniReadOrDefault(ConfigFilePath, "Settings", "Email")
+	return Ini_ReadOrDefault(ConfigFilePath, "Settings", "Email")
 }
 
 ;========================================================================================================================

@@ -7,7 +7,7 @@ global ConfigFilePath := A_ScriptName . ".config"
 
 Config_GetEmail() 
 {
-	return IniReadOrDefault(ConfigFilePath, "Settings", "Email")
+	return Ini_ReadOrDefault(ConfigFilePath, "Settings", "Email")
 }
 
 ; SQL_Snippet_TryCatch()

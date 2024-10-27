@@ -1,10 +1,27 @@
 #Requires AutoHotkey v2.0
 
-#Include ..\Constants.ahk
+#Include Constants.ahk
+#Include StringUtils.ahk
 
-IniReadOrDefault(filePath, section, key, defaultValue := UNKNOWN) 
+Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN) 
 {
     value := IniRead(filePath, section, key, defaultValue)
 
-    return value
+    return StringUtils.RemoveComments(value)
+}
+
+Ini_GetSectionEntries(filePath, section)
+{
+    entries := []
+
+    entryLines := IniRead(filePath, section)
+    for line in StrSplit(entryLines, "`n")
+    {
+        key := StrSplit(line, "=")[1]
+        value := Ini_ReadOrDefault(filePath, section, key)
+
+        entries.Push({Key: key, Value: value})
+    }
+
+    return entries
 }
