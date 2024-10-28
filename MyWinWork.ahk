@@ -79,6 +79,39 @@ OnNoSleep()
 	}
 
 	return
+}
 
-	
+;========================================================================================================================
+; CONTEXT-MENUS
+;========================================================================================================================
+
+Menu_TaskRunner_NoSleep(itemName, itemPos, menu)
+{
+	Send("^#a")
+
+	menu.ToggleCheck(itemName)
+}
+
+;--------------------------------------------------------------------------------
+; Create menus. 
+
+taskRunnerMenu := Menu()
+taskRunnerMenu.SetColor("edf39f")
+
+taskRunnerMenu.Add("NoSleep", Menu_TaskRunner_NoSleep)
+
+;--------------------------------------------------------------------------------
+
+^#t::
+{
+	if (IsNoSleepTimerOn)
+	{
+		taskRunnerMenu.Check("NoSleep")
+	}
+	else
+	{
+		taskRunnerMenu.Uncheck("NoSleep")
+	}
+
+	taskRunnerMenu.Show()
 }
