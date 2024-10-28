@@ -12,7 +12,21 @@ SetTitleMatchMode("2")
 DetectHiddenWindows(true)
 Persistent
 
+;========================================================================================================================
+; STARTUP
+;========================================================================================================================
+
+if (A_ScriptName = "MyWinShared.ahk")
+{
+    MsgBox("This script cannot be run directly."
+        ,"Execution Blocked", "Iconx"
+    )
+    ExitApp(-1)
+}
+
 global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
+
+;========================================================================================================================
 
 Menu_StringGenerator_RandomGuid(*)
 {
