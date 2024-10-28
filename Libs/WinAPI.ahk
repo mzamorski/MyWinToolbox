@@ -30,3 +30,30 @@ WinAPI_UuidCreate(mode := 1, format := "", &UUID?)
 			: output
 	}
 }
+
+; Forces the display to be on by resetting the display idle timer.
+WinAPI_SetThreadExecutionState_DisplayRequired()
+{
+	static ES_DISPLAY_REQUIRED := 0x00000002
+
+	DllCall("SetThreadExecutionState", "UInt", ES_DISPLAY_REQUIRED)
+	return
+}
+
+; Allow display to go idle
+WinAPI_SetThreadExecutionState_Continuous()
+{
+	static ES_CONTINUOUS := 0x80000000
+
+	DllCall("SetThreadExecutionState", "UInt", ES_CONTINUOUS)
+	return
+}
+
+; Forces the system to be in the working state by resetting the system idle timer.
+WinAPI_SetThreadExecutionState_SystemRequired()
+{
+	static ES_SYSTEM_REQUIRED := 0x00000001
+
+	DllCall("SetThreadExecutionState", "UInt", ES_SYSTEM_REQUIRED)
+	return
+}
