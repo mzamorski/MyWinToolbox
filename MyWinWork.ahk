@@ -1,15 +1,24 @@
 #Requires AutoHotkey v2.0
 
-#Include Constants.ahk
 #Include Libs\ConfigUtils.ahk
 #Include Libs\WinAPI.ahk
+#Include Constants.ahk
+#Include MyWinShared.ahk
+
+;========================================================================================================================
+; STARTUP
+;========================================================================================================================
+
+conflictingScriptName := "MyWinHome.ahk"
+if WinExist(conflictingScriptName)
+{
+    MsgBox("Another instance of a conflicting script '" . conflictingScriptName . "' is already running.`n`nThis script cannot operate concurrently and will now terminate."
+        ,"Execution Blocked", "Iconx"
+    )
+    ExitApp(-1)
+}
 
 global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
-
-Config_GetEmail() 
-{
-	return Ini_ReadOrDefault(ConfigFilePath, "Settings", "Email")
-}
 
 ; SQL_Snippet_TryCatch()
 ; {

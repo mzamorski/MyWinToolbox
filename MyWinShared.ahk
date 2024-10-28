@@ -7,6 +7,11 @@
 #Include Libs\ConfigUtils.ahk
 #Include Libs\WinAPI.ahk
 
+SendMode("Input")
+SetTitleMatchMode("2")
+DetectHiddenWindows(true)
+Persistent
+
 global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
 
 Menu_StringGenerator_RandomGuid(*)
