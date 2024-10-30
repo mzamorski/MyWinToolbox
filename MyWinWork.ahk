@@ -18,6 +18,8 @@ if WinExist(conflictingScriptName)
     ExitApp(-1)
 }
 
+
+
 global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
 
 ; SQL_Snippet_TryCatch()
@@ -94,11 +96,42 @@ OnNoSleep()
 ; CONTEXT-MENUS
 ;========================================================================================================================
 
+OnTimerShutdown()
+{
+	Traytip("Shutdown", "The system is now shutting down.")	
+	Sleep(3 * 1000)
+	Shutdown(0) 
+}
+
+OnTaskRunnerShutdown(delayInSeconds)
+{
+	SetTimer(OnTimerShutdown, delayInSeconds * SECOND_IN_MILLISECONDS)
+
+	Traytip("Shutdown", "The system will shut down in " . delayInSeconds . " seconds.")	
+}
+
 Menu_TaskRunner_NoSleep(itemName, itemPos, menu)
 {
 	Send("^#a")
 
 	menu.ToggleCheck(itemName)
+}
+
+Menu_TaskRunner_Shutdown_1h(*)
+{
+	OnTaskRunnerShutdown(3600 * SECOND_IN_MILLISECONDS)
+}
+
+Menu_TaskRunner_Shutdown_2h(*)
+{
+	OnTaskRunnerShutdown(7200 * SECOND_IN_MILLISECONDS)
+}
+
+Menu_TaskRunner_Shutdown_Cancel(*)
+{
+	SetTimer(OnTimerShutdown, 0)
+
+	Traytip("Shutdown", "Canceled.")
 }
 
 ;--------------------------------------------------------------------------------
@@ -108,6 +141,14 @@ taskRunnerMenu := Menu()
 taskRunnerMenu.SetColor("edf39f")
 
 taskRunnerMenu.Add("NoSleep", Menu_TaskRunner_NoSleep)
+
+shutdownMenu := Menu()
+shutdownMenu.Add("1h", Menu_TaskRunner_Shutdown_1h)
+shutdownMenu.Add("2h", Menu_TaskRunner_Shutdown_2h)
+shutdownMenu.Add()
+shutdownMenu.Add("Cancel", Menu_TaskRunner_Shutdown_Cancel)
+
+taskRunnerMenu.Add("Shutdown", shutdownMenu)
 
 ;--------------------------------------------------------------------------------
 
