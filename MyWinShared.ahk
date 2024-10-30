@@ -86,6 +86,7 @@ formatMenu.SetColor("cbe7b6", true)
 formatMenu.Add("To&Upper", Clipboard_ToUpper)
 formatMenu.Add("To&Lower", Clipboard_ToLower)
 formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
+formatMenu.Add("To&Quoted.Double", Clipboard_ToDoubleQuoted)
 
 subMenu := Menu()
 subMenu.Add("80", Clipboard_BreakLines_80)

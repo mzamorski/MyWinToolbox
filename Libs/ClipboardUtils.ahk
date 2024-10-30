@@ -36,11 +36,18 @@ Clipboard_ToLower(*)
 Clipboard_ToSingleQuoted(*)
 {
 	input:= Clipboard_Copy()
-	output := RegExReplace(input, "(\b\w+\b)" , "'$1'")
+	output := "'" . input . "'"
 	
 	Clipboard_Paste(output)
 }
 
+Clipboard_ToDoubleQuoted(*)
+{
+	input:= Clipboard_Copy()
+	output := '"' . input . '"'
+	
+	Clipboard_Paste(output)
+}
 
 Clipboard_Replicate_80(*)
 {
