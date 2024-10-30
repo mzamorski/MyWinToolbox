@@ -73,6 +73,43 @@ class StringUtils
 		return output
 	}
 	
+	static WordWrap(input, column := 80, indentChar := "")
+	{
+		indentLength := StrLen(indentChar)
+		out := ""
+
+		for line in StrSplit(input, "`n") ; Dzieli tekst na linie
+		{
+			if (StrLen(line) > column)
+			{
+				pos := 1
+				wordList := StrSplit(line, " ")
+
+				for word in wordList
+				{
+					loopLength := StrLen(word)
+					if (pos + loopLength <= column)
+					{
+						out .= (pos = 1 ? "" : " ") word
+						pos += loopLength + 1
+					}
+					else
+					{
+						pos := loopLength + 1 + indentLength
+						out .= "`n" indentChar word
+					}
+				}
+				out .= "`n"
+			}
+			else
+			{
+				out .= line "`n"
+			}
+		}
+
+		return SubStr(out, 1, -1)
+	}
+
 	static Random(length := 16) 
 	{
 		static chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,<>.?/"
