@@ -4,6 +4,8 @@
 
 class MenuUtils
 {
+    static INI_MENU_SEPARATOR_MARKER := "--"
+
     static Build(entries, callback)
     {
         ; Check if the argument is of type Dictionary
@@ -15,6 +17,12 @@ class MenuUtils
         menux := Menu()
         for key, value in entries
         {
+            if (key == MenuUtils.INI_MENU_SEPARATOR_MARKER)
+            {
+                menux.Add()    
+                continue
+            }
+
             menux.Add(key, callback)
         }
 
