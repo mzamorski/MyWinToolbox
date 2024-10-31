@@ -17,7 +17,9 @@ Persistent
 ; STARTUP
 ;========================================================================================================================
 
-if (A_ScriptName = "MyWinShared.ahk")
+global MainScriptName := A_ScriptName
+
+if (MainScriptName = "MyWinShared.ahk")
 {
     MsgBox("This script cannot be run directly."
         ,"Execution Blocked", "Iconx"
@@ -149,10 +151,16 @@ formatMenu.Add("&Number.AddThousandsSeparators", Clipboard_AddThousandsSeparator
 
 formatMenu.Add()
 
-formatMenu.Add("&Encrypt.RC4", Menu_Format_Encrypt_RC4)
-formatMenu.Add("&Decrypt.RC4", Menu_Format_Decrypt_RC4)
-formatMenu.Add("&Encrypt.BASE64", Menu_Format_Encrypt_BASE64)
-formatMenu.Add("&Decrypt.BASE64", Menu_Format_Decrypt_BASE64)
+subMenu := Menu()
+subMenu.Add("Encrypt", Menu_Format_Encrypt_RC4)
+subMenu.Add("Decrypt", Menu_Format_Decrypt_RC4)
+formatMenu.Add("&Crypto.RC4", subMenu)
+
+subMenu := Menu()
+subMenu.Add("Encrypt", Menu_Format_Encrypt_BASE64)
+subMenu.Add("Decrypt", Menu_Format_Decrypt_BASE64)
+
+formatMenu.Add("Crypto.BASE64", subMenu)
 
 ;--------------------------------------------------------------------------------
 
@@ -180,10 +188,16 @@ stringGeneratorMenu.Add("&Separator", subMenu)
 ; HOTKEYS
 ;========================================================================================================================
 
+;--------------------------------------------------------------------------------
+; Show 'FormatMenu'
+
 #^f::
 {
     formatMenu.Show()
 }
+
+;--------------------------------------------------------------------------------
+; Show 'StringgeneratorMenu'
 
 #^i::
 {
@@ -241,7 +255,3 @@ Config_GetEmail()
 {
 	return Ini_ReadOrDefault(ConfigFilePath, "Settings", "Email")
 }
-
-;========================================================================================================================
-; HOTKEYS
-;========================================================================================================================
