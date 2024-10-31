@@ -269,7 +269,7 @@ textSnippetsMenu.SetColor("fcfddb")
 ;--------------------------------------------------------------------------------
 ; Show 'TextSnippetsMenu'
 
-#^t::
+#^s::		; Win + Ctrl + Shift
 {
 	textSnippetsMenu.Show()
 }
