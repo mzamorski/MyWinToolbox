@@ -62,7 +62,6 @@ OnPasswordMenuHandler(itemName, itemPos, menu)
 
 ;--------------------------------------------------------------------------------
 ; Create menus. 
-;--------------------------------------------------------------------------------
 
 passwordMenu := Menu()
 passwordMenu.SetColor("ffabab")

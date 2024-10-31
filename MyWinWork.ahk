@@ -59,15 +59,12 @@ OnNoSleep()
 	WinAPI_SetThreadExecutionState_DisplayRequired()
 	WinAPI_SetThreadExecutionState_SystemRequired()
 	
-	/*
-	; Mouse move if idle...
-	if ( A_TimeIdle > 10000 ) 
+	if ( A_TimeIdle > 10 * SECOND_IN_MILLISECONDS) 
 	{
-		MouseMove, 10 , 0,, R
-		Sleep, 1000
-		MouseMove, -10, 0,, R
-	}
-	*/	
+		MouseMove(1, 0, , "R")
+		Sleep(1000)
+		MouseMove(-1, 0, , "R")
+	}	
 }
 
 ^#a::
@@ -76,7 +73,7 @@ OnNoSleep()
 
 	if (!IsNoSleepTimerOn)
 	{
-		SetTimer(OnNoSleep, 60000)
+		SetTimer(OnNoSleep, 60 * SECOND_IN_MILLISECONDS)
 		IsNoSleepTimerOn := true
 		
 		Traytip("NoSleep", "Activated")
@@ -101,7 +98,7 @@ OnNoSleep()
 OnTimerShutdown()
 {
 	Traytip("Shutdown", "The system is now shutting down.")	
-	Sleep(3 * 1000)
+	Sleep(3 * SECOND_IN_MILLISECONDS)
 	Shutdown(0) 
 }
 
