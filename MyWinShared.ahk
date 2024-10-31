@@ -3,6 +3,7 @@
 #Include Constants.ahk
 #Include Libs\StringUtils.ahk
 #Include Libs\ClipboardUtils.ahk
+#Include Libs\CryptoUtils.ahk
 #Include Libs\DateTimeUtils.ahk
 #Include Libs\ConfigUtils.ahk
 #Include Libs\WinAPI.ahk
@@ -25,6 +26,7 @@ if (A_ScriptName = "MyWinShared.ahk")
 }
 
 global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
+global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 
 ;========================================================================================================================
 
@@ -77,6 +79,38 @@ Menu_StringGenerator_Separator_120(*)
 ; CONTEXT-MENUS
 ;========================================================================================================================
 
+Menu_Format_Encrypt_RC4(*)
+{
+	input:= Clipboard_Copy()
+	output := CryptoUtils.Encrypt(input, Secret)
+
+	Clipboard_Paste(output)
+}
+
+Menu_Format_Decrypt_RC4(*)
+{
+	input:= Clipboard_Copy()
+	output := CryptoUtils.Decrypt(input, Secret)
+
+	Clipboard_Paste(output)
+}
+
+Menu_Format_Encrypt_BASE64(*)
+{
+	input:= Clipboard_Copy()
+	output := CryptoUtils.EncryptBase64(input)
+
+	Clipboard_Paste(output)
+}
+
+Menu_Format_Decrypt_BASE64(*)
+{
+	input:= Clipboard_Copy()
+	output := CryptoUtils.DecryptBase64(input)
+
+	Clipboard_Paste(output)
+}
+
 ;--------------------------------------------------------------------------------
 ; Create menus. 
 ;--------------------------------------------------------------------------------
@@ -114,6 +148,13 @@ formatMenu.Add()
 
 formatMenu.Add("&Number.AddThousandsSeparators", Clipboard_AddThousandsSeparators)
 
+formatMenu.Add()
+
+formatMenu.Add("&Encrypt.RC4", Menu_Format_Encrypt_RC4)
+formatMenu.Add("&Decrypt.RC4", Menu_Format_Decrypt_RC4)
+formatMenu.Add("&Encrypt.BASE64", Menu_Format_Encrypt_BASE64)
+formatMenu.Add("&Decrypt.BASE64", Menu_Format_Decrypt_BASE64)
+
 ;--------------------------------------------------------------------------------
 
 stringGeneratorMenu := Menu()
@@ -144,7 +185,6 @@ stringGeneratorMenu.Add("&Separator", subMenu)
 {
     formatMenu.Show()
 }
-
 
 #^i::
 {
