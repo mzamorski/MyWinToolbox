@@ -6,25 +6,25 @@ class DateTimeUtils
     {
         ; Format: 'YYYYMMDDHHmmSS'.
         currentDateTime := A_Now  
-            
-        ; Extract the year, month, and day.
-        year := SubStr(currentDateTime, 1, 4)
-        month := SubStr(currentDateTime, 5, 2)
-        day := SubStr(currentDateTime, 7, 2)
-
+      
         ; Format the date as 'YYYY-MM-DD'.
-        formattedDate := year . "-" . month . "-" . day
+        format := "yyyy-MM-dd"
 
         if includeTime 
         {
-            hour := SubStr(currentDateTime, 9, 2)
-            minute := SubStr(currentDateTime, 11, 2)
-            second := SubStr(currentDateTime, 13, 2)
-
-            ; If `includeTime` is true, append the time in format 'HH:mm:SS'.
-            formattedDate .= " " . hour . ":" . minute . ":" . second
+            format .= " HH:mm:ss"
         }
         
-        return formattedDate
+        return FormatTime(currentDateTime, format)
+    }
+
+    static GetCurrentISO8601Date(useLocalTime := false)
+    {
+        currentDateTime := useLocalTime ? A_Now : A_NowUTC
+
+        ; Get the current time in ISO 8601 format.
+        currentTime := FormatTime(currentDateTime, "yyyy-MM-dd'T'HH:mm:ssZ")
+        
+        return currentTime
     }
 }

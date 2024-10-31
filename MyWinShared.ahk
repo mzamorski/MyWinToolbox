@@ -62,7 +62,7 @@ Menu_StringGenerator_RandomString_32(*)
 
 Menu_StringGenerator_Dummy(*)
 {
-	Clipboard_Paste(DummyText)
+	Std_Paste(DummyText)
 }
 
 Menu_StringGenerator_CurrentDate(*)
@@ -75,6 +75,13 @@ Menu_StringGenerator_CurrentDate(*)
 Menu_StringGenerator_CurrentDateTime(*)
 {
 	output := DateTimeUtils.GetCurrentDate(true)
+
+	Clipboard_Paste(output)
+}
+
+Menu_StringGenerator_CurrentDateTime_ISO8601(*)
+{
+	output := DateTimeUtils.GetCurrentISO8601Date()
 
 	Clipboard_Paste(output)
 }
@@ -193,7 +200,12 @@ stringGeneratorMenu.Add("&Random.String", subMenu)
 stringGeneratorMenu.Add()
 
 stringGeneratorMenu.Add("&Date.Current", Menu_StringGenerator_CurrentDate)
-stringGeneratorMenu.Add("&DateTime.Current", Menu_StringGenerator_CurrentDateTime)
+
+subMenu := Menu()
+subMenu.Add("Local", Menu_StringGenerator_CurrentDateTime)
+subMenu.Add("UTC ISO-8601", Menu_StringGenerator_CurrentDateTime_ISO8601)
+
+stringGeneratorMenu.Add("&DateTime.Current", subMenu)
 stringGeneratorMenu.Add()
 
 subMenu := Menu()
@@ -228,6 +240,11 @@ stringGeneratorMenu.Add("UserSignatures", signaturesMenu)
 #^i::
 {
 	stringGeneratorMenu.Show()
+}
+
+#^d::
+{
+	Menu_StringGenerator_CurrentDateTime()
 }
 
 ;--------------------------------------------------------------------------------
