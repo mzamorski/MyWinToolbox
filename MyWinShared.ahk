@@ -191,6 +191,48 @@ stringGeneratorMenu.Add("&Separator", subMenu)
 	stringGeneratorMenu.Show()
 }
 
+;------------------------------------------------------------------------------
+; Close all windows of the same type (class)
+;------------------------------------------------------------------------------
+
+HotKey_CloseAllWindows(withSameTitle := false)
+{
+	prevTitleMode := A_TitleMatchMode 
+	SetTitleMatchMode(3)
+
+	windowClass := WinGetClass("A")
+	windowTitle := WinGetTitle("A")
+	
+	windowGroup := StrReplace(windowClass, A_Space, "_")
+	
+	if (withSameTitle)
+	{
+		GroupAdd(windowGroup, windowTitle . " ahk_class " . windowClass)
+	}
+	else
+	{
+		GroupAdd(windowGroup, "ahk_class " . windowClass)
+	}
+	
+	WinClose("ahk_group " . windowGroup)
+
+  
+	message := windowTitle . " (" . windowClass . ")"
+	SetTitleMatchMode(prevTitleMode)
+
+	Traytip("Close windows", message)
+}
+
+#!F4::		; Win + Alt + F4
+{
+	HotKey_CloseAllWindows(true)
+}
+
+^#F4::		; Ctrl + Win + F4
+{
+	HotKey_CloseAllWindows()
+}
+
 ;========================================================================================================================
 ; HOTSTRINGS
 ;========================================================================================================================
