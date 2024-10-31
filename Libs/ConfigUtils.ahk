@@ -7,8 +7,10 @@ global UNKNOWN := "<unknown>"
 Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN) 
 {
     value := IniRead(filePath, section, key, defaultValue)
-
-    return StringUtils.RemoveComments(value)
+    value := StringUtils.RemoveComments(value)
+    value := StrReplace(value, "\n", "`n")
+    
+    return value
 }
 
 Ini_GetSectionEntries(filePath, section)

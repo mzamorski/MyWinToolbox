@@ -29,6 +29,7 @@ if (MainScriptName = "MyWinShared.ahk")
 
 global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
 global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
+global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
 
 ;========================================================================================================================
 
@@ -163,6 +164,13 @@ subMenu.Add("Decrypt", Menu_Format_Decrypt_BASE64)
 formatMenu.Add("Crypto.BASE64", subMenu)
 
 ;--------------------------------------------------------------------------------
+;
+
+Menu_UserSignature(itemName, itemPos, menu)
+{
+    value := UserSignatures[itemName]
+    Std_Paste(value)
+}
 
 stringGeneratorMenu := Menu()
 stringGeneratorMenu.SetColor("cee1f8", true)
@@ -183,6 +191,15 @@ subMenu := Menu()
 subMenu.Add("120", Menu_StringGenerator_Separator_120)
 
 stringGeneratorMenu.Add("&Separator", subMenu)
+stringGeneratorMenu.Add()
+
+signaturesMenu := Menu()
+for key, value in UserSignatures
+{
+    signaturesMenu.Add(key, Menu_UserSignature)
+}
+
+stringGeneratorMenu.Add("UserSignatures", signaturesMenu)
 
 ;========================================================================================================================
 ; HOTKEYS
