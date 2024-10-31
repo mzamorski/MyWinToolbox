@@ -7,6 +7,7 @@
 #Include Libs\DateTimeUtils.ahk
 #Include Libs\ConfigUtils.ahk
 #Include Libs\WinAPI.ahk
+#Include Libs\MenuUtils.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
@@ -32,6 +33,8 @@ global ConfigFilePath := MainScriptName . CONFIG_FILE_EXTENSION
 global SharedConfigFilePath := CurrentScriptName . CONFIG_FILE_EXTENSION
 global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
+global TextSnippets := Ini_GetSectionEntries(SharedConfigFilePath, "TextSnippets")
+
 global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
 
 ;========================================================================================================================
@@ -138,10 +141,10 @@ Menu_Format_Clipboard_ToLower(*)
 }
 
 ;--------------------------------------------------------------------------------
-; Create menus. 
+; Create 'Format' menu. 
 
 formatMenu := Menu()
-formatMenu.SetColor("cbe7b6", true)
+formatMenu.SetColor("cbe7b6")
 formatMenu.Add("To&Upper", Clipboard_ToUpper)
 formatMenu.Add("To&Lower", Clipboard_ToLower)
 formatMenu.Add("ToSingleLine", Menu_Format_Clipboard_ToLower)
@@ -188,7 +191,7 @@ subMenu.Add("Decrypt", Menu_Format_Decrypt_BASE64)
 formatMenu.Add("Crypto.BASE64", subMenu)
 
 ;--------------------------------------------------------------------------------
-;
+; Create 'Stringgenerator' menu. 
 
 Menu_UserSignature(itemName, itemPos, menu)
 {
@@ -197,7 +200,7 @@ Menu_UserSignature(itemName, itemPos, menu)
 }
 
 stringGeneratorMenu := Menu()
-stringGeneratorMenu.SetColor("cee1f8", true)
+stringGeneratorMenu.SetColor("cee1f8")
 stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
 
 subMenu := Menu()
@@ -231,6 +234,18 @@ for key, value in UserSignatures
 
 stringGeneratorMenu.Add("UserSignatures", signaturesMenu)
 
+;--------------------------------------------------------------------------------
+; Create 'TextSnippet' menu. 
+
+Menu_TextSnippetCallback(itemName, itemPos, menu)
+{
+	output := TextSnippets[itemName]
+	Clipboard_Paste(output)
+}
+
+textSnippetsMenu := MenuUtils.Build(TextSnippets, Menu_TextSnippetCallback)
+textSnippetsMenu.SetColor("fcfddb")
+
 ;========================================================================================================================
 ; HOTKEYS
 ;========================================================================================================================
@@ -244,12 +259,23 @@ stringGeneratorMenu.Add("UserSignatures", signaturesMenu)
 }
 
 ;--------------------------------------------------------------------------------
-; Show 'StringgeneratorMenu'
+; Show 'StringGeneratorMenu'
 
 #^i::
 {
 	stringGeneratorMenu.Show()
 }
+
+;--------------------------------------------------------------------------------
+; Show 'TextSnippetsMenu'
+
+#^t::
+{
+	textSnippetsMenu.Show()
+}
+
+;--------------------------------------------------------------------------------
+; Paste current local date-time.
 
 #^d::
 {
