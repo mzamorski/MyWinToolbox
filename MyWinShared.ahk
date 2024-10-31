@@ -17,9 +17,10 @@ Persistent
 ; STARTUP
 ;========================================================================================================================
 
+global CurrentScriptName := "MyWinShared.ahk"
 global MainScriptName := A_ScriptName
 
-if (MainScriptName = "MyWinShared.ahk")
+if (MainScriptName = CurrentScriptName)
 {
     MsgBox("This script cannot be run directly."
         ,"Execution Blocked", "Iconx"
@@ -27,9 +28,11 @@ if (MainScriptName = "MyWinShared.ahk")
     ExitApp(-1)
 }
 
-global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
+global ConfigFilePath := MainScriptName . CONFIG_FILE_EXTENSION
+global SharedConfigFilePath := CurrentScriptName . CONFIG_FILE_EXTENSION
 global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
+global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
 
 ;========================================================================================================================
 
@@ -55,6 +58,11 @@ Menu_StringGenerator_RandomString_32(*)
 	output:= StringUtils.Random(32)
 
 	Clipboard_Paste(output)
+}
+
+Menu_StringGenerator_Dummy(*)
+{
+	Clipboard_Paste(DummyText)
 }
 
 Menu_StringGenerator_CurrentDate(*)
@@ -179,6 +187,7 @@ stringGeneratorMenu.Add("&Random.Guid", Menu_StringGenerator_RandomGuid)
 subMenu := Menu()
 subMenu.Add("16", Menu_StringGenerator_RandomString_16)
 subMenu.Add("32", Menu_StringGenerator_RandomString_32)
+subMenu.Add("Dummy", Menu_StringGenerator_Dummy)
 stringGeneratorMenu.Add("&Random.String", subMenu)
 
 stringGeneratorMenu.Add()

@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
 
-Std_Paste(text, inputType := 1) 
+Std_Paste(text, inputType := 0) 
 {
 	if (inputType = 1)
 	{
