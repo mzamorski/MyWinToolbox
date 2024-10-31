@@ -129,6 +129,14 @@ Menu_Format_Decrypt_BASE64(*)
 	Clipboard_Paste(output)
 }
 
+Menu_Format_Clipboard_ToLower(*)
+{
+	input:= Clipboard_Copy()
+	output := StringUtils.ToSingleLine(input)
+
+	Clipboard_Paste(output)
+}
+
 ;--------------------------------------------------------------------------------
 ; Create menus. 
 
@@ -136,6 +144,7 @@ formatMenu := Menu()
 formatMenu.SetColor("cbe7b6", true)
 formatMenu.Add("To&Upper", Clipboard_ToUpper)
 formatMenu.Add("To&Lower", Clipboard_ToLower)
+formatMenu.Add("ToSingleLine", Menu_Format_Clipboard_ToLower)
 formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
 formatMenu.Add("To&Quoted.Double", Clipboard_ToDoubleQuoted)
 

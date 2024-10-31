@@ -1,6 +1,11 @@
 
 class StringUtils
 {
+	static ToSingleLine(input)
+	{
+		return RegExReplace(input, "[`r`n]+", " ")
+	}
+
 	static Replicate(input, count)
 	{
 		if (count <= 0)
