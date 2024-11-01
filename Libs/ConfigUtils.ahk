@@ -1,6 +1,8 @@
 #Requires AutoHotkey v2.0
 
 #Include StringUtils.ahk
+#Include Collections.ahk
+
 FileEncoding("UTF-8")
 
 global UNKNOWN := "<unknown>"
@@ -21,7 +23,8 @@ Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN)
 
 Ini_GetSectionEntries(filePath, section)
 {
-    entries := Map()
+    entries := OrderedMap()
+    entries.CaseSense := false
 
     entryLines := IniRead(filePath, section)
     for line in StrSplit(entryLines, "`n")
