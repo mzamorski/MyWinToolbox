@@ -14,6 +14,8 @@ SetTitleMatchMode("2")
 DetectHiddenWindows(true)
 Persistent
 
+
+
 ;========================================================================================================================
 ; STARTUP
 ;========================================================================================================================
@@ -36,6 +38,8 @@ global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
 global TextSnippets := Ini_GetSectionEntries(SharedConfigFilePath, "TextSnippets")
 
 global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
+
+
 
 ;========================================================================================================================
 
@@ -95,6 +99,8 @@ Menu_StringGenerator_Separator_120(*)
 
 	Clipboard_Paste(output)
 }
+
+
 
 ;========================================================================================================================
 ; CONTEXT-MENUS
@@ -246,6 +252,8 @@ Menu_TextSnippetCallback(itemName, itemPos, menu)
 textSnippetsMenu := MenuUtils.Build(TextSnippets, Menu_TextSnippetCallback)
 textSnippetsMenu.SetColor("fcfddb")
 
+
+
 ;========================================================================================================================
 ; HOTKEYS
 ;========================================================================================================================
@@ -322,6 +330,8 @@ HotKey_CloseAllWindows(withSameTitle := false)
 {
 	HotKey_CloseAllWindows()
 }
+
+
 
 ;========================================================================================================================
 ; HOTSTRINGS

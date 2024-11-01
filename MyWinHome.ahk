@@ -23,6 +23,8 @@ global ConfigFilePath := A_ScriptName . CONFIG_FILE_EXTENSION
 global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 global PasswordEntries := Ini_GetSectionEntries(ConfigFilePath, "Passwords")
 
+
+
 ;========================================================================================================================
 ; FUNCTIONS
 ;========================================================================================================================
@@ -42,17 +44,21 @@ Config_GetPassword(keyName)
     return CryptoUtils.Decrypt(value, Secret)
 }
 
+
+
 ;========================================================================================================================
 ; HOTSTRINGS
 ;========================================================================================================================
 
 Hotstring(":0*:@a=", Config_GetShippingAddress())
 
+
+
 ;========================================================================================================================
 ; CONTEXT-MENUS
 ;========================================================================================================================
 
-OnPasswordMenuHandler(itemName, itemPos, menu)
+Menu_PastePassword(itemName, itemPos, menu)
 {
     value := PasswordEntries[itemName]
     output := CryptoUtils.Decrypt(value, Secret)
@@ -67,8 +73,10 @@ passwordMenu := Menu()
 passwordMenu.SetColor("ffabab")
 for key, value in PasswordEntries
 {
-    passwordMenu.Add(key, OnPasswordMenuHandler, "BarBreak")
+    passwordMenu.Add(key, Menu_PastePassword, "BarBreak")
 }
+
+
 
 ;========================================================================================================================
 ; HOTKEYS

@@ -14,18 +14,18 @@ class MenuUtils
         ;     throw TypeError("The argument must be a ``" . Type(Dictionary) . "`` object.")
         ; }
 
-        menux := Menu()
+        contextMenu := Menu()
         for key, value in entries
         {
             if (key == MenuUtils.INI_MENU_SEPARATOR_MARKER)
             {
-                menux.Add()    
+                contextMenu.Add()    
                 continue
             }
 
-            menux.Add(key, callback)
+            contextMenu.Add(key, callback)
         }
 
-        return menux
+        return contextMenu
     }
 }
