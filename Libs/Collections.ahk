@@ -7,16 +7,15 @@ class OrderedMap extends Map
     {
         super.__New(pairs*)
 
-        KeyArray := []
+        this.KeyArray := []
+
         keyCount := pairs.Length // 2
-        KeyArray.Length := keyCount
+        this.KeyArray.Length := keyCount
 
         Loop keyCount
         {
-            KeyArray[A_Index] := pairs[(A_Index << 1) - 1]
+            this.KeyArray[A_Index] := pairs[(A_Index << 1) - 1]     ; Every other element is a key.
         }
-
-        this.KeyArray := KeyArray
     }
 
     __Item[key] 
@@ -79,10 +78,9 @@ class OrderedMap extends Map
         {
             throw ValueError('Invalid number of parameters.', -1)
         }
-
-        KeyArray := this.KeyArray
+        
         keyCount := pairs.Length // 2
-        KeyArray.Capacity += keyCount
+        this.KeyArray.Capacity += keyCount
 
         Loop keyCount 
         {
@@ -90,7 +88,7 @@ class OrderedMap extends Map
 
             if !this.Has(key)
             {
-                KeyArray.Push(key)
+                this.KeyArray.Push(key)
             }
         }
 
