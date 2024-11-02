@@ -16,7 +16,7 @@ if WinExist(conflictingScriptName)
     MsgBox("Another instance of a conflicting script '" . conflictingScriptName . "' is already running.`n`nThis script cannot operate concurrently and will now terminate."
         ,"Execution Blocked", "Iconx"
     )
-    
+
     ExitApp(-1)
 }
 
@@ -71,7 +71,7 @@ Menu_PastePassword(itemName, itemPos, menu)
 ; Create menus. 
 
 passwordMenu := Menu()
-passwordMenu.SetColor("ffabab")
+passwordMenu.SetColor("ff2d2d")
 for key, value in PasswordEntries
 {
     passwordMenu.Add(key, Menu_PastePassword, "BarBreak")

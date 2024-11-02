@@ -111,6 +111,19 @@ Menu_StringGenerator_Separator_120(*)
 	Clipboard_Paste(output)
 }
 
+Menu_StringGenerator_Separator_80(*)
+{
+	output := StringUtils.Replicate("-", 80)
+
+	Clipboard_Paste(output)
+}
+
+Menu_StringGenerator_Separator_50(*)
+{
+	output := StringUtils.Replicate("-", 50)
+
+	Clipboard_Paste(output)
+}
 
 
 ;========================================================================================================================
@@ -238,6 +251,8 @@ stringGeneratorMenu.Add("&DateTime.Current", subMenu)
 stringGeneratorMenu.Add()
 
 subMenu := Menu()
+subMenu.Add("50", Menu_StringGenerator_Separator_50)
+subMenu.Add("80", Menu_StringGenerator_Separator_80)
 subMenu.Add("120", Menu_StringGenerator_Separator_120)
 
 stringGeneratorMenu.Add("&Separator", subMenu)
