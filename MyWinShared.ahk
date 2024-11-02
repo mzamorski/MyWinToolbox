@@ -8,6 +8,7 @@
 #Include Libs\ConfigUtils.ahk
 #Include Libs\WinAPI.ahk
 #Include Libs\MenuUtils.ahk
+#include Libs\Externals\_JXON.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
@@ -35,11 +36,13 @@ if (MainScriptName = CurrentScriptName)
 global ConfigFilePath := MainScriptName . CONFIG_FILE_EXTENSION
 global SharedConfigFilePath := CurrentScriptName . CONFIG_FILE_EXTENSION
 
+; --------------------------------------------------------------------------------
+; Config/Main/INI
+
 try
 {
 	global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 	global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
-	global TextSnippets := Ini_GetSectionEntries(SharedConfigFilePath, "TextSnippets")
 	global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
 }
 catch Error as e
@@ -49,6 +52,21 @@ catch Error as e
 	)
 
 	ExitApp(-1)
+}
+
+; --------------------------------------------------------------------------------
+; Config/TextSnippets/JSON
+
+try
+{
+	fileContent := FileRead("TextSnippets.json")
+	global TextSnippetsJson := jxon_load(&fileContent)
+}
+catch Error as e
+{
+	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
+		,"Config error"
+	)
 }
 
 
@@ -269,15 +287,44 @@ stringGeneratorMenu.Add("UserSignatures", signaturesMenu)
 ;--------------------------------------------------------------------------------
 ; Create 'TextSnippet' menu. 
 
-Menu_TextSnippetCallback(itemName, itemPos, menu)
+SNIPPET_TITLE_PROPERY := "title"
+SNIPPET_CONTENT_PROPERY := "content"
+
+Menu_TextSnippetCallback(itemName, itemPos, menu, content := unset)
 {
-	output := TextSnippets[itemName]
-	Clipboard_Paste(output)
+	SendInput(content)
 }
 
-textSnippetsMenu := MenuUtils.Build(TextSnippets, Menu_TextSnippetCallback)
-textSnippetsMenu.SetColor("fcfddb")
+textSnippetsMenu := Menu()
 
+for snippetName in TextSnippetsJson
+{
+    snippets := TextSnippetsJson[snippetName]
+
+    if (snippets.Length > 0)
+    {
+        subMenu := Menu()
+
+        for snippet in snippets
+        {
+            content := snippet[SNIPPET_CONTENT_PROPERY]
+
+            if (snippet.Has(SNIPPET_TITLE_PROPERY))
+            {
+                title := snippet[SNIPPET_CONTENT_PROPERY]
+            }
+            else
+            {
+                title := content
+            }
+    
+            subMenu.Add(title, Menu_TextSnippetCallback.Bind(,,, content))
+
+        }
+
+        textSnippetsMenu.Add(snippetName, subMenu)
+    }
+}
 
 
 ;========================================================================================================================

@@ -1,0 +1,28 @@
+{
+    "T-SQL": [
+        {
+            "title": "TRY",
+            "content": "BEGIN TRY{Enter 2}END TRY{Enter 2}BEGIN CATCH{Enter 2}END CATCH;{Esc}{Up 5}"
+        },
+        {
+            "title": "BREAK",
+            "content": "THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).';"
+        }
+    ],
+    "Quotes": [
+        {
+            "title": "Albert Einstein",
+            "content": "Life is like riding a bicycle. To keep your balance, you must keep moving."
+        },
+        {
+            "title": "Isaac Newton",
+            "content": "If I have seen further it is by standing on the shoulders of Giants."
+        }
+    ],
+    "GIT": [
+        {
+            "content": "git commit"
+        }
+    ]
+}
+  
