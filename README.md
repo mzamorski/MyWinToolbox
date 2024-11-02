@@ -12,6 +12,10 @@ Here are some screenshots showcasing the functionalities of MyWinToolbox:
 
 ![Screenshot 2](Docs/Images/StringGeneratorMenu.png)
 
+- **Text snippets menu.**
+
+![Screenshot 2](Docs/Images/TextSnippets.png)
+![Screenshot 2](Docs/Images/TextSnippets-GIT.png)
 
 ### Note
 This project uses AutoHotkey 2.0. For detailed information about the language and its features, please refer to the [AutoHotkey 2.0 documentation](https://www.autohotkey.com/v2/).
