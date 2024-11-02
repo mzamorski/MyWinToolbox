@@ -2,10 +2,10 @@
 
 #Include StringUtils.ahk
 #Include Collections.ahk
+#Include Constants.ahk
 
 FileEncoding("UTF-8")
 
-global UNKNOWN := "<unknown>"
 
 Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN) 
 {

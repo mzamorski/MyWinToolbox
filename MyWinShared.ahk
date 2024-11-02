@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
 
-#Include Constants.ahk
+#Include Libs\Constants.ahk
 #Include Libs\StringUtils.ahk
 #Include Libs\ClipboardUtils.ahk
 #Include Libs\CryptoUtils.ahk
@@ -33,12 +33,20 @@ if (MainScriptName = CurrentScriptName)
 
 global ConfigFilePath := MainScriptName . CONFIG_FILE_EXTENSION
 global SharedConfigFilePath := CurrentScriptName . CONFIG_FILE_EXTENSION
-global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
-global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
-global TextSnippets := Ini_GetSectionEntries(SharedConfigFilePath, "TextSnippets")
 
-global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
-
+try
+{
+	global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
+	global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
+	global TextSnippets := Ini_GetSectionEntries(SharedConfigFilePath, "TextSnippets")
+	global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
+}
+catch Error as e
+{
+	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
+		,"Config error")
+	Exit
+}
 
 
 ;========================================================================================================================

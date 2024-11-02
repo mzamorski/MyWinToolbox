@@ -2,7 +2,7 @@
 
 #Include Libs\ConfigUtils.ahk
 #Include Libs\WinAPI.ahk
-#Include Constants.ahk
+#Include Libs\Constants.ahk
 #Include MyWinShared.ahk
 
 
