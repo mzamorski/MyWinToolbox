@@ -407,12 +407,13 @@ HotKey_CloseAllWindows(withSameTitle := false)
 ^Space::	; Ctrl + Space
 {
     MouseGetPos(&x, &y)
-    color := PixelGetColor(x, y)
     
+	color := PixelGetColor(x, y)
+	color := StrLower(color)
+
 	A_Clipboard := color
     
 	color := "c" SubStr(color, 3)
-
     
     colorWindow := Gui()
     colorWindow.BackColor := color
