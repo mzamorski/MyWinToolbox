@@ -287,8 +287,8 @@ stringGeneratorMenu.Add("UserSignatures", signaturesMenu)
 ;--------------------------------------------------------------------------------
 ; Create 'TextSnippet' menu. 
 
-SNIPPET_TITLE_PROPERY := "title"
-SNIPPET_CONTENT_PROPERY := "content"
+SNIPPET_TITLE_PROPERY := "Title"
+SNIPPET_CONTENT_PROPERY := "Content"
 
 Menu_TextSnippetCallback(itemName, itemPos, menu, content := unset)
 {

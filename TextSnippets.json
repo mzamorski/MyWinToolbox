@@ -1,29 +1,38 @@
 {
     "T-SQL": [
         {
-            "title": "TRY",
-            "content": "BEGIN TRY{Enter 2}END TRY{Enter 2}BEGIN CATCH{Enter 2}END CATCH;{Esc}{Up 5}"
+            "Title": "TRY",
+            "Content": "BEGIN TRY{Enter 2}END TRY{Enter 2}BEGIN CATCH{Enter 2}END CATCH;{Esc}{Up 5}"
         },
         {
-            "title": "BREAK",
-            "content": "THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).';"
+            "Title": "BREAK",
+            "Content": "THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).';"
         }
     ],
     "GIT/Comments": [
         {
-            "content": "Refactoring."
+            "Content": "Refactoring."
         }
     ],
     "GIT": [
         {
-            "content": "git reset --hard HEAD~1"
+            "Content": "git reset --hard HEAD~1"
         },
         {
-            "content": "git reset --soft HEAD~1"
+            "Content": "git reset --soft HEAD~1"
         },
         {
-            "title" : "Change most recent commit message.",
-            "content": "git commit --amend"
+            "Content": "git restore ."
+        },
+        {
+            "Content": "git commit --amend -m \"<message>\""
+        },
+        {
+            "Content": "git checkout -b <branch>"
+        },
+        {
+            "Description": "Displays a compact and visually appealing view of the commit history across all branches.",
+            "Content": "git log --oneline --graph --decorate --all"
         }
     ]
 }
