@@ -9,19 +9,21 @@
             "content": "THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).';"
         }
     ],
-    "Quotes": [
+    "GIT/Comments": [
         {
-            "title": "Albert Einstein",
-            "content": "Life is like riding a bicycle. To keep your balance, you must keep moving."
-        },
-        {
-            "title": "Isaac Newton",
-            "content": "If I have seen further it is by standing on the shoulders of Giants."
+            "content": "Refactoring."
         }
     ],
     "GIT": [
         {
-            "content": "git commit"
+            "content": "git reset --hard HEAD~1"
+        },
+        {
+            "content": "git reset --soft HEAD~1"
+        },
+        {
+            "title" : "Change most recent commit message.",
+            "content": "git commit --amend"
         }
     ]
 }

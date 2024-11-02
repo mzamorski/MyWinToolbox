@@ -311,7 +311,7 @@ for snippetName in TextSnippetsJson
 
             if (snippet.Has(SNIPPET_TITLE_PROPERY))
             {
-                title := snippet[SNIPPET_CONTENT_PROPERY]
+                title := snippet[SNIPPET_TITLE_PROPERY]
             }
             else
             {
@@ -319,7 +319,6 @@ for snippetName in TextSnippetsJson
             }
     
             subMenu.Add(title, Menu_TextSnippetCallback.Bind(,,, content))
-
         }
 
         textSnippetsMenu.Add(snippetName, subMenu)
