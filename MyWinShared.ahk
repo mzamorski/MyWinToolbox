@@ -404,7 +404,24 @@ HotKey_CloseAllWindows(withSameTitle := false)
 	HotKey_CloseAllWindows()
 }
 
+^Space::	; Ctrl + Space
+{
+    MouseGetPos(&x, &y)
+    color := PixelGetColor(x, y)
+    
+	A_Clipboard := color
+    
+	color := "c" SubStr(color, 3)
 
+    
+    colorWindow := Gui()
+    colorWindow.BackColor := color
+    colorWindow.Opt("-Caption +ToolWindow +Disabled +Border")
+    colorWindow.Show("w50 h50 x" . x . " y" . y)
+    Sleep (1000)
+	
+    colorWindow.Destroy()
+}
 
 ;========================================================================================================================
 ; HOTSTRINGS
