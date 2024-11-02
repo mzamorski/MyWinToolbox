@@ -28,6 +28,7 @@ if (MainScriptName = CurrentScriptName)
     MsgBox("This script cannot be run directly."
         ,"Execution Blocked", "Iconx"
     )
+
     ExitApp(-1)
 }
 
@@ -44,8 +45,10 @@ try
 catch Error as e
 {
 	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
-		,"Config error")
-	Exit
+		,"Config error"
+	)
+
+	ExitApp(-1)
 }
 
 

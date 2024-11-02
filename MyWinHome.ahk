@@ -16,6 +16,7 @@ if WinExist(conflictingScriptName)
     MsgBox("Another instance of a conflicting script '" . conflictingScriptName . "' is already running.`n`nThis script cannot operate concurrently and will now terminate."
         ,"Execution Blocked", "Iconx"
     )
+    
     ExitApp(-1)
 }
 
