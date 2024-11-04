@@ -28,4 +28,18 @@ class MenuUtils
 
         return contextMenu
     }
+
+    static IsChecked(menuHandle, itemPos)
+    {
+        static MF_BYPOSITION := 0x00000400
+        static MF_CHECKED    := 0x00000008
+
+        menuState := DllCall("user32\GetMenuState", "Ptr", menuHandle, "UInt", itemPos - 1, "UInt", MF_BYPOSITION, "UInt")
+        if (menuState = -1)
+        {
+            return -1
+        }
+
+        return !!(menuState & MF_CHECKED)
+    }
 }

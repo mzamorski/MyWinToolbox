@@ -403,7 +403,7 @@ HotKey_CloseAllWindows(withSameTitle := false)
 	HotKey_CloseAllWindows()
 }
 
-#Space::	; Ctrl + Space
+#Space::	; Win + Space
 {
     MouseGetPos(&x, &y)
     
