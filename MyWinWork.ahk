@@ -38,9 +38,11 @@ Hotstring(":0*:@k=", Config_GetEmail())
 
 #HotIf WinActive("ahk_exe ssms.exe")
 
-	:*:try::BEGIN TRY{Enter 2}END TRY{Enter 2}BEGIN CATCH{Enter 2}END CATCH{Esc}{Up 5}
+	::try::BEGIN TRY{Enter 2}END TRY{Enter 2}BEGIN CATCH{Enter 2}END CATCH{Esc}{Up 5}
 
-	:*:break::THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).', 1
+	::break::THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).', 1
+
+	::nl::WITH (NOLOCK)
 
 #HotIf
 
