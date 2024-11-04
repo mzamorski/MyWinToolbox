@@ -141,7 +141,11 @@ Menu_TaskRunner_Shutdown_Cancel(*)
 taskRunnerMenu := Menu()
 taskRunnerMenu.SetColor("edf39f")
 
+; "NoSleep"
+
 taskRunnerMenu.Add("NoSleep", Menu_TaskRunner_NoSleep)
+
+; "Shutdown"
 
 shutdownMenu := Menu()
 shutdownMenu.Add("1h", Menu_TaskRunner_Shutdown_1h)
@@ -150,6 +154,61 @@ shutdownMenu.Add()
 shutdownMenu.Add("Cancel", Menu_TaskRunner_Shutdown_Cancel)
 
 taskRunnerMenu.Add("Shutdown", shutdownMenu)
+
+; "Clipboard"
+
+global ClipboardTrimEnabled := false
+global LastClipboard := STRING_EMPTY
+
+OnTaskRunnerClipboardTrim()
+{
+	global ClipboardTrimEnabled, LastClipboard
+
+    if (!ClipboardTrimEnabled)
+	{
+        return
+	}
+
+    if (A_Clipboard != LastClipboard) 
+    {
+        LastClipboard := A_Clipboard
+
+        try
+        {
+            ;A_Clipboard := RegExReplace(LastClipboard, "^\s+|\s+$", STRING_EMPTY)
+			A_Clipboard := Trim(LastClipboard, " `t`r`n")
+        }
+        catch Error as e
+        {
+            TrayTip(e.What . ": " . e.Message, "TaskRunner")
+        }
+    }
+}
+
+Menu_TaskRunner_Clipboard_Trim(itemName, itemPos, menu)
+{
+	global ClipboardTrimEnabled
+	
+	ClipboardTrimEnabled := !ClipboardTrimEnabled
+
+	if (ClipboardTrimEnabled)
+	{
+		SetTimer(OnTaskRunnerClipboardTrim, 500) 
+		menu.Check(itemName)
+	}
+	else
+	{
+		SetTimer(OnTaskRunnerClipboardTrim, 0) 
+		menu.Uncheck(itemName)
+	}
+
+	TrayTip("Monitoring clipboard " . (ClipboardTrimEnabled ? "enabled" : "disabled"))
+}
+
+subMenu := Menu()
+subMenu.Add("Trim", Menu_TaskRunner_Clipboard_Trim)
+
+taskRunnerMenu.Add("Clipboard", subMenu)
 
 ;--------------------------------------------------------------------------------
 
