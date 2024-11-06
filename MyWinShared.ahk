@@ -326,6 +326,15 @@ for snippetName in TextSnippetsJson
     }
 }
 
+;--------------------------------------------------------------------------------
+; Create 'EmojiMenu' menu. 
+
+emojiMenu := Menu()
+emojiMenu.Add("🤑 — Money-Mouth Face", (*) => Send("🤑"))
+emojiMenu.Add("👍 — Thumbs Up", (itemName, *) => Send("👍"))
+emojiMenu.Add("👎 — Thumbs Down", (itemName, *) => Send("👎"))
+emojiMenu.Add("☠️ — Skull and Crossbones", (itemName, *) => Send("☠️"))
+emojiMenu.Add("💨 — Dashing Away", (itemName, *) => Send("💨"))
 
 ;========================================================================================================================
 ; HOTKEYS
@@ -342,7 +351,7 @@ for snippetName in TextSnippetsJson
 ;--------------------------------------------------------------------------------
 ; Show 'StringGeneratorMenu'
 
-#^i::
+#^i::		; Win + Ctrl + i
 {
 	stringGeneratorMenu.Show()
 }
@@ -350,15 +359,23 @@ for snippetName in TextSnippetsJson
 ;--------------------------------------------------------------------------------
 ; Show 'TextSnippetsMenu'
 
-#^s::		; Win + Ctrl + Shift
+#^s::		; Win + Ctrl + s
 {
 	textSnippetsMenu.Show()
 }
 
 ;--------------------------------------------------------------------------------
+; Show 'EmocjiMenu'
+
+#^e::		; Win + Ctrl + e
+{
+	emojiMenu.Show()
+}
+
+;--------------------------------------------------------------------------------
 ; Paste current local date-time.
 
-#^d::
+#^d::		; Win + Ctrl + d
 {
 	Menu_StringGenerator_CurrentDateTime()
 }
@@ -441,8 +458,11 @@ Hotstring(":0*:@me", Config_GetEmail())
 ; Add three zeros (convert to thousands)
 XHotstring(":*:(\d+)k=", (match, *) => Send(match[1] . "000"))
 
+; Insert char [—]
+:0*:@--::{U+2014}
+
 ; Insert char [→]
-:0*:@->::→
+:0*:@->::{U+2192}
 
 ; Insert char [✓]
-:0*:@v::✓
+:0*:@v::{U+2713}
