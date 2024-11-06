@@ -18,4 +18,4 @@ Here are some screenshots showcasing the functionalities of MyWinToolbox:
 ![Screenshot 2](Docs/Images/TextSnippets-GIT.png)
 
 ### Note
-This project uses AutoHotkey 2.0. For detailed information about the language and its features, please refer to the [AutoHotkey 2.0 documentation](https://www.autohotkey.com/v2/).
+This project uses [AutoHotkey 2.0](https://www.autohotkey.com/). For detailed information about the language and its features, please refer to the [documentation](https://www.autohotkey.com/v2/).
