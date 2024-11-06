@@ -9,7 +9,7 @@
 #Include Libs\WinAPI.ahk
 #Include Libs\MenuUtils.ahk
 #include Libs\Externals\_JXON.ahk
-#Include Libs\Externals\RegExHotstring.ahk
+#Include Libs\Externals\XHotstring.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
@@ -439,7 +439,7 @@ Hotstring(":0*:@=", Config_GetEmail())
 Hotstring(":0*:@me", Config_GetEmail())
 
 ; Add three zeros (convert to thousands)
-RegExHotstring("(\d+)k=", (match) => Send(match[1] . "000"), "*")
+XHotstring(":*:(\d+)k=", (match, *) => Send(match[1] . "000"))
 
 ; Insert char [→]
 :0*:@->::→
