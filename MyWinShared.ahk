@@ -298,6 +298,7 @@ Menu_TextSnippetCallback(itemName, itemPos, menu, content := unset)
 }
 
 textSnippetsMenu := Menu()
+textSnippetsMenu.SetColor("b6e0e7")
 
 for snippetName in TextSnippetsJson
 {
@@ -409,7 +410,7 @@ HotKey_CloseAllWindows(withSameTitle := false)
 	message := windowTitle . " (" . windowClass . ")"
 	SetTitleMatchMode(prevTitleMode)
 
-	Traytip("Close windows", message)
+	TrayTip("Close windows", message)
 }
 
 #!F4::		; Win + Alt + F4
@@ -440,6 +441,13 @@ HotKey_CloseAllWindows(withSameTitle := false)
     Sleep (1000)
 	
     colorWindow.Destroy()
+}
+
+^#F12::		; Ctrl + Win + F12
+{
+	TrayTip("The script will be reloaded.", MainScriptName)
+	Sleep(2000)
+	Reload
 }
 
 ;========================================================================================================================

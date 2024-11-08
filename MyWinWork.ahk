@@ -77,7 +77,7 @@ OnNoSleep()
 		SetTimer(OnNoSleep, 60 * SECOND_IN_MILLISECONDS)
 		IsNoSleepTimerOn := true
 		
-		Traytip("NoSleep", "Activated")
+		TrayTip("NoSleep", "Activated")
 	}
 	else
 	{
@@ -86,7 +86,7 @@ OnNoSleep()
 		SetTimer(OnNoSleep, 0)
 		IsNoSleepTimerOn := false
 
-		Traytip("NoSleep", "Deactivated")
+		TrayTip("NoSleep", "Deactivated")
 	}
 
 	return
@@ -100,7 +100,7 @@ OnNoSleep()
 
 OnTimerShutdown()
 {
-	Traytip("Shutdown", "The system is now shutting down.")	
+	TrayTip("Shutdown", "The system is now shutting down.")	
 	Sleep(3 * SECOND_IN_MILLISECONDS)
 	Shutdown(0) 
 }
@@ -109,7 +109,7 @@ OnTaskRunnerShutdown(delayInSeconds)
 {
 	SetTimer(OnTimerShutdown, delayInSeconds * SECOND_IN_MILLISECONDS)
 
-	Traytip("Shutdown", "The system will shut down in " . delayInSeconds . " seconds.")	
+	TrayTip("Shutdown", "The system will shut down in " . delayInSeconds . " seconds.")	
 }
 
 Menu_TaskRunner_NoSleep(itemName, itemPos, menu)
@@ -133,7 +133,7 @@ Menu_TaskRunner_Shutdown_Cancel(*)
 {
 	SetTimer(OnTimerShutdown, 0)
 
-	Traytip("Shutdown", "Canceled.")
+	TrayTip("Shutdown", "Canceled.")
 }
 
 ;--------------------------------------------------------------------------------
