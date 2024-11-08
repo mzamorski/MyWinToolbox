@@ -121,12 +121,12 @@ Menu_TaskRunner_NoSleep(itemName, itemPos, menu)
 
 Menu_TaskRunner_Shutdown_1h(*)
 {
-	OnTaskRunnerShutdown(3600 * SECOND_IN_MILLISECONDS)
+	OnTaskRunnerShutdown(HOUR_IN_MILLISECONDS)
 }
 
 Menu_TaskRunner_Shutdown_2h(*)
 {
-	OnTaskRunnerShutdown(7200 * SECOND_IN_MILLISECONDS)
+	OnTaskRunnerShutdown(2 * HOUR_IN_MILLISECONDS)
 }
 
 Menu_TaskRunner_Shutdown_Cancel(*)
@@ -212,8 +212,9 @@ subMenu.Add("Trim", Menu_TaskRunner_Clipboard_Trim)
 taskRunnerMenu.Add("Clipboard", subMenu)
 
 ;--------------------------------------------------------------------------------
+; Show 'TaskRunner' menu.
 
-^#t::
+^#t::		; Ctrl + Win + t
 {
 	if (IsNoSleepTimerOn)
 	{
