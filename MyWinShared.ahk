@@ -443,12 +443,20 @@ HotKey_CloseAllWindows(withSameTitle := false)
     colorWindow.Destroy()
 }
 
-^#F12::		; Ctrl + Win + F12
+^#Home::		; Ctrl + Win + Home
 {
 	TrayTip("The script will be reloaded.", MainScriptName)
 	Sleep(2000)
 	Reload
 }
+
+^#End::		; Ctrl + Win + End
+{
+	TrayTip("The script will be closed.", MainScriptName)
+	Sleep(2000)
+	ExitApp
+}
+
 
 ;========================================================================================================================
 ; HOTSTRINGS
