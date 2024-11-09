@@ -9,11 +9,6 @@
             "Content": "THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).';"
         }
     ],
-    "GIT/Comments": [
-        {
-            "Content": "Refactoring."
-        }
-    ],
     "GIT": [
         {
             "Content": "git reset --hard HEAD~1"
@@ -34,6 +29,40 @@
             "Description": "Displays a compact and visually appealing view of the commit history across all branches.",
             "Content": "git log --oneline --graph --decorate --all"
         }
+    ],
+    "Markdown": [
+        {
+            "Title": "Link",
+            "Content": "[<text>](<url>){Left 1}{Shift Down}{Left 5}{Shift Up}"
+        },
+        {
+            "Title": "Link.Image",
+            "Content": "![<alt-text>](<image-url>){Left 1}{Shift Down}{Left 5}{Shift Up}"
+        },
+        {
+            "Title": "Heading.Level-1",
+            "Content": "# "
+        },
+        {
+            "Title": "Bold",
+            "Content": "**<text>**{Left 2}{Shift Down}{Left 6}{Shift Up}"
+        },
+        {
+            "Title": "Quotes.Block",
+            "Content": "> "
+        },
+        {
+            "Title": "Quotes.Block.Nested",
+            "Content": ">> "
+        },
+        {
+            "Title": "Code",
+            "Content": "`<code>`{Left 1}{Shift Down}{Left 6}{Shift Up}"
+        },
+        {
+            "Title": "Code.Block",
+            "Content": "```{Enter}"
+        } 
     ]
 }
   
