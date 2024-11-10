@@ -296,6 +296,7 @@ stringGeneratorMenu.Add("UserSignatures", signaturesMenu)
 
 SNIPPET_TITLE_PROPERY := "Title"
 SNIPPET_CONTENT_PROPERY := "Content"
+SNIPPET_CONTENT_SEPARATOR := "--"
 
 Menu_TextSnippetCallback(itemName, itemPos, menu, content := unset)
 {
@@ -316,6 +317,12 @@ for snippetName in TextSnippetsJson
         for snippet in snippets
         {
             content := snippet[SNIPPET_CONTENT_PROPERY]
+
+			if (content = SNIPPET_CONTENT_SEPARATOR)
+			{
+				subMenu.Add()
+				continue
+			}
 
             if (snippet.Has(SNIPPET_TITLE_PROPERY))
             {

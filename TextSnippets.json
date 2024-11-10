@@ -11,6 +11,50 @@
     ],
     "GIT": [
         {
+			"Title": "Revert.Working.All",
+            "Content": "git restore ."
+        },
+        {
+			"Title": "Revert.Staged.All",
+            "Content": "git restore --staged ."
+        }
+        ,
+        {
+			"Title": "Revert.Hard",
+            "Content": "git reset --hard"
+        },
+	    {
+			"Title": "Commit.Edit",
+			"Description" : "Edit last commit message.",
+            "Content": "git commit --amend -m \"<message>\"{Left 1}{Shift Down}{Left 9}{Shift Up}"
+        },
+        {
+			"Title": "Branch.Push",
+			"Description" : "Pushes a newly created branch to the remote repository and sets it to track the remote branch.",
+            "Content": "git push -u origin <branch>{Shift Down}{Left 8}{Shift Up}"
+        },
+        {
+			"Title": "Branch.Create",
+            "Content": "git checkout -b <branch>{Shift Down}{Left 8}{Shift Up}"
+        },
+        {
+            "Title": "Log.Graph",
+            "Description": "Displays a compact and visually appealing view of the commit history across all branches.",
+            "Content": "git log --oneline --graph --decorate --all"
+        },
+        {
+            "Title": "Log.OneLine",
+            "Content": "git log --pretty=oneline"
+        },
+        {
+            "Title": "Log.Search.ByAuthor",
+            "Description": "Displays a compact and visually appealing view of the commit history across all branches.",
+            "Content": "git log --author=\"<name>\"{Left 1}{Shift Down}{Left 6}{Shift Up}"
+        },
+        {
+            "Content" : "--"
+        },
+        {
             "Content": "git reset --hard HEAD~1"
         },
         {
@@ -18,16 +62,6 @@
         },
         {
             "Content": "git restore ."
-        },
-        {
-            "Content": "git commit --amend -m \"<message>\""
-        },
-        {
-            "Content": "git checkout -b <branch>"
-        },
-        {
-            "Description": "Displays a compact and visually appealing view of the commit history across all branches.",
-            "Content": "git log --oneline --graph --decorate --all"
         }
     ],
     "Markdown": [
