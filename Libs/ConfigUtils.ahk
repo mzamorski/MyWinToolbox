@@ -3,12 +3,17 @@
 #Include StringUtils.ahk
 #Include Collections.ahk
 #Include Constants.ahk
+#Include Std.ahk
 
 FileEncoding("UTF-8")
 
-
 Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN) 
 {
+    if !FileExist(filePath) 
+    {
+        throw IOError(filePath)
+    } 
+
     value := IniRead(filePath, section, key, defaultValue)
     value := StringUtils.RemoveComments(value)
     value := StrReplace(value, "\n", "`n")

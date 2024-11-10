@@ -14,3 +14,16 @@ Std_Paste(text, inputType := 0)
 	}
 }
 
+class IOError extends Error 
+{
+	static DEFAULT_MESSAGE := "File not found."
+
+    __New(filePath := STRING_EMPTY, message := IOError.DEFAULT_MESSAGE) 
+	{
+        this.Message := message
+		this.FilePath := filePath
+
+		this.Line := A_LineNumber
+		this.What := A_ThisFunc 
+    }
+}
