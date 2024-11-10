@@ -43,9 +43,13 @@ global SharedConfigFilePath := CurrentScriptName . CONFIG_FILE_EXTENSION
 
 try
 {
+	; Shared config
+	global SpacesPerIndent  := Ini_ReadOrDefault(SharedConfigFilePath, "Settings", "SpacesPerIndent")
+	global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
+
+	; Home/Work config
 	global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 	global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
-	global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
 }
 catch Error as e
 {
@@ -70,6 +74,7 @@ catch Error as e
 		,"Config error"
 	)
 }
+
 
 
 ;========================================================================================================================
@@ -457,6 +462,13 @@ HotKey_CloseAllWindows(withSameTitle := false)
 	ExitApp
 }
 
+; --------------------------------------------------------------------------------
+; Insert a 4-space indent.
+
+^Tab::		; Ctrl + tab
+{
+	Send(Format("{Space {1:i}}", SpacesPerIndent))
+}
 
 ;========================================================================================================================
 ; HOTSTRINGS
