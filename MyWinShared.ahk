@@ -479,6 +479,12 @@ HotKey_CloseAllWindows(withSameTitle := false)
 
 ;========================================================================================================================
 ; HOTSTRINGS
+; --
+; O  - Remove the ending character.
+; b0 - Don't delete the typed text.
+; *  - Trigger immediately.
+; ?  - Search everywhere (trigger even if the start is not separated from the previous text).
+; X  - Execute. Instead of replacement text.
 ;========================================================================================================================
 
 Config_GetEmail() 
@@ -494,11 +500,15 @@ Hotstring(":0*:@me", Config_GetEmail())
 ; Add three zeros (convert to thousands)
 XHotstring(":*:(\d+)k=", (match, *) => Send(match[1] . "000"))
 
+#Hotstring *
+
 ; Insert char [—]
-:0*:@--::{U+2014}
+::@--::{U+2014}
 
 ; Insert char [→]
-:0*:@->::{U+2192}
+::@->::{U+2192}
 
 ; Insert char [✓]
-:0*:@v::{U+2713}
+::@v::{U+2713}
+
+#Hotstring
