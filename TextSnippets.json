@@ -7,6 +7,18 @@
         {
             "Title": "BREAK",
             "Content": "THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).';"
+        },
+        {
+            "Title": "SELECT",
+            "Content": "SELECT TOP 100{Enter}{Tab}t.*{Enter}FROM <table-name> AS t WITH (NOLOCK){Enter}-- WHERE{Up}{Left 2}{Shift Down}{Right 12}{Shift Up}"
+        },
+        {
+            "Title": "DIFF <mine-table> <their-table>",
+            "Content": "WITH Theirs AS{Enter}({Enter}{Tab}SELECT *{Enter}{Tab}FROM <TheirTable>{Enter}){Enter},Mine AS{Enter}({Enter}{Tab}SELECT *{Enter}{Tab}FROM <MineTable>{Enter}){Enter}{Tab}SELECT 'THEIRS-ONLY', L.* FROM{Enter}{Tab}({Enter}{Tab}{Tab}SELECT * FROM Theirs{Enter}{Tab}{Tab}EXCEPT{Enter}{Tab}{Tab}SELECT * FROM Mine{Enter}{Tab}) AS L{Enter 2}{Tab}UNION ALL{Enter 2}{Tab}SELECT 'MINE-ONLY', R.* FROM{Enter}{Tab}({Enter}{Tab}{Tab}SELECT * FROM Mine{Enter}{Tab}{Tab}EXCEPT{Enter}{Tab}{Tab}SELECT * FROM Theirs{Enter}{Tab}) AS R{Enter})"
+        },
+        {
+            "Title": "SCHEMA.change",
+            "Content": "ALTER SCHEMA [<new-schema>] TRANSFER [<old-schema>].[<object-name>]"
         }
     ],
     "GIT": [

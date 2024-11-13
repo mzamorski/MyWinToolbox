@@ -45,6 +45,14 @@ Hotstring(":0*:@k=", Config_GetEmail())
 
 	::nl::WITH (NOLOCK)
 
+	::sel::
+	{
+		tableName := A_Clipboard
+		sqlCommand := "SELECT TOP 100`n`tt.*`nFROM " . tableName . " AS t WITH (NOLOCK)`nWHERE`n`t"
+	
+		Send(sqlCommand)
+	}
+
 #HotIf
 
 
