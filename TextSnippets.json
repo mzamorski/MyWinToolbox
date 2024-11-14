@@ -2,7 +2,7 @@
     "T-SQL": [
         {
             "Title": "TRY",
-            "Content": "BEGIN TRY{Enter 2}END TRY{Enter 2}BEGIN CATCH{Enter 2}END CATCH;{Esc}{Up 5}"
+            "Content": "BEGIN TRY{Enter}{Tab}BEGIN TRANSACTION;{Enter}{Tab}-- <code>{Enter}{Tab}COMMIT;{Enter}END TRY{Enter}BEGIN CATCH{Enter}{Tab}ROLLBACK;{Enter}{Tab}PRINT ERROR_MESSAGE();{Enter}END CATCH;{Up 6}"
         },
         {
             "Title": "BREAK",
@@ -10,14 +10,18 @@
         },
         {
             "Title": "SELECT",
-            "Content": "SELECT TOP 100{Enter}{Tab}t.*{Enter}FROM <table-name> AS t WITH (NOLOCK){Enter}-- WHERE{Up}{Left 2}{Shift Down}{Right 12}{Shift Up}"
+            "Content": "SELECT TOP 100{Enter}{Tab}t.*{Enter}FROM <table-name> AS t WITH (NOLOCK){Enter}-- WHERE{Up}{Left 3}{Shift Down}{Right 12}{Shift Up}"
+        },
+        {
+            "Title": "DELETE.Duplicates",
+            "Content": "WITH dup AS {Enter}({Enter}{Tab}SELECT *, ROW_NUMBER() OVER (PARTITION BY <column-name> ORDER BY Id) AS RowNum{Enter}{Tab}FROM <table-name>{Enter}){Enter}DELETE FROM dup{Enter}WHERE RowNum > 1;"
         },
         {
             "Title": "DIFF <mine-table> <their-table>",
             "Content": "WITH Theirs AS{Enter}({Enter}{Tab}SELECT *{Enter}{Tab}FROM <TheirTable>{Enter}){Enter},Mine AS{Enter}({Enter}{Tab}SELECT *{Enter}{Tab}FROM <MineTable>{Enter}){Enter}{Tab}SELECT 'THEIRS-ONLY', L.* FROM{Enter}{Tab}({Enter}{Tab}{Tab}SELECT * FROM Theirs{Enter}{Tab}{Tab}EXCEPT{Enter}{Tab}{Tab}SELECT * FROM Mine{Enter}{Tab}) AS L{Enter 2}{Tab}UNION ALL{Enter 2}{Tab}SELECT 'MINE-ONLY', R.* FROM{Enter}{Tab}({Enter}{Tab}{Tab}SELECT * FROM Mine{Enter}{Tab}{Tab}EXCEPT{Enter}{Tab}{Tab}SELECT * FROM Theirs{Enter}{Tab}) AS R{Enter})"
         },
         {
-            "Title": "SCHEMA.change",
+            "Title": "SCHEMA.Change",
             "Content": "ALTER SCHEMA [<new-schema>] TRANSFER [<old-schema>].[<object-name>]"
         }
     ],
