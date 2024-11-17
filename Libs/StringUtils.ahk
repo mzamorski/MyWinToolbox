@@ -132,4 +132,46 @@ class StringUtils
 	{
 		return RegExReplace(value, "\s*[" . commentChars . "].*$", "")
 	}
+
+	class AHK
+	{
+		/**
+		 * Replaces matches of a regular expression pattern with a formatted string.
+		 *
+		 * This function scans a string for repeated occurrences of a specific 
+		 * pattern (e.g., `\n\n`) and replaces them with a formatted string 
+		 * that can include the count of consecutive matches. 
+		 * 
+		 * The format string can use placeholders such as `{1:d}` for the match count.
+		 * 
+		 * Examples:
+ 		 * - "{Enter {1:d}}", "{Tab {1:d}}"
+		 */
+		static Replace(input, pattern, replacementFormat)
+		{
+			output := ""
+			startIndex := 1
+
+			while pos := RegExMatch(input, pattern, &match, startIndex)
+			{
+				partLen := pos - startIndex
+				part := SubStr(input, startIndex, partLen)
+				
+				replacement := Format(replacementFormat, match.Len)
+				output := output part replacement
+				
+				startIndex := pos + match.Len
+			}
+
+			partLen := StrLen(input)
+			if (startIndex <= partLen)
+			{
+				part := SubStr(input, startIndex, partLen)
+				output := output part
+			}
+
+			return output
+		}
+
+	}
 }

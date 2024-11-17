@@ -155,6 +155,9 @@ Menu_StringGenerator_Separator_50(*)
 ; CONTEXT-MENUS
 ;========================================================================================================================
 
+;--------------------------------------------------------------------------------
+; Create 'Format' menu. 
+
 Menu_Format_Encrypt_RC4(*)
 {
 	input:= Clipboard_Copy()
@@ -195,8 +198,17 @@ Menu_Format_Clipboard_ToLower(*)
 	Clipboard_Paste(output)
 }
 
+Menu_Format_AHK_ToSpecialKeys(*)
+{
+	input:= Clipboard_Copy()
+	
+	output := StringUtils.AHK.Replace(input, "(`r?`n)+", "{Enter {1:d}}")
+	output := StringUtils.AHK.Replace(output, "(`t)+", "{Tab {1:d}}")
+
+	Clipboard_Paste(output)
+}
+
 ;--------------------------------------------------------------------------------
-; Create 'Format' menu. 
 
 formatMenu := Menu()
 formatMenu.SetColor("cbe7b6")
@@ -244,6 +256,10 @@ subMenu.Add("Encrypt", Menu_Format_Encrypt_BASE64)
 subMenu.Add("Decrypt", Menu_Format_Decrypt_BASE64)
 
 formatMenu.Add("Crypto.BASE64", subMenu)
+
+; AHK.ToSpecialKeys
+formatMenu.Add()
+formatMenu.Add("AHK.ToSpecialKeys", Menu_Format_AHK_ToSpecialKeys)
 
 ;--------------------------------------------------------------------------------
 ; Create 'Stringgenerator' menu. 
