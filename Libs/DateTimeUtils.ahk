@@ -27,4 +27,21 @@ class DateTimeUtils
         
         return currentTime
     }
+
+    static GetUnixTimestamp()
+    {
+        static Epoch := "19700101000000"
+
+        localDiff := DateDiff(A_Now, epoch, "Seconds")
+        
+        utcOffset := DateDiff(A_Now, A_NowUTC, "Seconds")
+        timestamp := localDiff - utcOffset
+        
+        return timestamp
+    }
+
+    static GetTimestamp()
+    {
+        return FormatTime(A_NowUTC, "yyyyMMdd'T'HHmmss" . A_MSec . "Z")
+    }
 }

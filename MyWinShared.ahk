@@ -11,6 +11,8 @@
 #Include Libs\MenuUtils.ahk
 #include Libs\Externals\_JXON.ahk
 #Include Libs\Externals\XHotstring.ahk
+#Include Libs\IOUtils.ahk
+#Include Libs\ExplorerUtils.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
@@ -491,6 +493,49 @@ HotKey_CloseAllWindows(withSameTitle := false)
 ^Tab::		; Ctrl + tab
 {
 	Send(Format("{Space {1:i}}", SpacesPerIndent))
+}
+
+; --------------------------------------------------------------------------------
+; Move all selected files/folders to a specified destination directory.
+
+^#m::
+{
+	paths := Explorer_GetSelectedFiles()
+    if (!paths)
+    {
+        MsgBox("Failed to retrieve file names from Explorer!")
+    }
+    
+    currentDirectory := Explorer_GetActivePath()
+    defaultDirName := DateTimeUtils.GetTimestamp()
+ 
+    dialogResult := InputBox("Please enter directory name", "MoveTo", "w100 h70", defaultDirName)
+    if (dialogResult.Result = "Cancel")
+    {
+        return
+    }
+
+    newDirectoryName := StringUtils.IsNullOrWhiteSpace(dialogResult.Value) 
+        ? defaultDirName 
+        : dialogResult.Value
+
+    destDirectoryPath := PathUtils.Combine(currentDirectory, newDirectoryName)
+    if (!DirectoryUtils.Create(destDirectoryPath))
+    {
+        MsgBox("Failed to create the directory!")
+    }
+
+	for path in paths 
+    {
+        if InStr(FileExist(path), "D") 
+        {
+            DirMove(path, destDirectoryPath, 1)
+        } 
+        else
+        {
+            FileMove(path, destDirectoryPath)    
+        }
+	}
 }
 
 ;========================================================================================================================

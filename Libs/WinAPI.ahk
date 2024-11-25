@@ -57,3 +57,35 @@ WinAPI_SetThreadExecutionState_SystemRequired()
 	DllCall("SetThreadExecutionState", "UInt", ES_SYSTEM_REQUIRED)
 	return
 }
+
+global MAX_PATH := 260 * 2
+global MAX_TEMP_FILE_PREFIX_LEN := 3
+
+WinAPI_GetTempFilePath(directoryPath := A_Temp, prefix := STRING_EMPTY)
+{
+	; if (StrLen(prefix) > MAX_TEMP_FILE_PREFIX_LEN)
+	; {
+	; }
+
+	static len := MAX_PATH + 1 
+	output := Buffer(len)
+
+	unique  := DllCall("Kernel32.dll\GetTempFileName", "Str", directoryPath, "Str", prefix, "UInt", 0, "Ptr", output)
+
+	; MSDN: 
+	; If the function succeeds, the return value specifies the unique numeric value used in the temporary file name.
+	; If the function fails, the return value is zero.
+    if (unique == 0)
+	{
+        errorCode := DllCall("Kernel32.dll\GetLastError")
+        throw OSError("Failed to generate a temporary file name.", errorCode)
+	}
+
+	path := StrGet(output.Ptr)
+	if (!path)
+	{
+		throw Error("Invalid file path!")
+	}
+	
+    return path
+}

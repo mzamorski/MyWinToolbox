@@ -133,6 +133,19 @@ class StringUtils
 		return RegExReplace(value, "\s*[" . commentChars . "].*$", "")
 	}
 
+	static EndsWith(value, char)
+	{
+		return (SubStr(value, -1) == char)
+	}
+
+	static IsNullOrWhiteSpace(value)
+	{
+		return (!value || Trim(value) = STRING_EMPTY)
+	}
+
+	; --------------------------------------------------------------------------------
+	; AHK-specific.
+
 	class AHK
 	{
 		/**
@@ -172,6 +185,5 @@ class StringUtils
 
 			return output
 		}
-
 	}
 }
