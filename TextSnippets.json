@@ -6,7 +6,7 @@
         },
         {
             "Title": "BREAK",
-            "Content": "THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).';"
+            "Content": "THROW 50000, 'This script should not be run as a whole. It contains manual operations (step-by-step).', 1;"
         },
         {
             "Title": "SELECT",
