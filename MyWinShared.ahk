@@ -210,6 +210,31 @@ Menu_Format_AHK_ToSpecialKeys(*)
 	Clipboard_Paste(output)
 }
 
+Menu_Format_SQL_ToQuotedList(*)
+{
+	input := Clipboard_Copy()
+	output := STRING_EMPTY
+
+	separator := STRING_EMPTY
+
+	lines := StrSplit(input, "`n", "`r")
+	for i, line in lines
+	{
+		line := Trim(line)
+		if (!StringUtils.IsNullOrWhiteSpace(line))
+		{
+			output .= separator . "'" . line . "'`n"
+		}
+
+		if (!separator)
+		{
+			separator := ","
+		}
+	}
+
+	Clipboard_Paste(output)
+}
+
 ;--------------------------------------------------------------------------------
 
 formatMenu := Menu()
@@ -241,6 +266,7 @@ formatMenu.Add()
 
 formatMenu.Add("SQL.AddBraket", Clipboard_AddBraket)
 formatMenu.Add("SQL.RemoveBraket", Clipboard_RemoveBraket)
+formatMenu.Add("SQL.ToQuotedList", Menu_Format_SQL_ToQuotedList)
 
 formatMenu.Add()
 
