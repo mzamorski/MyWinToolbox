@@ -435,7 +435,7 @@ emojiMenu.Add("💨 — Dashing Away", (itemName, *) => Send("💨"))
 
 #^d::		; Win + Ctrl + d
 {
-	Menu_StringGenerator_CurrentDateTime()
+	Menu_StringGenerator_CurrentDate()
 }
 
 ;--------------------------------------------------------------------------------
