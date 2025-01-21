@@ -4,10 +4,9 @@
 
 Clipboard_Copy() 
 {
-    A_Clipboard := ""
     Send("^c")
 	Sleep(100)	; Add a short delay to allow the clipboard to update
-    ClipWait(0.5, 0)
+    ClipWait(2)
 
     return A_Clipboard
 }
@@ -20,7 +19,7 @@ Clipboard_Paste(value)
 Clipboard_ToUpper(*) 
 {
 	input:= Clipboard_Copy()
-	output := StrUpper(input )
+	output := StrUpper(input)
 
 	Clipboard_Paste(output)
 }
