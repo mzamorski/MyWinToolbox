@@ -53,6 +53,8 @@ Hotstring(":0*:@k=", Config_GetEmail())
 		Send(sqlCommand)
 	}
 
+	::dirty::SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+	
 #HotIf
 
 
