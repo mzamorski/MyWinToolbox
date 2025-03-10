@@ -210,6 +210,29 @@ Menu_Format_AHK_ToSpecialKeys(*)
 	Clipboard_Paste(output)
 }
 
+Menu_Format_Sort_Ascending(*)
+{
+	Menu_Format_Sort(true)
+}
+
+Menu_Format_Sort_Descending(*)
+{
+	Menu_Format_Sort(false)
+}
+
+Menu_Format_Sort(ascending := true)
+{
+	input := Clipboard_Copy()
+	if !input 
+	{
+		return
+	}
+	
+    output := ascending ? Sort(input) : Sort(input, "R")
+
+	Clipboard_Paste(output)
+}
+
 Menu_Format_SQL_ToQuotedList(*)
 {
 	input := Clipboard_Copy()
@@ -241,6 +264,12 @@ formatMenu := Menu()
 formatMenu.SetColor("cbe7b6")
 formatMenu.Add("To&Upper", Clipboard_ToUpper)
 formatMenu.Add("To&Lower", Clipboard_ToLower)
+
+subMenu := Menu()
+subMenu.Add("&Ascending", Menu_Format_Sort_Ascending)
+subMenu.Add("&Descending", Menu_Format_Sort_Descending)
+formatMenu.Add("&Sort", subMenu)
+
 formatMenu.Add("ToSingleLine", Menu_Format_Clipboard_ToLower)
 formatMenu.Add("To&Quoted.Single", Clipboard_ToSingleQuoted)
 formatMenu.Add("To&Quoted.Double", Clipboard_ToDoubleQuoted)
