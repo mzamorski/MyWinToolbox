@@ -27,17 +27,24 @@
     ],
     "GIT": [
         {
+			"Title": "Revert.WorkingTree",
+            "Content": "git reset --hard; git clean -fd"
+        },
+        {
 			"Title": "Revert.Working.All",
             "Content": "git restore ."
         },
         {
 			"Title": "Revert.Staged.All",
             "Content": "git restore --staged ."
-        }
-        ,
+        },
         {
 			"Title": "Revert.Hard",
             "Content": "git reset --hard"
+        },
+        {
+			"Title": "Clean.Untracked",
+            "Content": "git clean -fd"
         },
 	    {
 			"Title": "Commit.Edit",
