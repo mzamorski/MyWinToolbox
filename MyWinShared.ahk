@@ -608,6 +608,11 @@ Config_GetEmail()
 	return Ini_ReadOrDefault(ConfigFilePath, "Settings", "Email")
 }
 
+Terminal_IsActive() {
+    winExe := WinGetProcessPath("A")
+    return InStr(winExe, "cmd.exe") || InStr(winExe, "WindowsTerminal.exe")
+}
+
 ;--------------------------------------------------------------------------------
 
 Hotstring(":0*:@=", Config_GetEmail())
@@ -628,3 +633,22 @@ XHotstring(":*:(\d+)k=", (match, *) => Send(match[1] . "000"))
 ::@v::{U+2713}
 
 #Hotstring
+
+#HotIf Terminal_IsActive()
+
+::s30m=::
+{
+    SendText("shutdown -s -t 1800")
+}
+
+::s1h=::
+{
+    SendText("shutdown -s -t 3600")
+}
+
+::s2h=::
+{
+    SendText("shutdown -s -t 7200")
+}
+
+#HotIf 
