@@ -5,6 +5,9 @@
 #Include Libs\CryptoUtils.ahk
 #Include Libs\Std.ahk
 #Include Libs\Constants.ahk
+#Include Libs\Browser.ahk
+#Include Libs\WindowApp.ahk
+#Include Libs\Uri.ahk
 #Include MyWinShared.ahk
 
 ;========================================================================================================================
@@ -86,5 +89,50 @@ for key, value in PasswordEntries
 
 #^p::
 {
-	passwordMenu.Show()
+    found := false
+
+    appName := "KeePass"
+    if (WindowApp.IsActive(appName))
+    {
+        for key, value in PasswordEntries
+        {
+            if (key = appName)
+            {
+                found := true
+
+                output := CryptoUtils.Decrypt(value, Secret)
+                Std_Paste(output)
+
+                break
+            }
+        }
+    }
+    else 
+    {
+        url := Browser_GetURL()
+
+        appName := "XTB"
+        if (Uri.Contains(url, appName))
+        {
+            for key, value in PasswordEntries
+            {
+                if (key = appName)
+                {
+                    found := true
+    
+                    output := CryptoUtils.Decrypt(value, Secret)
+                    A_Clipboard := output
+    
+                    break
+                }
+            }
+        }
+    }
+
+    if (!found)
+    {
+        passwordMenu.Show()
+    }
+
+    return
 }
