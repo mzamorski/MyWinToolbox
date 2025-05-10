@@ -7,9 +7,8 @@ Browser_GetURL()
 
     A_Clipboard := ""
     Send("^l")
-    Sleep(100)
     Send("^c")
-    Sleep(100)
+    Send("{Esc}")
 
     if !ClipWait(0.5)
     {

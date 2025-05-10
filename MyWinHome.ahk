@@ -107,7 +107,7 @@ for key, value in PasswordEntries
             }
         }
     }
-    else 
+    else if (WindowApp.IsBrowserActive())
     {
         url := Browser_GetURL()
 
