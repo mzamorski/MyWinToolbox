@@ -1,0 +1,4 @@
+74c74
+< 			val := (i = 1) ? Map() : Array()	; ahk v2
+---
+> 			val := (i = 1) ? OrderedMap() : Array()	; ahk v2

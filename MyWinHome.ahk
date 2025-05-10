@@ -109,7 +109,7 @@ for key, value in PasswordEntries
     }
     else if (WindowApp.IsBrowserActive())
     {
-        url := Browser_GetURL()
+        url := Browser.GetURL()
 
         appName := "XTB"
         if (Uri.Contains(url, appName))

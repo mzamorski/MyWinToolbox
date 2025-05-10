@@ -1,19 +1,37 @@
 #Requires AutoHotkey v2.0
 
-Browser_GetURL()
+#Include WindowApp.ahk
+
+class Browser
 {
-    handle := WinActive("A")
-    WinActivate(handle)
-
-    A_Clipboard := ""
-    Send("^l")
-    Send("^c")
-    Send("{Esc}")
-
-    if !ClipWait(0.5)
+    static GetURL()
     {
-        return ""
+        handle := WinActive("A")
+        WinActivate(handle)
+
+        A_Clipboard := ""
+        Send("^l")
+        Send("^c")
+        Send("{Esc}")
+
+        if !ClipWait(0.5)
+        {
+            return ""
+        }
+
+        return A_Clipboard
     }
 
-    return A_Clipboard
+    static IsActive() 
+    {
+        for exe in WindowApp.KnownBrowsers 
+        {
+            if WinExist("ahk_exe " exe)
+            {
+                return true
+            }
+        }
+
+        return false
+    }
 }
