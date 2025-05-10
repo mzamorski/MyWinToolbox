@@ -381,12 +381,18 @@ textSnippetsMenu.SetColor("b6e0e7")
 
 for snippetName in TextSnippetsJson
 {
+	subMenu := Menu()
+
+	if (snippetName = SNIPPET_CONTENT_SEPARATOR)
+	{
+		textSnippetsMenu.Add()
+		continue
+	}
+
     snippets := TextSnippetsJson[snippetName]
 
     if (snippets.Length > 0)
     {
-        subMenu := Menu()
-
         for snippet in snippets
         {
             content := snippet[SNIPPET_CONTENT_PROPERY]
