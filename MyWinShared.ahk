@@ -623,6 +623,7 @@ Terminal_IsActive() {
 
 Hotstring(":0*:@=", Config_GetEmail())
 Hotstring(":0*:@me", Config_GetEmail())
+Hotstring(":0*:--=", Menu_StringGenerator_Separator_120)
 
 ; Add three zeros (convert to thousands)
 XHotstring(":*:(\d+)k=", (match, *) => Send(match[1] . "000"))
