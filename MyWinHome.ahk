@@ -87,6 +87,22 @@ for key, value in PasswordEntries
 ; HOTKEYS
 ;========================================================================================================================
 
+HandlePassword(appName, entries, secret, outputHandler := Std_Paste) 
+{
+    for key, value in entries 
+    {
+        if (key = appName) 
+        {
+            output := CryptoUtils.Decrypt(value, secret)
+            outputHandler.Call(output)
+
+            return true
+        }
+    }
+    
+    return false
+}
+
 #^p::
 {
     found := false
@@ -94,17 +110,9 @@ for key, value in PasswordEntries
     appName := "KeePass"
     if (WindowApp.IsActive(appName))
     {
-        for key, value in PasswordEntries
+        if (HandlePassword(appName, PasswordEntries, Secret))
         {
-            if (key = appName)
-            {
-                found := true
-
-                output := CryptoUtils.Decrypt(value, Secret)
-                Std_Paste(output)
-
-                break
-            }
+            found := true
         }
     }
     else if (WindowApp.IsBrowserActive())
@@ -114,17 +122,10 @@ for key, value in PasswordEntries
         appName := "XTB"
         if (Uri.Contains(url, appName))
         {
-            for key, value in PasswordEntries
+            ;if (HandlePassword(appName, PasswordEntries, Secret, (output) => A_Clipboard := output))
+            if (HandlePassword(appName, PasswordEntries, Secret))
             {
-                if (key = appName)
-                {
-                    found := true
-    
-                    output := CryptoUtils.Decrypt(value, Secret)
-                    A_Clipboard := output
-    
-                    break
-                }
+                found := true
             }
         }
     }

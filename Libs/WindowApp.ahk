@@ -14,7 +14,7 @@ class WindowApp
             exeName .= ".exe"
         }
     
-        return WinExist("ahk_exe " exeName)
+        return WinActive("ahk_exe " exeName)
     }
 
     static IsKeepassActive() 
@@ -26,7 +26,7 @@ class WindowApp
     {
         for exe in WindowApp.KnownBrowsers 
         {
-            if WinExist("ahk_exe " exe)
+            if WindowApp.IsActive(exe)
             {
                 return true
             }
