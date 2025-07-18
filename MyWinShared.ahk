@@ -619,6 +619,11 @@ Terminal_IsActive() {
     return InStr(winExe, "cmd.exe") || InStr(winExe, "WindowsTerminal.exe")
 }
 
+TortoiseGit_IsActive() {
+    winExe := WinGetProcessPath("A")
+    return InStr(winExe, "TortoiseGitProc.exe")
+}
+
 ;--------------------------------------------------------------------------------
 
 Hotstring(":0*:@=", Config_GetEmail())
@@ -641,6 +646,9 @@ XHotstring(":*:(\d+)k=", (match, *) => Send(match[1] . "000"))
 
 #Hotstring
 
+;--------------------------------------------------------------------------------
+; Terminal
+
 #HotIf Terminal_IsActive()
 
 ::s30m=::
@@ -659,3 +667,12 @@ XHotstring(":*:(\d+)k=", (match, *) => Send(match[1] . "000"))
 }
 
 #HotIf 
+
+;--------------------------------------------------------------------------------
+; TortoiseGit
+
+#HotIf TortoiseGit_IsActive()
+
+::r=::Refactoring.
+
+#HotIf
