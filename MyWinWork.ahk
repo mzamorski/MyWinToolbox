@@ -45,7 +45,7 @@ Hotstring(":0*:@k=", Config_GetEmail())
 
 	::nl=::WITH (NOLOCK)
 
-	::dt=::DROP TABLE IF EXIST{Space}
+	::dt=::DROP TABLE IF EXISTS{Space}
 
 	::sel=::
 	{
