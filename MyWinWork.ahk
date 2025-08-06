@@ -45,6 +45,8 @@ Hotstring(":0*:@k=", Config_GetEmail())
 
 	::nl=::WITH (NOLOCK)
 
+	::dt=::DROP TABLE IF EXIST{Space}
+
 	::sel=::
 	{
 		tableName := A_Clipboard
