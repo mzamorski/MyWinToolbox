@@ -42,6 +42,10 @@
 			"Title": "Revert.Hard",
             "Content": "git reset --hard"
         },
+		{
+			"Title": "Reset.ToRemote",
+			"Content": "git fetch origin; git reset --hard origin/main; git clean -fd"
+		},
         {
 			"Title": "Clean.Untracked",
             "Content": "git clean -fd"
