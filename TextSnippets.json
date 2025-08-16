@@ -50,6 +50,11 @@
 			"Title": "Clean.Untracked",
             "Content": "git clean -fd"
         },
+		{
+            "Title": "Clear.Credentials",
+            "Description": "Clears credential cache to force re-authentication on the next operation.",
+            "Content": "git credential-cache exit"
+        },
 	    {
 			"Title": "Commit.Edit",
 			"Description" : "Edit last commit message.",
