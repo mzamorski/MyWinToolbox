@@ -143,6 +143,26 @@ class StringUtils
 		return (!value || Trim(value) = STRING_EMPTY)
 	}
 
+	static Join(obj, delimiter := ", ", omitChars := " `t`r`n") {
+		if (obj.Length = 0)
+		{
+			return ""
+		}
+
+		str := obj[1]
+		for i, val in obj 
+		{
+			if (i = 1)
+			{
+				continue
+			}
+
+			str .= delimiter . Trim(val, omitChars)
+		}
+
+		return str
+	}
+
 	; --------------------------------------------------------------------------------
 	; AHK-specific.
 

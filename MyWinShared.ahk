@@ -233,6 +233,32 @@ Menu_Format_Sort(ascending := true)
 	Clipboard_Paste(output)
 }
 
+Menu_Format_SQL_ToValuesTable(*)
+{
+	input := Clipboard_Copy()
+	if !input 
+	{
+		return
+	}
+
+	lines := StrSplit(input, "`n", "`r")
+	values := []
+
+	for line in lines 
+	{
+		line := Trim(line)
+		if (line != "")
+		{
+			values.Push("('" line "')")
+		}
+	}
+
+	sqlValues := StringUtils.Join(values, ",`n")
+	output := "SELECT *`nFROM (VALUES `n" sqlValues "`n) AS v(Name);"
+
+	Clipboard_Paste(output)
+}
+
 Menu_Format_SQL_ToQuotedList(*)
 {
 	input := Clipboard_Copy()
@@ -296,6 +322,7 @@ formatMenu.Add()
 formatMenu.Add("SQL.AddBraket", Clipboard_AddBraket)
 formatMenu.Add("SQL.RemoveBraket", Clipboard_RemoveBraket)
 formatMenu.Add("SQL.ToQuotedList", Menu_Format_SQL_ToQuotedList)
+formatMenu.Add("SQL.ToValuesTable", Menu_Format_SQL_ToValuesTable)
 
 formatMenu.Add()
 
