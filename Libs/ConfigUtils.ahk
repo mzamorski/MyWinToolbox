@@ -32,9 +32,32 @@ Ini_GetSectionEntries(filePath, section)
     entries.CaseSense := false
 
     entryLines := IniRead(filePath, section)
+    if (StringUtils.IsNullOrWhiteSpace(entryLines))
+    {
+        return entries
+    }
+
     for line in StrSplit(entryLines, "`n")
     {
-        key := StrSplit(line, "=")[1]
+        trimmedLine := Trim(line)
+
+        if (StringUtils.IsNullOrWhiteSpace(trimmedLine))
+        {
+            continue
+        }
+
+        firstChar := SubStr(trimmedLine, 1, 1)
+        if (firstChar = ";" || firstChar = "#")
+        {
+            continue
+        }
+
+        key := Trim(StrSplit(trimmedLine, "=", , 2)[1])
+        if (StringUtils.IsNullOrWhiteSpace(key))
+        {
+            continue
+        }
+
         value := Ini_ReadOrDefault(filePath, section, key)
 
         entries[key] := value
