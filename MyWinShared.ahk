@@ -13,13 +13,14 @@
 #Include Libs\Externals\XHotstring.ahk
 #Include Libs\IOUtils.ahk
 #Include Libs\ExplorerUtils.ahk
+#Include Libs\MinimizeToTray.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
 DetectHiddenWindows(true)
 Persistent
 
-
+global AUTO_PASTE_TIMER_INTERVAL_MS := 500
 
 ;========================================================================================================================
 ; STARTUP
@@ -48,6 +49,7 @@ try
 	; Shared config
 	global SpacesPerIndent  := Ini_ReadOrDefault(SharedConfigFilePath, "Settings", "SpacesPerIndent")
 	global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
+	global AutoPasteEntries := Ini_GetSectionEntries(SharedConfigFilePath, "AutoPaste")
 
 	; Home/Work config
 	global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
@@ -80,6 +82,104 @@ catch Error as e
 
 
 ;========================================================================================================================
+
+; --------------------------------------------------------------------------------
+; Create watcher for `AutoPaste` functionality.
+
+if (AutoPasteEntries.Count > 0)
+{
+	MsgBox("Start timer")
+
+    SetTimer(AutoPaste_CheckActiveWindow, AUTO_PASTE_TIMER_INTERVAL_MS)
+}
+
+AutoPaste_CheckActiveWindow(*)
+{
+        global AutoPasteEntries
+
+        hwnd := WinExist("A")
+        if (!hwnd)
+        {
+            return
+        }
+
+        for entry in AutoPasteEntries
+        {
+			MsgBox(entry.key)
+			
+			if (AutoPaste_WindowMatches(hwnd, entry))
+			{
+				MsgBox("Perform")
+			}
+        }
+}
+
+AutoPaste_WindowMatches(hwnd, entry)
+{
+        if (entry.Has("exe"))
+        {
+			MsgBox("exe")
+
+                winExe := WinGetProcessName("ahk_id " hwnd)
+        }
+
+        if (entry.Has("class"))
+        {
+                winClass := WinGetClass("ahk_id " hwnd)
+
+
+        }
+
+        if (entry.Has("title"))
+        {
+                winTitle := WinGetTitle("ahk_id " hwnd)
+                matchValue := entry["title"]
+                matchMode := entry.Has("titleMatchMode") ? entry["titleMatchMode"] : "contains"
+
+                if (matchMode = "equals")
+                {
+
+                }
+                else
+                {
+                        if (!InStr(winTitle, matchValue, false))
+                        {
+                                return false
+                        }
+                }
+        }
+
+        return true
+}
+
+AutoPaste_Perform(hwnd, entry)
+{
+        if (entry["delayMs"] > 0)
+        {
+                Sleep(entry["delayMs"])
+        }
+
+        if (!WinExist("ahk_id " hwnd))
+        {
+                return false
+        }
+
+        if (!WinActive("ahk_id " hwnd))
+        {
+                WinActivate("ahk_id " hwnd)
+
+                if (!WinWaitActive("ahk_id " hwnd, , 1))
+                {
+                        return false
+                }
+        }
+
+        Std_Paste(entry["text"], entry["inputType"])
+
+        return true
+}
+
+; --------------------------------------------------------------------------------
 
 Menu_StringGenerator_RandomGuid(*)
 {
