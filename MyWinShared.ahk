@@ -13,6 +13,7 @@
 #Include Libs\Externals\XHotstring.ahk
 #Include Libs\IOUtils.ahk
 #Include Libs\ExplorerUtils.ahk
+#Include Libs\MinimizeToTray.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
