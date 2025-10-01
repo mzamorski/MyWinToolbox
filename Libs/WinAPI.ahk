@@ -89,3 +89,41 @@ WinAPI_GetTempFilePath(directoryPath := A_Temp, prefix := STRING_EMPTY)
 	
     return path
 }
+
+WinAPI_GetWindowIcon(hwnd) {
+    ; Try WM_GETICON small2, small, big; then class icons
+    WM_GETICON := 0x7F
+    ICON_SMALL2 := 2, ICON_SMALL := 0, ICON_BIG := 1
+
+    for iconType in [ICON_SMALL2, ICON_SMALL, ICON_BIG] {
+        hIcon := SendMessage(WM_GETICON, iconType, 0, , "ahk_id " hwnd)
+        if hIcon
+            return hIcon
+    }
+
+    ; Class small icon
+    GCLP_HICONSM := -34
+
+    hIcon := DllCall("GetClassLongPtr", "ptr",hwnd, "int",GCLP_HICONSM, "ptr")
+    if hIcon
+        return hIcon
+
+    ; Class big icon
+    GCLP_HICON := -14
+
+    return DllCall("GetClassLongPtr", "ptr",hwnd, "int",GCLP_HICON, "ptr")
+}
+
+WinAPI_HwndUnderMouse() {
+    ; Get the window under the mouse.
+    ; MouseGetPos (v2): 3rd output = window HWND, 4th = control under cursor.
+    MouseGetPos(&mx, &my, &hWin, &hCtrl)
+
+    ; Coerce to numeric (if we accidentally get a class/control name, this becomes 0)
+    hw := hWin + 0
+    if !hw
+        return 0
+
+    ; Return the top-level ancestor (GA_ROOT = 2)
+    return DllCall("GetAncestor", "ptr", hw, "uint", 2, "ptr")
+}
