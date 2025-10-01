@@ -3,7 +3,6 @@
 ;========================================================================================================================
 ; Minimize To Tray
 ;---
-; Hotkey: Shift + RButton
 ; Behavior:
 ;   - Hides the window under the mouse (or the active window) and adds a tray icon for it.
 ;   - Left-clicking that tray icon restores the window and removes the icon.
@@ -44,10 +43,10 @@ A_TrayMenu.Add()        ; Separator
 A_TrayMenu.Add("E&xit", (*) => ExitApp())
 
 ;========================================================================================================================
-; HOTKEY: Shift + Right Mouse Button
+; HOTKEY: Win + Right Mouse Button
 ;========================================================================================================================
 
-+RButton::{
+#RButton::{
     hwnd := WinAPI_HwndUnderMouse()
     if (!hwnd)
     {
