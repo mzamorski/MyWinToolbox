@@ -502,6 +502,22 @@ emojiMenu.Add("💨 — Dashing Away", (itemName, *) => Send("💨"))
 }
 
 ;--------------------------------------------------------------------------------
+; Always On Top — toggle for the active window
+
+#^PgUp:: {
+    hwnd := WinExist("A")
+    if !hwnd
+        return
+
+    ex := WinGetExStyle("ahk_id " hwnd)
+    isTop := (ex & 0x00000008) ; WS_EX_TOPMOST
+
+    WinSetAlwaysOnTop !isTop, "ahk_id " hwnd
+    ToolTip (isTop ? "Always-on-top: OFF" : "Always-on-top: ON")
+    SetTimer () => ToolTip(), -700
+}
+
+;--------------------------------------------------------------------------------
 ; Close all windows of the same type (class)
 
 HotKey_CloseAllWindows(withSameTitle := false)
