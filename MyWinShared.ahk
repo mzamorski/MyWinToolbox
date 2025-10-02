@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
-#Warn
 
 #Include Libs\Constants.ahk
 #Include Libs\StringUtils.ahk

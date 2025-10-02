@@ -17,7 +17,7 @@ Win_Third(n) {
     w := (r - l) // 3
     x := l + (n - 1) * w
 
-    ; optional: ensure not maximized (some apps ignore move while maximized)
+    ; Optional: ensure not maximized (some apps ignore move while maximized)
     try WinRestore("ahk_id " hwnd)
 
     WinMove(x, t, w, (b - t), "ahk_id " hwnd)
@@ -33,7 +33,7 @@ Monitor_GetWorkAreaFromWindow(hwnd, &left, &top, &right, &bottom) {
         idx := MonitorGetPrimary()
     }
 
-    MonitorGetWorkArea idx, &left, &top, &right, &bottom
+    MonitorGetWorkArea(idx, &left, &top, &right, &bottom)
 }
 
 ; Finds monitor index whose rect contains the window center.
@@ -51,9 +51,12 @@ Monitor_GetIndexFromWindow(hwnd) {
     count := MonitorGetCount()
     Loop count {
         i := A_Index
-        MonitorGet i, &l, &t, &r, &b
+        
+        MonitorGet(i, &l, &t, &r, &b)
         if (cx >= l && cx < r && cy >= t && cy < b)
+        {
             return i
+        }
     }
 
     return MonitorGetPrimary()
