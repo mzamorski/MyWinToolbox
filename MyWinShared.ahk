@@ -15,6 +15,7 @@
 #Include Libs\ExplorerUtils.ahk
 #Include Libs\MinimizeToTray.ahk
 #Include Libs\WindowGrid.ahk
+#Include Libs\CopyWindowInfo.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
