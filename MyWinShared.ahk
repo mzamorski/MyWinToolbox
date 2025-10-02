@@ -1,5 +1,6 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
+#Warn
 
 #Include Libs\Constants.ahk
 #Include Libs\StringUtils.ahk
@@ -14,6 +15,7 @@
 #Include Libs\IOUtils.ahk
 #Include Libs\ExplorerUtils.ahk
 #Include Libs\MinimizeToTray.ahk
+#Include Libs\WindowGrid.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
