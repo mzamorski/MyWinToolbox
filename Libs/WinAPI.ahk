@@ -127,3 +127,65 @@ WinAPI_HwndUnderMouse() {
     ; Return the top-level ancestor (GA_ROOT = 2)
     return DllCall("GetAncestor", "ptr", hw, "uint", 2, "ptr")
 }
+
+; Returns WM_NCHITTEST code at the current cursor position for the given hwnd.
+; Useful if you want the hotkey to work only on caption/minimize button.
+WinAPI_HitTestAtCursor(hwnd) {
+    MouseGetPos(&mx, &my)
+	
+    return WinAPI_NcHitTest(hwnd, mx, my)
+}
+
+/*
+; Gets WM_NCHITTEST code at the current cursor position for the given hwnd.
+WinAPI_HitTestAtCursor(hwnd) {
+    ; Always read screen coords directly from WinAPI (independent of CoordMode)
+    pt := Buffer(8, 0)  ; POINT { LONG x; LONG y; }
+    if !DllCall("GetCursorPos", "ptr", pt, "int")
+        return 0
+    x := NumGet(pt, 0, "Int")
+    y := NumGet(pt, 4, "Int")
+    return WinAPI_NcHitTest(hwnd, x, y)
+}
+
+*/
+
+; Performs WM_NCHITTEST for arbitrary screen coords (x,y).
+WinAPI_NcHitTest(hwnd, x, y) {
+    ; Pack screen coords into LPARAM (signed low/high word)
+    lParam := (y & 0xFFFF) << 16 | (x & 0xFFFF)
+    return DllCall("SendMessageW", "ptr", hwnd, "uint", 0x84, "ptr", 0, "ptr", lParam, "int") ; WM_NCHITTEST
+}
+
+/*
+
+; Performs WM_NCHITTEST for screen coords (x,y).
+WinAPI_NcHitTest(hwnd, x, y) {
+    ; Optional guard: ensure point is within the top-level window rect.
+    rect := Buffer(16, 0) ; RECT { left, top, right, bottom }
+    if DllCall("GetWindowRect", "ptr", hwnd, "ptr", rect, "int") {
+        left   := NumGet(rect,  0, "Int")
+        top    := NumGet(rect,  4, "Int")
+        right  := NumGet(rect,  8, "Int")
+        bottom := NumGet(rect, 12, "Int")
+        if (x < left || x >= right || y < top || y >= bottom)
+            return 0  ; outside -> HTNOWHERE
+    }
+
+    ; Pack screen coords into LPARAM like MAKELPARAM(x, y).
+    ; Low word = x, High word = y (both 16-bit, sign handled by the window proc).
+    lParam := (y & 0xFFFF) << 16 | (x & 0xFFFF)
+
+    ; Send WM_NCHITTEST; returns HT* code (>0) or 0 if nowhere.
+    return DllCall("SendMessageW", "ptr", hwnd, "uint", 0x84, "ptr", 0, "ptr", lParam, "int") ; WM_NCHITTEST
+}
+
+*/
+
+; Convenience predicates (optional)
+WinAPI_IsCursorOnCaption(hwnd) {
+    return WinAPI_HitTestAtCursor(hwnd) = 2   ; HTCAPTION
+}
+WinAPI_IsCursorOnMinButton(hwnd) {
+    return WinAPI_HitTestAtCursor(hwnd) = 8   ; HTMINBUTTON
+}

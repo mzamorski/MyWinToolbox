@@ -13,6 +13,7 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 Persistent
+CoordMode "Mouse", "Screen"  ; make MouseGetPos return screen coords
 
 #Include "WinAPI.ahk"
 #Include "WindowApp.ahk"
@@ -21,11 +22,13 @@ Persistent
 ; GLOBALS / STATE
 ;========================================================================================================================
 
-global gTrayGui       := Gui(, "TrayMsgSink")   ; Hidden sink window to receive tray callbacks
-global gSinkHwnd      := gTrayGui.Hwnd
-global gWM_TRAYMSG    := 0x8000 + 1             ; Custom callback message for Shell_NotifyIcon
-global gHiddenWins    := Map()                  ; hwnd -> { title, hIcon, added: true }
-global gTaskbarMsg    := DllCall("RegisterWindowMessage", "str","TaskbarCreated", "uint") ; Explorer restart
+global gScope := "caption"   ; change to "caption", "min", or "caption+min" if desired
+global gTrayGui := Gui(, "TrayMsgSink")   ; Hidden sink window to receive tray callbacks
+global gSinkHwnd := gTrayGui.Hwnd
+global gWM_TRAYMSG := 0x8000 + 1             ; Custom callback message for Shell_NotifyIcon
+global gHiddenWins := Map()                  ; hwnd -> { title, hIcon, added: true }
+global gTaskbarMsg := DllCall("RegisterWindowMessage", "str","TaskbarCreated", "uint") ; Explorer restart
+global gHotIfHwnd := 0
 
 ; Prepare hidden sink GUI (no taskbar item)
 gTrayGui.Opt("+ToolWindow -Caption +E0x08000000")  ; WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
@@ -42,10 +45,40 @@ A_TrayMenu.Add("&Restore all windows", RestoreAll)
 A_TrayMenu.Add()        ; Separator
 A_TrayMenu.Add("E&xit", (*) => ExitApp())
 
+Tray_ShouldHandle() {
+    ; Decides whether our Win+RButton hotkey should be active at the current cursor.
+    global gScope, gHotIfHwnd, gSinkHwnd
+
+    ; Reset cached hwnd by default; only set it if we decide to handle.
+    gHotIfHwnd := 0
+
+    hwnd := WinAPI_HwndUnderMouse()
+    if !hwnd
+        return false
+    if (!WindowApp.IsRealWindow(hwnd) || hwnd = gSinkHwnd)
+        return false
+
+    ; Optional scope filter based on WM_NCHITTEST
+    if (gScope != "any") {
+        ht := WinAPI_HitTestAtCursor(hwnd)   ; 2=HTCAPTION, 8=HTMINBUTTON
+        if (gScope = "caption"      && ht != 2)
+            return false
+        if (gScope = "min"          && ht != 8)
+            return false
+        if (gScope = "caption+min"  && (ht != 2 && ht != 8))
+            return false
+    }
+
+    ; Passed all checks: cache hwnd for the hotkey handler and allow it.
+    gHotIfHwnd := hwnd
+    return true
+}
+
 ;========================================================================================================================
-; HOTKEY: Win + Right Mouse Button
+; HOTKEY
 ;========================================================================================================================
 
+#HotIf Tray_ShouldHandle()
 #RButton::{
     hwnd := WinAPI_HwndUnderMouse()
     if (!hwnd)
@@ -63,6 +96,20 @@ A_TrayMenu.Add("E&xit", (*) => ExitApp())
     
     ; Swallow the click so it doesn't open a context menu
     return
+}
+#HotIf
+
+; [Ctrl+Alt+H] -> show WM_NCHITTEST code over window under cursor
+^!h::{
+    hwnd := WinAPI_HwndUnderMouse()
+    if !hwnd {
+        ToolTip "no hwnd"
+        SetTimer () => ToolTip(), -700
+        return
+    }
+    ht := WinAPI_HitTestAtCursor(hwnd)
+    ToolTip "WM_NCHITTEST = " ht
+    SetTimer () => ToolTip(), -1000
 }
 
 ;========================================================================================================================
