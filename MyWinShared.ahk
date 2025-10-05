@@ -22,6 +22,9 @@ SetTitleMatchMode("2")
 DetectHiddenWindows(true)
 Persistent
 
+global AUTO_PASTE_TIMER_INTERVAL_MS := 500
+global AutoPasteEntries := []
+
 
 
 ;========================================================================================================================
@@ -52,17 +55,24 @@ try
 	global SpacesPerIndent  := Ini_ReadOrDefault(SharedConfigFilePath, "Settings", "SpacesPerIndent")
 	global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
 
-	; Home/Work config
-	global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
-	global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
+        ; Home/Work config
+        global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
+        global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
+        global AutoPasteEntries := AutoPaste_LoadEntries(ConfigFilePath)
 }
 catch Error as e
 {
-	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
-		,"Config error"
-	)
+        MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
+                ,"Config error"
+        )
 
-	ExitApp(-1)
+        ExitApp(-1)
+}
+
+global AutoPasteHandledWindows := Map()
+if (AutoPasteEntries.Length > 0)
+{
+        SetTimer(AutoPaste_CheckActiveWindow, AUTO_PASTE_TIMER_INTERVAL_MS)
 }
 
 ; --------------------------------------------------------------------------------
@@ -643,6 +653,263 @@ HotKey_CloseAllWindows(withSameTitle := false)
             FileMove(path, destDirectoryPath)    
         }
 	}
+}
+
+;========================================================================================================================
+; AUTO-PASTE
+;========================================================================================================================
+
+AutoPaste_LoadEntries(configFilePath)
+{
+        entries := []
+
+        try
+        {
+                sectionEntries := Ini_GetSectionEntries(configFilePath, "AutoPaste")
+        }
+        catch
+        {
+                return entries
+        }
+
+        for name, rawValue in sectionEntries
+        {
+                if (StringUtils.IsNullOrWhiteSpace(name))
+                {
+                        continue
+                }
+
+                try
+                {
+                        entry := AutoPaste_ParseEntry(name, rawValue)
+
+                        if (entry)
+                        {
+                                entries.Push(entry)
+                        }
+                }
+                catch Error as e
+                {
+                        OutputDebug(Format("[AutoPaste] Entry '{1}' skipped: {2} (Line: {3})", name, e.Message, e.Line))
+                }
+        }
+
+        return entries
+}
+
+AutoPaste_ParseEntry(name, rawValue)
+{
+        if (StringUtils.IsNullOrWhiteSpace(rawValue))
+        {
+                throw Error("AutoPaste entry is empty.")
+        }
+
+        try
+        {
+                definition := jxon_load(&rawValue)
+        }
+        catch Error as innerError
+        {
+                throw Error("AutoPaste entry is not valid JSON. " . innerError.Message)
+        }
+
+        if (!IsObject(definition))
+        {
+                throw Error("AutoPaste entry must be a JSON object.")
+        }
+
+        entry := Map()
+        entry.CaseSense := false
+        entry["name"] := name
+
+        for property, value in definition
+        {
+                key := StrLower(property)
+
+                switch key
+                {
+                        case "title":
+                                entry["title"] := AutoPaste_ToString(value)
+                        case "titlematchmode":
+                                entry["titleMatchMode"] := StrLower(AutoPaste_ToString(value))
+                        case "exe", "process", "processname":
+                                entry["exe"] := AutoPaste_ToString(value)
+                        case "class", "winclass":
+                                entry["class"] := AutoPaste_ToString(value)
+                        case "text":
+                                entry["text"] := AutoPaste_ToString(value, false)
+                        case "inputtype":
+                                entry["inputType"] := value + 0
+                        case "delay", "delayms":
+                                entry["delayMs"] := value + 0
+                        default:
+                                entry[key] := value
+                }
+        }
+
+        if (!entry.Has("text") || StringUtils.IsNullOrWhiteSpace(entry["text"]))
+        {
+                throw Error("AutoPaste entry requires a non-empty 'text' value.")
+        }
+
+        if (!entry.Has("inputType"))
+        {
+                entry["inputType"] := 0
+        }
+
+        if (!entry.Has("delayMs"))
+        {
+                entry["delayMs"] := 0
+        }
+
+        if (entry.Has("titleMatchMode"))
+        {
+                mode := entry["titleMatchMode"]
+
+                if (mode = "exact")
+                {
+                        mode := "equals"
+                        entry["titleMatchMode"] := mode
+                }
+
+                if (mode != "equals" && mode != "contains")
+                {
+                        throw Error("AutoPaste entry has unsupported TitleMatchMode '" . mode . "'.")
+                }
+        }
+
+        return entry
+}
+
+AutoPaste_ToString(value, trim := true)
+{
+        result := value
+
+        if (Type(result) != "String")
+        {
+                result := result . ""
+        }
+
+        if (trim)
+        {
+                result := Trim(result)
+        }
+
+        return result
+}
+
+AutoPaste_CheckActiveWindow(*)
+{
+        global AutoPasteEntries
+        global AutoPasteHandledWindows
+
+        if (AutoPasteEntries.Length = 0)
+        {
+                return
+        }
+
+        hwnd := WinExist("A")
+        if (!hwnd)
+        {
+                return
+        }
+
+        if (AutoPasteHandledWindows.Has(hwnd))
+        {
+                return
+        }
+
+        for entry in AutoPasteEntries
+        {
+                if (AutoPaste_WindowMatches(hwnd, entry))
+                {
+                        if (AutoPaste_Perform(hwnd, entry))
+                        {
+                                AutoPasteHandledWindows[hwnd] := entry["name"]
+                        }
+
+                        break
+                }
+        }
+}
+
+AutoPaste_WindowMatches(hwnd, entry)
+{
+        if (entry.Has("exe"))
+        {
+                winExe := WinGetProcessName("ahk_id " hwnd)
+
+                if (!AutoPaste_EqualsIgnoreCase(winExe, entry["exe"]))
+                {
+                        return false
+                }
+        }
+
+        if (entry.Has("class"))
+        {
+                winClass := WinGetClass("ahk_id " hwnd)
+
+                if (!AutoPaste_EqualsIgnoreCase(winClass, entry["class"]))
+                {
+                        return false
+                }
+        }
+
+        if (entry.Has("title"))
+        {
+                winTitle := WinGetTitle("ahk_id " hwnd)
+                matchValue := entry["title"]
+                matchMode := entry.Has("titleMatchMode") ? entry["titleMatchMode"] : "contains"
+
+                if (matchMode = "equals")
+                {
+                        if (!AutoPaste_EqualsIgnoreCase(winTitle, matchValue))
+                        {
+                                return false
+                        }
+                }
+                else
+                {
+                        if (!InStr(winTitle, matchValue, false))
+                        {
+                                return false
+                        }
+                }
+        }
+
+        return true
+}
+
+AutoPaste_Perform(hwnd, entry)
+{
+        if (entry["delayMs"] > 0)
+        {
+                Sleep(entry["delayMs"])
+        }
+
+        if (!WinExist("ahk_id " hwnd))
+        {
+                return false
+        }
+
+        if (!WinActive("ahk_id " hwnd))
+        {
+                WinActivate("ahk_id " hwnd)
+
+                if (!WinWaitActive("ahk_id " hwnd, , 1))
+                {
+                        return false
+                }
+        }
+
+        Std_Paste(entry["text"], entry["inputType"])
+
+        return true
+}
+
+AutoPaste_EqualsIgnoreCase(value, expected)
+{
+        return StrLower(AutoPaste_ToString(value)) = StrLower(AutoPaste_ToString(expected))
 }
 
 ;========================================================================================================================
