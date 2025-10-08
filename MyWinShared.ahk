@@ -101,6 +101,11 @@ catch Error as e
         global HotstringsJson := []
 }
 
+global DynamicHotstrings_Registry := []
+global DynamicHotstrings_DiagnosticsGui := 0
+
+DynamicHotstrings_Register()
+
 
 
 ;========================================================================================================================
@@ -517,6 +522,14 @@ emojiMenu.Add("💨 — Dashing Away", (itemName, *) => Send("💨"))
 }
 
 ;--------------------------------------------------------------------------------
+; Show diagnostics for dynamic hotstrings
+
+#^+h::		; Win + Ctrl + Shift + h
+{
+	DynamicHotstrings_ShowDiagnostics()
+}
+
+;--------------------------------------------------------------------------------
 ; Paste current local date-time.
 
 #^d::		; Win + Ctrl + d
@@ -677,15 +690,14 @@ HotKey_CloseAllWindows(withSameTitle := false)
 ;========================================================================================================================
 
 DynamicHotstrings_Register()
-
-DynamicHotstrings_Register()
 {
-	global HotstringsJson
+        global HotstringsJson
+        global DynamicHotstrings_Registry
 
-	if !IsSet(HotstringsJson)
-	{
-		return
-	}
+        if !IsSet(HotstringsJson)
+        {
+                return
+        }
 
 	config := DynamicHotstrings_ParseConfiguration(HotstringsJson)
 	if !IsObject(config)
@@ -693,16 +705,18 @@ DynamicHotstrings_Register()
 		return
 	}
 
-	definitions := config["Hotstrings"]
-	if !IsObject(definitions) || (definitions.Length = 0)
-	{
-		return
-	}
+        definitions := config["Hotstrings"]
+        if !IsObject(definitions) || (definitions.Length = 0)
+        {
+                DynamicHotstrings_Registry := []
+                return
+        }
 
-	items := []
-	for definition in definitions
-	{
-		items.Push(Map(
+        DynamicHotstrings_Registry := []
+        items := []
+        for definition in definitions
+        {
+                items.Push(Map(
 		"Priority", DynamicHotstring_GetPriority(definition)
 		, "Definition", definition
 		))
@@ -758,98 +772,117 @@ DynamicHotstring_RegisterDefinition(definition, config)
 			sendMode := StrLower(Trim("" . sendMode))
 		}
 
-		scopeInfo := DynamicHotstring_PrepareScopeContext(definition, config)
-		if !scopeInfo["ShouldRegister"]
-		{
-			return
-		}
+                scopeInfo := DynamicHotstring_PrepareScopeContext(definition, config)
+                if !scopeInfo["ShouldRegister"]
+                {
+                        return
+                }
 
-		predicate := scopeInfo["Predicate"]
-		if predicate
-		{
-			HotIf(predicate)
-		}
+                predicate := scopeInfo["Predicate"]
+                if predicate
+                {
+                        HotIf(predicate)
+                }
 
-		try
-		{
-			switch sendMode
-			{
-				case "text":
-				Hotstring(pattern, (*) => SendText(replacement))
-				case "raw":
-			Hotstring(pattern, (*) => Send("{Raw}" . replacement))
-				default:
-				Hotstring(pattern, replacement)
-			}
-		}
-		catch Error as e
-		{
-	OutputDebug(Format("[DynamicHotstring] Failed to register hotstring. Message: {1}, What: {2}", e.Message, e.What))
-		}
-		finally
-		{
-			if predicate
-			{
-				HotIf()
-			}
-		}
-	}
-	catch Error as e
-	{
+                try
+                {
+                        registered := false
+                        switch sendMode
+                        {
+                                case "text":
+                                Hotstring(pattern, (*) => SendText(replacement))
+                                registered := true
+                                case "raw":
+                        Hotstring(pattern, (*) => Send("{Raw}" . replacement))
+                                registered := true
+                                default:
+                                Hotstring(pattern, replacement)
+                                registered := true
+                        }
+                }
+                catch Error as e
+                {
+        OutputDebug(Format("[DynamicHotstring] Failed to register hotstring. Message: {1}, What: {2}", e.Message, e.What))
+                }
+                finally
+                {
+                        if predicate
+                        {
+                                HotIf()
+                        }
+                }
+
+                if registered
+                {
+                        DynamicHotstrings_RecordRegistration(pattern, replacement, sendMode, scopeInfo)
+                }
+        }
+        catch Error as e
+        {
 OutputDebug(Format("[DynamicHotstring] Failed to process definition. Message: {1}, What: {2}", e.Message, e.What))
-	}
+        }
 }
 
 DynamicHotstring_PrepareScopeContext(definition, config)
 {
-	result := Map("ShouldRegister", true, "Predicate", 0)
+        result := Map(
+                "ShouldRegister", true
+                , "Predicate", 0
+                , "IncludeNames", []
+                , "ExcludeNames", []
+                , "AllowEverywhere", false
+        )
 
-	defaults := config.Has("Defaults") ? config["Defaults"] : Map()
-	aliases := config.Has("ScopeAliases") ? config["ScopeAliases"] : Map()
+        defaults := config.Has("Defaults") ? config["Defaults"] : Map()
+        aliases := config.Has("ScopeAliases") ? config["ScopeAliases"] : Map()
 
-	includeData := DynamicHotstring_NormalizeScopeItems(definition, aliases, ["IncludeScopes", "includeScopes"])
-	excludeData := DynamicHotstring_NormalizeScopeItems(definition, aliases, ["ExcludeScopes", "excludeScopes"])
+        includeData := DynamicHotstring_NormalizeScopeItems(definition, aliases, ["IncludeScopes", "includeScopes"])
+        excludeData := DynamicHotstring_NormalizeScopeItems(definition, aliases, ["ExcludeScopes", "excludeScopes"])
 
-	includeScopes := includeData["Scopes"]
-	excludeScopes := excludeData["Scopes"]
-	hasWildcard := includeData["HasWildcard"]
-	hasIncludeProperty := DynamicHotstring_HasProperty(definition, ["IncludeScopes", "includeScopes"])
-	hasExcludeProperty := DynamicHotstring_HasProperty(definition, ["ExcludeScopes", "excludeScopes"])
+        includeScopes := includeData["Scopes"]
+        excludeScopes := excludeData["Scopes"]
+        result["IncludeNames"] := includeData["Names"]
+        result["ExcludeNames"] := excludeData["Names"]
 
-	allowEverywhere := false
-	if !hasIncludeProperty && !hasExcludeProperty
-	{
-		allowEverywhere := true
-	}
-	else if hasWildcard
-	{
-		allowEverywhere := true
-	}
-	else if (includeScopes.Length = 0)
-	{
-		if (excludeScopes.Length > 0)
-		{
-			allowEverywhere := true
-		}
-		else
-		{
-			scopeMode := defaults.Has("ScopeMode") ? defaults["ScopeMode"] : "include"
-			scopeMode := StrLower("" . scopeMode)
-			if (scopeMode = "exclude")
-			{
-				allowEverywhere := true
-			}
-			else
-			{
-				result["ShouldRegister"] := false
-				return result
-			}
-		}
-	}
+        hasWildcard := includeData["HasWildcard"]
+        hasIncludeProperty := DynamicHotstring_HasProperty(definition, ["IncludeScopes", "includeScopes"])
+        hasExcludeProperty := DynamicHotstring_HasProperty(definition, ["ExcludeScopes", "excludeScopes"])
 
-	predicate := DynamicHotstring_CreateScopePredicate(includeScopes, excludeScopes, allowEverywhere)
-	result["Predicate"] := predicate
-	return result
+        allowEverywhere := false
+        if !hasIncludeProperty && !hasExcludeProperty
+        {
+                allowEverywhere := true
+        }
+        else if hasWildcard
+        {
+                allowEverywhere := true
+        }
+        else if (includeScopes.Length = 0)
+        {
+                if (excludeScopes.Length > 0)
+                {
+                        allowEverywhere := true
+                }
+                else
+                {
+                        scopeMode := defaults.Has("ScopeMode") ? defaults["ScopeMode"] : "include"
+                        scopeMode := StrLower("" . scopeMode)
+                        if (scopeMode = "exclude")
+                        {
+                                allowEverywhere := true
+                        }
+                        else
+                        {
+                                result["ShouldRegister"] := false
+                                return result
+                        }
+                }
+        }
+
+        predicate := DynamicHotstring_CreateScopePredicate(includeScopes, excludeScopes, allowEverywhere)
+        result["Predicate"] := predicate
+        result["AllowEverywhere"] := allowEverywhere
+        return result
 }
 
 DynamicHotstring_CreateScopePredicate(includeScopes, excludeScopes, allowEverywhere)
@@ -1016,58 +1049,109 @@ DynamicHotstring_ArrayContains(collection, value, caseInsensitive := true)
 
 DynamicHotstring_NormalizeScopeItems(definition, aliases, propertyNames)
 {
-	result := Map("Scopes", [], "HasWildcard", false)
-	value := ""
-	if !DynamicHotstring_TryGet(definition, propertyNames, &value)
-	{
-		return result
-	}
+        result := Map("Scopes", [], "Names", [], "HasWildcard", false)
+        value := ""
+        if !DynamicHotstring_TryGet(definition, propertyNames, &value)
+        {
+                return result
+        }
 
-	items := DynamicHotstrings_ToArray(value)
-	for item in items
-	{
-		if item is String
-		{
-			scopeName := Trim("" . item)
-			if (scopeName = "")
-			{
-				continue
-			}
+        items := DynamicHotstrings_ToArray(value)
+        for item in items
+        {
+                if item is String
+                {
+                        scopeName := Trim("" . item)
+                        if (scopeName = "")
+                        {
+                                continue
+                        }
 
-			if (scopeName = "*")
-			{
-				result["HasWildcard"] := true
-				continue
-			}
+                        if (scopeName = "*")
+                        {
+                                result["HasWildcard"] := true
+                                result["Names"].Push("*")
+                                continue
+                        }
 
-			aliasKey := StrLower(scopeName)
-			if aliases.Has(aliasKey)
-			{
-				result["Scopes"].Push(aliases[aliasKey])
-			}
-			else
-			{
-			OutputDebug(Format("[DynamicHotstring] Unknown scope alias: {1}", scopeName))
-			}
-		}
-		else if IsObject(item)
-		{
-			scopeDefinition := DynamicHotstrings_NormalizeScope(item)
-			if IsObject(scopeDefinition)
-			{
-				result["Scopes"].Push(scopeDefinition)
-			}
-		}
-	}
+                        aliasKey := StrLower(scopeName)
+                        if aliases.Has(aliasKey)
+                        {
+                                result["Scopes"].Push(aliases[aliasKey])
+                                result["Names"].Push(scopeName)
+                        }
+                        else
+                        {
+                        OutputDebug(Format("[DynamicHotstring] Unknown scope alias: {1}", scopeName))
+                        }
+                }
+                else if IsObject(item)
+                {
+                        scopeDefinition := DynamicHotstrings_NormalizeScope(item)
+                        if IsObject(scopeDefinition)
+                        {
+                                result["Scopes"].Push(scopeDefinition)
+                                result["Names"].Push(DynamicHotstrings_FormatScopeDescriptor(scopeDefinition))
+                        }
+                }
+        }
 
-	return result
+        return result
+}
+
+DynamicHotstrings_FormatScopeDescriptor(scopeDefinition)
+{
+        if !IsObject(scopeDefinition)
+        {
+                return "[custom]"
+        }
+
+        if scopeDefinition.Has("Name")
+        {
+                return "" . scopeDefinition["Name"]
+        }
+
+        parts := []
+        if scopeDefinition.Has("Processes")
+        {
+                processes := scopeDefinition["Processes"]
+                if IsObject(processes) && (processes.Length > 0)
+                {
+                        parts.Push("proc=" . processes.Join("|"))
+                }
+        }
+
+        if scopeDefinition.Has("Classes")
+        {
+                classes := scopeDefinition["Classes"]
+                if IsObject(classes) && (classes.Length > 0)
+                {
+                        parts.Push("class=" . classes.Join("|"))
+                }
+        }
+
+        if scopeDefinition.Has("TitleRegex")
+        {
+                title := "" . scopeDefinition["TitleRegex"]
+                if (title != "")
+                {
+                        parts.Push("title=" . title)
+                }
+        }
+
+        if (parts.Length = 0)
+        {
+                return "[custom]"
+        }
+
+        return "[" . parts.Join(", ") . "]"
 }
 
 DynamicHotstrings_ParseConfiguration(rawConfig)
 {
-	if !IsObject(rawConfig)
-	{
-		return ""
+        if !IsObject(rawConfig)
+        {
+                return ""
 	}
 
 	config := Map()
@@ -1404,6 +1488,155 @@ DynamicHotstring_NormalizePattern(pattern)
         }
 
         return pattern
+}
+
+DynamicHotstrings_RecordRegistration(pattern, replacement, sendMode, scopeInfo)
+{
+        global DynamicHotstrings_Registry
+
+        if !IsSet(DynamicHotstrings_Registry)
+        {
+                DynamicHotstrings_Registry := []
+        }
+
+        info := Map()
+        info["Pattern"] := pattern
+        info["SendMode"] := (sendMode = "") ? "default" : sendMode
+        info["ScopeSummary"] := DynamicHotstrings_FormatScopeSummary(scopeInfo)
+        info["ReplacementPreview"] := DynamicHotstrings_CreatePreview(replacement)
+
+        DynamicHotstrings_Registry.Push(info)
+
+        OutputDebug(Format("[DynamicHotstring] Registered {1} (mode: {2}, scope: {3})"
+                , pattern
+                , StrUpper(info["SendMode"])
+                , info["ScopeSummary"]
+        ))
+}
+
+DynamicHotstrings_CreatePreview(value)
+{
+        text := "" . value
+        if (text = "")
+        {
+                return ""
+        }
+
+        text := StrReplace(text, "`r`n", " ⏎ ")
+        text := StrReplace(text, "`n", " ⏎ ")
+        text := StrReplace(text, "`r", " ⏎ ")
+        text := StrReplace(text, "`t", " ⇥ ")
+        text := Trim(text)
+
+        maxLength := 120
+        if (StrLen(text) > maxLength)
+        {
+                text := SubStr(text, 1, maxLength - 3) . "..."
+        }
+
+        return text
+}
+
+DynamicHotstrings_FormatScopeSummary(scopeInfo)
+{
+        if !IsObject(scopeInfo)
+        {
+                return "unknown"
+        }
+
+        includeNames := scopeInfo.Has("IncludeNames") ? scopeInfo["IncludeNames"] : []
+        excludeNames := scopeInfo.Has("ExcludeNames") ? scopeInfo["ExcludeNames"] : []
+        allowEverywhere := scopeInfo.Has("AllowEverywhere") ? scopeInfo["AllowEverywhere"] : false
+
+        includeText := (IsObject(includeNames) && includeNames.Length > 0) ? includeNames.Join(", ") : ""
+        excludeText := (IsObject(excludeNames) && excludeNames.Length > 0) ? excludeNames.Join(", ") : ""
+
+        if (allowEverywhere && (includeText = "") && (excludeText = ""))
+        {
+                return "Everywhere"
+        }
+
+        parts := []
+        if (includeText != "")
+        {
+                parts.Push("Include: " . includeText)
+        }
+        else if allowEverywhere
+        {
+                parts.Push("Include: *")
+        }
+
+        if (excludeText != "")
+        {
+                parts.Push("Exclude: " . excludeText)
+        }
+
+        if (parts.Length = 0)
+        {
+                return allowEverywhere ? "Everywhere" : "No scope"
+        }
+
+        return parts.Join(" | ")
+}
+
+DynamicHotstrings_ShowDiagnostics(*)
+{
+        global DynamicHotstrings_Registry
+        global DynamicHotstrings_DiagnosticsGui
+
+        if IsObject(DynamicHotstrings_DiagnosticsGui)
+        {
+                try DynamicHotstrings_DiagnosticsGui.Destroy()
+                catch
+                {
+                }
+                DynamicHotstrings_DiagnosticsGui := 0
+        }
+
+        if !IsSet(DynamicHotstrings_Registry) || (DynamicHotstrings_Registry.Length = 0)
+        {
+                MsgBox("Brak dynamicznych hotstringów do wyświetlenia.")
+                return
+        }
+
+        gui := Gui("+Resize", "Dynamic Hotstrings")
+        gui.OnEvent("Close", DynamicHotstrings_OnDiagnosticsClose)
+        gui.OnEvent("Escape", DynamicHotstrings_OnDiagnosticsClose)
+
+        header := ["Trigger", "Send mode", "Scopes", "Preview"]
+        listView := gui.AddListView("w760 r16", header)
+        listView.ModifyCol(1, 150)
+        listView.ModifyCol(2, 90)
+        listView.ModifyCol(3, 230)
+        listView.ModifyCol(4, 260)
+
+        for item in DynamicHotstrings_Registry
+        {
+                sendMode := StrUpper("" . item["SendMode"])
+                scopeSummary := "" . item["ScopeSummary"]
+                preview := "" . item["ReplacementPreview"]
+                listView.Add("", item["Pattern"], sendMode, scopeSummary, preview)
+        }
+
+        listView.ModifyCol()
+
+        button := gui.AddButton("xm y+10", "Pokaż ListHotkeys")
+        button.OnEvent("Click", (*) => ListHotkeys())
+
+        DynamicHotstrings_DiagnosticsGui := gui
+        gui.Show()
+}
+
+DynamicHotstrings_OnDiagnosticsClose(gui, *)
+{
+        global DynamicHotstrings_DiagnosticsGui
+
+        try gui.Destroy()
+        catch
+        {
+        }
+
+        DynamicHotstrings_DiagnosticsGui := 0
 }
 
 DynamicHotstring_IsTruthy(value)
