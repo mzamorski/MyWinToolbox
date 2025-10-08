@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "defaults": {
+    "options": "*",
+    "scopeMode": "include"
+  },
+  "scopes": {
+    "aliases": {
+      "Notepad": {
+        "process": ["notepad.exe"]
+      },
+      "SSMS": {
+        "process": ["ssms.exe", "ssms.app.exe"],
+        "titleRegex": "SQL Server Management Studio"
+      },
+      "AnyEditor": {
+        "process": ["notepad.exe", "notepad++.exe"],
+        "class": ["Notepad", "Notepad++"]
+      }
+    }
+  },
+  "hotstrings": [
+    {
+      "id": "sig",
+      "trigger": "sig",
+      "options": "*",
+      "text": "Best regards,{Enter}John",
+      "description": "Email signature",
+      "tags": ["email", "signature"],
+      "includeScopes": ["Notepad", "SSMS"],
+      "excludeScopes": [],
+      "enabled": true,
+      "priority": 100
+    },
+    {
+      "id": "addr",
+      "trigger": "addr",
+      "options": "",
+      "text": "123 Main St.",
+      "description": "Demo address",
+      "tags": ["address"],
+      "includeScopes": ["*"],
+      "excludeScopes": [],
+      "enabled": true
+    },
+    {
+      "id": "btw",
+      "trigger": "btw",
+      "options": "*",
+      "text": "by the way",
+      "description": "Common phrase",
+      "tags": ["text", "shortcut"],
+      "includeScopes": ["AnyEditor"],
+      "excludeScopes": [],
+      "enabled": true
+    },
+    {
+      "id": "ts_now",
+      "trigger": "now",
+      "options": "*",
+      "text": "%{DateTime:yyyy-MM-dd HH:mm}",
+      "description": "Current timestamp",
+      "tags": ["date", "time"],
+      "includeScopes": ["*"],
+      "excludeScopes": [],
+      "enabled": true
+    },
+    {
+      "id": "sql_use_db",
+      "trigger": "udb",
+      "options": "*",
+      "text": "USE [MyDatabase];{Enter}GO{Enter}",
+      "description": "SQL: switch database",
+      "tags": ["sql", "ssms"],
+      "includeScopes": ["SSMS"],
+      "excludeScopes": [],
+      "enabled": true
+    },
+    {
+      "id": "disabled_example",
+      "trigger": "demooff",
+      "options": "",
+      "text": "This one is off",
+      "description": "Disabled hotstring example",
+      "tags": ["demo"],
+      "includeScopes": ["*"],
+      "excludeScopes": [],
+      "enabled": false
+    }
+  ]
+}
