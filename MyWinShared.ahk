@@ -14,6 +14,9 @@
 #Include Libs\IOUtils.ahk
 #Include Libs\ExplorerUtils.ahk
 #Include Libs\MinimizeToTray.ahk
+#Include Libs\WindowGrid.ahk
+#Include Libs\CopyWindowInfo.ahk
+#Include Libs\DynamicHotStrings.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
@@ -79,7 +82,29 @@ catch Error as e
 	)
 }
 
+; --------------------------------------------------------------------------------
+; Config/HotStrings/JSON
 
+try
+{
+	hotStringsFilePath := "HotStrings.json"
+	if FileExist(hotStringsFilePath)
+	{
+		fileContent := FileRead(hotStringsFilePath)
+		global HotstringsJson := jxon_load(&fileContent)
+
+		DynamicHotstrings_Register(HotstringsJson)
+		;DynamicHotstrings_ShowDiagnostics()
+	}
+}
+catch Error as e
+{
+	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
+		, "Config error"
+	)
+
+	global HotstringsJson := []
+}
 
 ;========================================================================================================================
 
@@ -598,6 +623,22 @@ emojiMenu.Add("💨 — Dashing Away", (itemName, *) => Send("💨"))
 #^d::		; Win + Ctrl + d
 {
 	Menu_StringGenerator_CurrentDate()
+}
+
+;--------------------------------------------------------------------------------
+; Always On Top — toggle for the active window
+
+#^PgUp:: {
+    hwnd := WinExist("A")
+    if !hwnd
+        return
+
+    ex := WinGetExStyle("ahk_id " hwnd)
+    isTop := (ex & 0x00000008) ; WS_EX_TOPMOST
+
+    WinSetAlwaysOnTop !isTop, "ahk_id " hwnd
+    ToolTip (isTop ? "Always-on-top: OFF" : "Always-on-top: ON")
+    SetTimer () => ToolTip(), -700
 }
 
 ;--------------------------------------------------------------------------------

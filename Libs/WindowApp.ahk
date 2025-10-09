@@ -34,4 +34,32 @@ class WindowApp
 
         return false
     }
+    
+    static IsRealWindow(hwnd) {
+        ; Validate handle & existence
+        if !hwnd
+            return false
+        if !WinExist("ahk_id " hwnd)
+            return false
+
+        ; Exclude shell/desktop/system windows
+        cls := WinGetClass("ahk_id " hwnd)
+        if (cls = "Shell_TrayWnd" || cls = "Shell_SecondaryTrayWnd" || cls = "Progman"
+        || cls = "WorkerW" || cls = "NotifyIconOverflowWindow")
+            return false
+
+        ; Must be top-level (GA_ROOT)
+        if (DllCall("GetAncestor", "ptr", hwnd, "uint", 2, "ptr") != hwnd)
+            return false
+
+        ; Style checks
+        style := WinGetStyle("ahk_id " hwnd)
+        ex    := WinGetExStyle("ahk_id " hwnd)
+        if !(style & 0x10000000) ; WS_VISIBLE
+            return false
+        if  (ex & 0x00000080)    ; WS_EX_TOOLWINDOW
+            return false
+
+        return true
+    }
 }
