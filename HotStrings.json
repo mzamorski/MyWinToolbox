@@ -1,0 +1,52 @@
+{
+  "Version": 1,
+  "Defaults": {
+    "Options": "*",
+    "ScopeMode": "include"
+  },
+  "Scopes": {
+    "Aliases": {
+      "Notepad": {
+        "Process": ["notepad.exe"]
+      },
+      "AnyTextEditor": {
+        "Process": ["notepad.exe", "notepad++.exe"],
+        "Class": ["Notepad", "Notepad++"]
+      }
+    }
+  },
+  "HotStrings": [
+    {
+      "Id": "sig",
+      "Trigger": "sig",
+      "Options": "*",
+      "Text": "Best regards,{Enter}John Connor",
+      "Description": "Signature",
+      "Tags": ["signature"],
+      "IncludeScopes": ["Notepad"],
+      "ExcludeScopes": [],
+      "Enabled": true
+    },
+    {
+      "Id": "addr",
+      "Trigger": "addr",
+      "Options": "",
+      "Text": "Google LLC{Enter}1600 Amphitheatre Parkway{Enter}Mountain View, CA 94043{Enter}USA",
+      "Description": "Work address",
+      "Tags": ["address"],
+      "IncludeScopes": ["*"],
+      "ExcludeScopes": [],
+      "Enabled": true
+    },
+    {
+      "Id": "btw",
+      "Trigger": "btw",
+      "Options": "*",
+      "Text": "By the way",
+      "Tags": ["text", "shortcut"],
+      "IncludeScopes": ["AnyTextEditor"],
+      "ExcludeScopes": [],
+      "Enabled": true
+    }
+  ]
+}
