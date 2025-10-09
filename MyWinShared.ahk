@@ -16,6 +16,7 @@
 #Include Libs\MinimizeToTray.ahk
 #Include Libs\WindowGrid.ahk
 #Include Libs\CopyWindowInfo.ahk
+#Include Libs\DynamicHotStrings.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
@@ -80,7 +81,29 @@ catch Error as e
 	)
 }
 
+; --------------------------------------------------------------------------------
+; Config/HotStrings/JSON
 
+try
+{
+	hotStringsFilePath := "HotStrings.json"
+	if FileExist(hotStringsFilePath)
+	{
+		fileContent := FileRead(hotStringsFilePath)
+		global HotstringsJson := jxon_load(&fileContent)
+
+		DynamicHotstrings_Register(HotstringsJson)
+		;DynamicHotstrings_ShowDiagnostics()
+	}
+}
+catch Error as e
+{
+	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
+		, "Config error"
+	)
+
+	global HotstringsJson := []
+}
 
 ;========================================================================================================================
 
