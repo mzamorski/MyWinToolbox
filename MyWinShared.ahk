@@ -17,13 +17,12 @@
 #Include Libs\WindowGrid.ahk
 #Include Libs\CopyWindowInfo.ahk
 #Include Libs\DynamicHotStrings.ahk
+#Include Libs\AutoPaste.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
 DetectHiddenWindows(true)
 Persistent
-
-
 
 ;========================================================================================================================
 ; STARTUP
@@ -90,9 +89,9 @@ try
 	if FileExist(hotStringsFilePath)
 	{
 		fileContent := FileRead(hotStringsFilePath)
-		global HotstringsJson := jxon_load(&fileContent)
+		hotstringsJson := jxon_load(&fileContent)
 
-		DynamicHotstrings_Register(HotstringsJson)
+		DynamicHotstrings_Register(hotstringsJson)
 		;DynamicHotstrings_ShowDiagnostics()
 	}
 }
@@ -101,8 +100,27 @@ catch Error as e
 	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
 		, "Config error"
 	)
+}
 
-	global HotstringsJson := []
+; --------------------------------------------------------------------------------
+; Config/AutoPastes/JSON
+
+try
+{
+	autoPastesFilePath := "AutoPastes.json"
+	if FileExist(autoPastesFilePath)
+	{
+		fileContent := FileRead(autoPastesFilePath)
+		autoPastesJson := jxon_load(&fileContent)
+
+		AutoPaste_Register(autoPastesJson)
+	}
+}
+catch Error as e
+{
+	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
+		, "Config error"
+	)
 }
 
 ;========================================================================================================================
