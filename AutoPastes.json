@@ -1,0 +1,4 @@
+[
+  { "name": "Notepad",   "exe": "notepad.exe",   "text": "Hello World!" },
+  { "name": "Notepad++", "exe": "notepad++.exe", "text": "Hello World++!" }
+]
