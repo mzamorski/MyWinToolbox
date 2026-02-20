@@ -731,6 +731,36 @@ XHotstring(":*:(\d+)k=", (match, *) => Send(match[1] . "000"))
 ; Insert char [✓]
 ::@v::{U+2713}
 
+; Insert char [•] (Bullet point)
+::@..::{U+2022}
+
+; Insert char [○] (White circle / Second level bullet)
+::@.o::{U+25CB}
+
+; Insert char [▪] (Black small square)
+::@.k::{U+25AA}
+
+; Insert char [‣] (Bullet arrow)
+::@.>::{U+2023}
+
+; Insert char [☐] (Empty checkbox)
+::@cb::{U+2610}
+
+; Insert char [✗] (Ballot X / Cancelled)
+::@x::{U+2717}
+
+; Insert char [⚠️] (Warning sign)
+::@!!::{U+26A0}
+
+; Insert char [§] (Section sign)
+::@pp::{U+00A7}
+
+; Insert char [°] (Degree sign)
+::@oo::{U+00B0}
+
+; Insert char […] (Horizontal ellipsis)
+::@...::{U+2026}
+
 #Hotstring
 
 ;--------------------------------------------------------------------------------
