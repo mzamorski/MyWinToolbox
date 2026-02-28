@@ -360,6 +360,7 @@ formatMenu.Add()
 
 formatMenu.Add("Path.ToSingleBackslash", Clipboard_ToSingleBackslash)
 formatMenu.Add("Path.ToDoubleBackslash", Clipboard_ToDoubleBackslash)
+formatMenu.Add("Path.ToBackslash", Clipboard_ToBackslash)
 
 formatMenu.Add()
 

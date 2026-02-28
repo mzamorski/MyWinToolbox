@@ -80,6 +80,14 @@ Clipboard_ToDoubleBackslash(*)
 	Clipboard_Paste(output)
 }
 
+Clipboard_ToBackslash(*)
+{
+	input := Clipboard_Copy()
+	output := StrReplace(input, "/", "\")
+	
+	Clipboard_Paste(output)
+}
+
 Clipboard_AddBraket(*)
 {
 	input := Clipboard_Copy()
