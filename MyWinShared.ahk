@@ -687,6 +687,21 @@ HotKey_CloseAllWindows(withSameTitle := false)
 	}
 }
 
+NirCmd() => A_ScriptDir "\Libs\Externals\nircmd\nircmd.exe"
+
+; --------------------------------------------------------------------------------
+; Sound - Toggle mute of the active window
+#^Volume_Mute:: {
+	global NIRCMD
+
+    procName := WinGetProcessName("A")
+
+    Run(NirCmd() ' muteappvolume "' procName '" 2', , "Hide")  ; 2 = toggle
+
+    ToolTip("Toggle mute: " procName)
+    SetTimer(() => ToolTip(), -2000)
+}
+
 ;========================================================================================================================
 ; HOTSTRINGS
 ; --
