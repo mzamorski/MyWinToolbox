@@ -1,4 +1,5 @@
 [
   { "name": "Notepad",   "exe": "notepad.exe",   "text": "Hello World!" },
-  { "name": "Notepad++", "exe": "notepad++.exe", "text": "Hello World++!" }
+  { "name": "Notepad++", "exe": "notepad++.exe", "text": "Hello World++!" },
+  { "name": "Cisco Secure Client", "exe": "csc_ui.exe", "class": "#32770", "title": "Klient Cisco Secure |", "passwordKey": "CiscoSecurityPassword" }
 ]

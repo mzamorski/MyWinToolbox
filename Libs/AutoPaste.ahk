@@ -117,9 +117,23 @@ AutoPaste_Paste(hwnd, entry)
 		}
 	}
 
-	Std_Paste(entry["text"])
+	text := AutoPaste_GetText(entry)
+	Std_Paste(text)
 
 	return true
+}
+
+AutoPaste_GetText(entry)
+{
+	global ConfigFilePath, Secret
+
+	if (entry.Has("passwordKey"))
+	{
+		encryptedPassword := Ini_ReadOrDefault(ConfigFilePath, "Passwords", entry["passwordKey"])
+		return CryptoUtils.Decrypt(encryptedPassword, Secret)
+	}
+
+	return entry["text"]
 }
 
 ; --------------------------------------------------------------------------------
