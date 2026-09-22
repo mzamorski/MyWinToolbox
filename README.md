@@ -9,6 +9,7 @@ MyWinToolbox is a collection of AutoHotkey v2 tools for common Windows, clipboar
 - Run either `MyWinHome.ahk` or `MyWinWork.ahk` from the repository root. The profiles cannot run at the same time.
 - Each profile reads its settings from a sibling configuration file: `MyWinHome.ahk.config` or `MyWinWork.ahk.config`.
 - Shared settings are read from `MyWinShared.ahk.config`.
+- `MyWinShared.ahk` is the shared composition root; implementation sections live under `Shared\Startup.ahk`, `Shared\Menus.ahk`, `Shared\Hotkeys.ahk`, and `Shared\Hotstrings.ahk`.
 - Reload the active script with `Ctrl + Win + Home`; exit it with `Ctrl + Win + End`.
 
 ## Production deployment
@@ -19,7 +20,7 @@ Run `Install.ps1` from PowerShell to deploy the scripts to `C:\Program Files\MyW
 .\Install.ps1
 ```
 
-The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. It copies only the selected profile entry script, `MyWinShared.ahk`, and the required `Libs` tree. Files are compared by SHA-256, so unchanged scripts are skipped.
+The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. It deploys the selected profile entry script, `MyWinShared.ahk`, the required `Libs` and `Shared` trees, and the shortcut-sheet PDF. Files are compared by SHA-256, so unchanged files are skipped.
 
 Production configuration is preserved: the installer never copies or overwrites `*.config`, `AutoPastes.json`, `HotStrings.json`, or `TextSnippets.json`. Create and maintain these files directly in the installation directory.
 
@@ -29,6 +30,23 @@ For a non-interactive deployment or a custom destination, pass parameters explic
 .\Install.ps1 -Profile Home
 .\Install.ps1 -Profile Work -Destination 'D:\Tools\MyWinToolbox'
 ```
+
+Use `-Verify` to compare SHA-256 hashes after deployment and `-Restart` to start/reload the selected installed profile. The installer also deploys `Docs\SHORTCUTS.pdf`, which is required by the `Ctrl + Win + F1` shortcut.
+
+```powershell
+.\Install.ps1 -Profile Work -Verify -Restart
+```
+
+
+### Tests
+
+Run the lightweight AutoHotkey regression tests with:
+
+```powershell
+.\Test.ps1
+```
+
+If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration validation, legacy focus normalization, and trigger-mode keys without interacting with browser UI.
 
 ## Shared functionality
 
@@ -94,13 +112,14 @@ Browser-specific rules can match the active tab URL. It is recommended to includ
   "exe": "msedge.exe",
   "url": "https://example.com/login",
   "urlMatchMode": "contains",
+  "triggerMode": "oncePerWindow",
   "text": "Hello from AutoPaste"
 }
 ```
 
 AutoPaste reads the browser URL through Windows UI Automation when possible. If that is unavailable, it falls back to copying the address bar while preserving and restoring the existing clipboard content. URL lookup is only attempted for rules that contain `url` and only after the other configured window criteria have matched.
 
-Each rule is processed once for the current matching window state. For URL rules, navigating to a different URL causes the rule to be evaluated again, so another page in the same browser window can trigger its own AutoPaste rule.
+By default, each rule can paste only once per top-level window (`"triggerMode": "oncePerWindow"`). You can opt into `"oncePerUrl"` for URL rules to allow one paste per distinct URL in the same browser window, or `"always"` to execute every time the 500 ms AutoPaste timer observes a match. `oncePerUrl` requires a `url` matcher. Use `always` only for actions that are intentionally safe to repeat.
 
 For diagnostics, add `"notifyOnMatch": true` to a rule. After all configured match criteria have succeeded—and before AutoPaste attempts to paste—Windows shows a notification containing the rule name, executable, window title, and the current URL for URL-based rules. This makes it possible to distinguish a matching problem from a focus/paste problem.
 
@@ -141,6 +160,8 @@ For example, a login form that needs keyboard navigation can be expressed as one
 ```
 
 One action must contain one operation only. Use separate items such as `{ "keys": "{Tab}" }`, `{ "delay": 200 }` rather than combining `keys` and `delay` in one object. The top-level `delay` remains an entry-level wait performed after matching and before window activation.
+
+AutoPaste validates the complete configuration during startup. Invalid rule fields, unsupported match modes, malformed actions, ambiguous top-level action sources, and actions with more than one operation stop registration immediately with a message that includes the rule/action location.
 
 The complete action list is validated before execution. If any action is invalid, AutoPaste executes none of the actions, avoiding partial form fills followed by repeated retries from the timer.
 
@@ -186,7 +207,7 @@ To create the encrypted value, copy the password to the clipboard, press `Ctrl +
 
 | File | Purpose |
 | --- | --- |
-| `MyWinShared.ahk.config` | Shared settings such as `SpacesPerIndent` and `DummyText`. |
+| `MyWinShared.ahk.config` | Shared settings such as `SpacesPerIndent`, `DummyText`, and runtime logging. |
 | `MyWinHome.ahk.config` | Home email, shipping address, RC4 secret, signatures, and encrypted passwords. |
 | `MyWinWork.ahk.config` | Work email, RC4 secret, signatures, and optionally encrypted passwords used by AutoPaste. |
 | `HotStrings.json` | Dynamic hotstring definitions and window scopes. |
@@ -194,6 +215,8 @@ To create the encrypted value, copy the password to the clipboard, press `Ctrl +
 | `AutoPastes.json` | Window-matching automatic paste rules. |
 
 Keep profile configuration private: it can contain personal details and encrypted password values. The repository's sample configuration is intentionally generic.
+
+Runtime diagnostics are written to `%LOCALAPPDATA%\MyWinToolbox\MyWinToolbox.log` (rotated at 2 MB). Set `[Logging] Debug = true` in `MyWinShared.ahk.config` for additional debug-level entries. Logging failures are intentionally non-fatal.
 
 ### Screenshots
 Here are some screenshots showcasing the functionalities of MyWinToolbox:

@@ -72,7 +72,7 @@ OnNoSleep()
 	WinAPI_SetThreadExecutionState_DisplayRequired()
 	WinAPI_SetThreadExecutionState_SystemRequired()
 	
-	if ( A_TimeIdle > 10 * SECOND_IN_MILLISECONDS) 
+	if (A_TimeIdle > 10 * MINUTE_IN_MILLISECONDS) 
 	{
 		MouseMove(1, 0, , "R")
 		Sleep(1000)
@@ -119,7 +119,7 @@ OnTimerShutdown()
 
 OnTaskRunnerShutdown(delayInSeconds)
 {
-	SetTimer(OnTimerShutdown, delayInSeconds * SECOND_IN_MILLISECONDS)
+	SetTimer(OnTimerShutdown, -delayInSeconds * SECOND_IN_MILLISECONDS)
 
 	TrayTip("Shutdown", "The system will shut down in " . delayInSeconds . " seconds.")	
 }
@@ -133,12 +133,12 @@ Menu_TaskRunner_NoSleep(itemName, itemPos, menu)
 
 Menu_TaskRunner_Shutdown_1h(*)
 {
-	OnTaskRunnerShutdown(HOUR_IN_MILLISECONDS)
+	OnTaskRunnerShutdown(HOUR_IN_SECONDS)
 }
 
 Menu_TaskRunner_Shutdown_2h(*)
 {
-	OnTaskRunnerShutdown(2 * HOUR_IN_MILLISECONDS)
+	OnTaskRunnerShutdown(2 * HOUR_IN_SECONDS)
 }
 
 Menu_TaskRunner_Shutdown_Cancel(*)

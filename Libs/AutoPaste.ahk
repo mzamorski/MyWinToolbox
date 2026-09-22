@@ -8,6 +8,8 @@ global TimerIntervalInMs := 500
 global AutoPasteEntries := []
 global ProcessedHwnds := Map()
 global NotifiedMatches := Map()
+global AutoPasteLastCleanupTick := 0
+global AutoPasteCleanupIntervalInMs := 5000
 
 ; --------------------------------------------------------------------------------
 ; Create watcher for `AutoPaste` functionality.
@@ -16,6 +18,8 @@ AutoPaste_Register(entries)
 {
     global AutoPasteEntries, ProcessedHwnds, NotifiedMatches
 
+    AutoPaste_ValidateEntries(entries)
+
     AutoPasteEntries := entries
     ProcessedHwnds.Clear()
     NotifiedMatches.Clear()
@@ -23,6 +27,16 @@ AutoPaste_Register(entries)
     if (AutoPasteEntries.Length > 0)
     {
         SetTimer(AutoPaste_Run, TimerIntervalInMs)
+        Logger.Info("Registered " AutoPasteEntries.Length " rule(s).", "AutoPaste")
+
+        for entryIndex, entry in AutoPasteEntries
+        {
+            Logger.Debug(
+                AutoPaste_GetRuleLabel(entry, entryIndex)
+                    . " triggerMode=" AutoPaste_GetTriggerMode(entry),
+                "AutoPaste"
+            )
+        }
     }
     else
     {
@@ -30,9 +44,309 @@ AutoPaste_Register(entries)
     }
 }
 
+AutoPaste_CleanupStaleWindows()
+{
+    global ProcessedHwnds, NotifiedMatches
+    global AutoPasteLastCleanupTick, AutoPasteCleanupIntervalInMs
+
+    currentTick := A_TickCount
+    if (
+        AutoPasteLastCleanupTick != 0
+        && currentTick >= AutoPasteLastCleanupTick
+        && currentTick - AutoPasteLastCleanupTick < AutoPasteCleanupIntervalInMs
+    )
+    {
+        return
+    }
+
+    AutoPasteLastCleanupTick := currentTick
+    staleHwnds := []
+
+    for trackedHwnd, processedState in ProcessedHwnds
+    {
+        if (!WinExist("ahk_id " trackedHwnd))
+        {
+            staleHwnds.Push(trackedHwnd)
+        }
+    }
+
+    for trackedHwnd in staleHwnds
+    {
+        if (ProcessedHwnds.Has(trackedHwnd))
+        {
+            ProcessedHwnds.Delete(trackedHwnd)
+        }
+
+        if (NotifiedMatches.Has(trackedHwnd))
+        {
+            NotifiedMatches.Delete(trackedHwnd)
+        }
+
+        Logger.Debug("Removed stale state for HWND " trackedHwnd ".", "AutoPaste")
+    }
+}
+
+AutoPaste_ValidateEntries(entries)
+{
+    if (!IsObject(entries) || Type(entries) != "Array")
+    {
+        throw Error("AutoPastes.json: root value must be an array.")
+    }
+
+    allowedEntryFields := Map(
+        "name", true,
+        "exe", true,
+        "class", true,
+        "title", true,
+        "titleMatchMode", true,
+        "url", true,
+        "urlMatchMode", true,
+        "notifyOnMatch", true,
+        "triggerMode", true,
+        "delay", true,
+        "focus", true,
+        "focusDelay", true,
+        "passwordKey", true,
+        "text", true,
+        "actions", true
+    )
+
+    for entryIndex, entry in entries
+    {
+        ruleLabel := AutoPaste_GetRuleLabel(entry, entryIndex)
+
+        if (!IsObject(entry) || !(entry is Map))
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": rule must be an object.")
+        }
+
+        for fieldName, fieldValue in entry
+        {
+            if (!allowedEntryFields.Has(fieldName))
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": unknown field '" fieldName "'.")
+            }
+        }
+
+        hasMatcher := entry.Has("exe")
+            || entry.Has("class")
+            || entry.Has("title")
+            || entry.Has("url")
+
+        if (!hasMatcher)
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": at least one matcher (exe, class, title, url) is required.")
+        }
+
+        for fieldName in ["name", "exe", "class", "title", "url", "text", "passwordKey"]
+        {
+            if (entry.Has(fieldName) && Type(entry[fieldName]) != "String")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' must be a string.")
+            }
+        }
+
+        for fieldName in ["exe", "class", "title", "url", "passwordKey"]
+        {
+            if (entry.Has(fieldName) && Trim(entry[fieldName]) = "")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' cannot be empty.")
+            }
+        }
+
+        for fieldName in ["titleMatchMode", "urlMatchMode"]
+        {
+            if (entry.Has(fieldName))
+            {
+                mode := StrLower("" entry[fieldName])
+                if (mode != "contains" && mode != "equals")
+                {
+                    throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' must be 'contains' or 'equals'.")
+                }
+            }
+        }
+
+        if (entry.Has("triggerMode"))
+        {
+            triggerMode := StrLower("" entry["triggerMode"])
+            if (triggerMode != "onceperwindow" && triggerMode != "onceperurl" && triggerMode != "always")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": 'triggerMode' must be 'oncePerWindow', 'oncePerUrl', or 'always'.")
+            }
+
+            if (triggerMode = "onceperurl" && !entry.Has("url"))
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": triggerMode 'oncePerUrl' requires a 'url' matcher.")
+            }
+        }
+
+        for fieldName in ["delay", "focusDelay"]
+        {
+            if (entry.Has(fieldName))
+            {
+                value := entry[fieldName]
+                if (!IsNumber(value) || value < 0)
+                {
+                    throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' must be a non-negative number.")
+                }
+            }
+        }
+
+        if (entry.Has("notifyOnMatch"))
+        {
+            value := entry["notifyOnMatch"]
+            if (!IsNumber(value) || (value != 0 && value != 1))
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": 'notifyOnMatch' must be true or false.")
+            }
+        }
+
+        if (entry.Has("focus"))
+        {
+            focus := entry["focus"]
+            if (!IsObject(focus) || !(focus is Map))
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": legacy 'focus' must be an object.")
+            }
+
+            for fieldName, fieldValue in focus
+            {
+                if (fieldName != "method" && fieldName != "keys")
+                {
+                    throw Error("AutoPastes.json / " ruleLabel ": unknown focus field '" fieldName "'.")
+                }
+            }
+
+            method := focus.Has("method") ? StrLower("" focus["method"]) : "keys"
+            if (method != "keys")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": legacy focus method must be 'keys'.")
+            }
+
+            if (!focus.Has("keys") || Type(focus["keys"]) != "String" || focus["keys"] = "")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": legacy focus requires non-empty 'keys'.")
+            }
+        }
+        else if (entry.Has("focusDelay"))
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": 'focusDelay' requires legacy 'focus'.")
+        }
+
+        sourceCount := 0
+        for fieldName in ["actions", "passwordKey", "text"]
+        {
+            if (entry.Has(fieldName))
+            {
+                sourceCount += 1
+            }
+        }
+
+        if (sourceCount > 1)
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": use only one of actions, passwordKey, or text.")
+        }
+
+        if (entry.Has("actions"))
+        {
+            AutoPaste_ValidateActions(entry["actions"], ruleLabel)
+        }
+        else if (sourceCount = 0 && !entry.Has("focus"))
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": rule has no executable action.")
+        }
+    }
+}
+
+AutoPaste_ValidateActions(actions, ruleLabel)
+{
+    if (!IsObject(actions) || Type(actions) != "Array" || actions.Length = 0)
+    {
+        throw Error("AutoPastes.json / " ruleLabel ": 'actions' must be a non-empty array.")
+    }
+
+    allowedActionFields := Map(
+        "keys", true,
+        "delay", true,
+        "passwordKey", true,
+        "text", true
+    )
+
+    for actionIndex, action in actions
+    {
+        actionLabel := ruleLabel " / action #" actionIndex
+
+        if (!IsObject(action) || !(action is Map))
+        {
+            throw Error("AutoPastes.json / " actionLabel ": action must be an object.")
+        }
+
+        for fieldName, fieldValue in action
+        {
+            if (!allowedActionFields.Has(fieldName))
+            {
+                throw Error("AutoPastes.json / " actionLabel ": unknown field '" fieldName "'.")
+            }
+        }
+
+        operationCount := 0
+        for fieldName in ["keys", "delay", "passwordKey", "text"]
+        {
+            if (action.Has(fieldName))
+            {
+                operationCount += 1
+            }
+        }
+
+        if (operationCount != 1)
+        {
+            throw Error("AutoPastes.json / " actionLabel ": action must contain exactly one operation (keys, delay, passwordKey, text).")
+        }
+
+        if (action.Has("delay"))
+        {
+            value := action["delay"]
+            if (!IsNumber(value) || value < 0)
+            {
+                throw Error("AutoPastes.json / " actionLabel ": 'delay' must be a non-negative number.")
+            }
+        }
+        else
+        {
+            for fieldName in ["keys", "passwordKey", "text"]
+            {
+                if (action.Has(fieldName) && Type(action[fieldName]) != "String")
+                {
+                    throw Error("AutoPastes.json / " actionLabel ": '" fieldName "' must be a string.")
+                }
+            }
+
+            for fieldName in ["keys", "passwordKey"]
+            {
+                if (action.Has(fieldName) && Trim(action[fieldName]) = "")
+                {
+                    throw Error("AutoPastes.json / " actionLabel ": '" fieldName "' cannot be empty.")
+                }
+            }
+        }
+    }
+}
+
+AutoPaste_GetRuleLabel(entry, entryIndex)
+{
+    if (IsObject(entry) && entry is Map && entry.Has("name") && Type(entry["name"]) = "String" && entry["name"] != "")
+    {
+        return entry["name"] " (#" entryIndex ")"
+    }
+
+    return "rule #" entryIndex
+}
+
 AutoPaste_Run(*)
 {
     global AutoPasteEntries, ProcessedHwnds, NotifiedMatches
+
+    AutoPaste_CleanupStaleWindows()
 
     hwnd := WinExist("A")
     if (!hwnd)
@@ -88,18 +402,61 @@ AutoPaste_Run(*)
             notifiedEntries[entryIndex] := notificationValue
         }
 
-        ; A rule may paste successfully only once for a given top-level HWND.
-        ; URL changes within the same browser window must not re-trigger it.
-        if (processedEntries.Has(entryIndex))
+        triggerKey := AutoPaste_GetTriggerKey(entry, matchContext)
+
+        if (
+            triggerKey != ""
+            && processedEntries.Has(entryIndex)
+            && processedEntries[entryIndex].Has(triggerKey)
+        )
         {
             continue
         }
 
         if (AutoPaste_Paste(hwnd, entry))
         {
-            processedEntries[entryIndex] := true
+            Logger.Info("Executed " AutoPaste_GetRuleLabel(entry, entryIndex) " for HWND " hwnd ".", "AutoPaste")
+
+            if (triggerKey = "")
+            {
+                continue
+            }
+
+            if (!processedEntries.Has(entryIndex))
+            {
+                processedEntries[entryIndex] := Map()
+            }
+
+            processedEntries[entryIndex][triggerKey] := true
         }
     }
+}
+
+AutoPaste_GetTriggerMode(entry)
+{
+    if (!entry.Has("triggerMode"))
+    {
+        return "onceperwindow"
+    }
+
+    return StrLower("" entry["triggerMode"])
+}
+
+AutoPaste_GetTriggerKey(entry, matchContext)
+{
+    triggerMode := AutoPaste_GetTriggerMode(entry)
+
+    if (triggerMode = "always")
+    {
+        return ""
+    }
+
+    if (triggerMode = "onceperurl")
+    {
+        return matchContext["url"]
+    }
+
+    return "__window__"
 }
 
 AutoPaste_IsMatched(hwnd, entry, matchContext)

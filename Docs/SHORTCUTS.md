@@ -319,7 +319,7 @@ Example browser rule:
 }
 ```
 
-Browser URLs are read with Windows UI Automation when available; the fallback address-bar method preserves the clipboard. URL lookup only runs for rules that declare `url` and after their other window filters match. A URL rule can be triggered again after navigation changes the active tab URL.
+Browser URLs are read with Windows UI Automation when available; the fallback address-bar method preserves the clipboard. URL lookup only runs for rules that declare `url` and after their other window filters match. The default trigger mode is `oncePerWindow`; URL rules can opt into `oncePerUrl`, while `always` disables processed-state suppression and repeats on each 500 ms timer match.
 
 Set `"notifyOnMatch": true` on a rule to show a Windows notification after all match criteria succeed and before the paste is attempted. The notification includes the matched rule, executable, title, and URL when applicable, which is useful for diagnosing whether a failure is in matching or in the later focus/paste step.
 
@@ -343,6 +343,8 @@ Use an ordered `actions` list for keyboard focus/navigation and multi-field form
 
 Simple top-level `text` and `passwordKey` rules remain supported. Legacy `focus` / `focusDelay` are accepted only for backward compatibility and are normalized into leading actions; new rules should use `actions` only. The action list is validated before execution, so an invalid item prevents the entire sequence from starting.
 
+The entire `AutoPastes.json` file is validated at startup. Configuration errors identify the affected rule and action before any AutoPaste timer starts.
+
 ---
 
 ## Configuration-driven features
@@ -355,13 +357,3 @@ These parts of the cheat sheet can change without editing the AHK code:
 - `TextSnippets.json` — snippet categories and content.
 - `AutoPastes.json` — automatic window-matching paste rules.
 
----
-
-## Implementation notes
-
-Two timer-related details are worth checking in the current code:
-
-1. **Task Runner shutdown presets** pass `HOUR_IN_MILLISECONDS` into a function that multiplies the value by `SECOND_IN_MILLISECONDS` again. The labels say 1h/2h, but the actual timer value appears to be 1000× larger than intended.
-2. **NoSleep pointer nudge** checks `A_TimeIdle > 10 * SECOND_IN_MILLISECONDS` and the handler itself runs every 60 seconds. That differs from the README wording that mentions 10 minutes.
-
-These notes describe the current implementation and are separate from the intended UI labels above.
