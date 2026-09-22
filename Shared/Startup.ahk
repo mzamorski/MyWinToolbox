@@ -58,6 +58,7 @@ try
 }
 catch Error as e
 {
+	Logger.Error(e.Message . " | Line: " . e.Line . " / " . e.What, "Config")
 	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
 		,"Config error"
 	)
