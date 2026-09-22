@@ -250,8 +250,44 @@ AutoPaste_Paste(hwnd, entry)
         return false
     }
 
-    text := AutoPaste_GetText(entry)
-    Std_Paste(text)
+    return AutoPaste_ExecuteEntry(entry)
+}
+
+AutoPaste_ExecuteEntry(entry)
+{
+    if (!entry.Has("actions"))
+    {
+        text := AutoPaste_GetText(entry)
+        Std_Paste(text)
+        return true
+    }
+
+    actions := entry["actions"]
+    if (actions.Length = 0)
+    {
+        return false
+    }
+
+    for action in actions
+    {
+        if (action.Has("delay") && action["delay"] > 0)
+        {
+            Sleep(action["delay"])
+        }
+
+        if (action.Has("keys"))
+        {
+            Send(action["keys"])
+        }
+        else if (action.Has("passwordKey") || action.Has("text"))
+        {
+            Std_Paste(AutoPaste_GetText(action))
+        }
+        else if (!action.Has("delay"))
+        {
+            return false
+        }
+    }
 
     return true
 }

@@ -327,6 +327,22 @@ To move keyboard focus before pasting, use `"focus": { "method": "keys", "keys":
 
 For secrets, use `passwordKey` and keep only the encrypted value in the profile configuration.
 
+For login forms with more than one field, use an ordered `actions` list. Each action can paste `text`, decrypt and paste a `passwordKey`, send `keys`, or apply a millisecond `delay`:
+
+```json
+{
+  "name": "Example credentials",
+  "exe": "msedge.exe",
+  "url": "https://example.com/login",
+  "actions": [
+    { "passwordKey": "ExampleLogin" },
+    { "keys": "{Tab}" },
+    { "passwordKey": "ExamplePassword" },
+    { "keys": "{Enter}" }
+  ]
+}
+```
+
 ---
 
 ## Configuration-driven features

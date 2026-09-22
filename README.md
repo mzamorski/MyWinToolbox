@@ -135,6 +135,24 @@ The order is: match window/URL → optional match notification → `delay` → a
 
 Passwords must not be stored directly in JSON. Use `passwordKey` to point to an encrypted entry in the active profile's `[Passwords]` section. AutoPaste reads the value and decrypts it using the existing RC4 key from `[Settings]` / `Secret` immediately before pasting.
 
+For forms that require multiple values, use `actions`. Actions run in order and can paste literal `text`, decrypt and paste a `passwordKey`, send `keys`, or wait for a `delay` in milliseconds. The existing top-level `text` and `passwordKey` formats remain supported.
+
+```json
+{
+  "name": "Example credentials",
+  "exe": "msedge.exe",
+  "url": "https://example.com/login",
+  "actions": [
+    { "passwordKey": "ExampleLogin" },
+    { "keys": "{Tab}" },
+    { "passwordKey": "ExamplePassword" },
+    { "keys": "{Enter}" }
+  ]
+}
+```
+
+Both values in this example are encrypted entries in the active profile's `[Passwords]` section. A delay can be a separate action, for example `{ "delay": 200 }`, or be added to another action to wait before it runs.
+
 ```json
 {
     "name": "Cisco Secure Client",
