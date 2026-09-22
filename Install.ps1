@@ -82,6 +82,11 @@ $files += $libFiles | ForEach-Object {
     $_.FullName.Substring($sourceRoot.TrimEnd('\').Length + 1)
 }
 
+$sharedFiles = Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'Shared') -File -Recurse -Filter '*.ahk'
+$files += $sharedFiles | ForEach-Object {
+    $_.FullName.Substring($sourceRoot.TrimEnd('\').Length + 1)
+}
+
 $copied = 0
 $unchanged = 0
 

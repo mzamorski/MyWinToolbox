@@ -9,6 +9,7 @@ MyWinToolbox is a collection of AutoHotkey v2 tools for common Windows, clipboar
 - Run either `MyWinHome.ahk` or `MyWinWork.ahk` from the repository root. The profiles cannot run at the same time.
 - Each profile reads its settings from a sibling configuration file: `MyWinHome.ahk.config` or `MyWinWork.ahk.config`.
 - Shared settings are read from `MyWinShared.ahk.config`.
+- `MyWinShared.ahk` is the shared composition root; implementation sections live under `Shared\Startup.ahk`, `Shared\Menus.ahk`, `Shared\Hotkeys.ahk`, and `Shared\Hotstrings.ahk`.
 - Reload the active script with `Ctrl + Win + Home`; exit it with `Ctrl + Win + End`.
 
 ## Production deployment
