@@ -245,8 +245,51 @@ AutoPaste_Paste(hwnd, entry)
         }
     }
 
+    if (!AutoPaste_ApplyFocus(entry))
+    {
+        return false
+    }
+
     text := AutoPaste_GetText(entry)
     Std_Paste(text)
+
+    return true
+}
+
+AutoPaste_ApplyFocus(entry)
+{
+    if (!entry.Has("focus"))
+    {
+        return true
+    }
+
+    focus := entry["focus"]
+    method := focus.Has("method")
+        ? StrLower(focus["method"])
+        : "keys"
+
+    if (method = "keys")
+    {
+        if (!focus.Has("keys"))
+        {
+            return false
+        }
+
+        Send(focus["keys"])
+    }
+    else
+    {
+        return false
+    }
+
+    delay := entry.Has("focusDelay")
+        ? entry["focusDelay"]
+        : 0
+
+    if (delay > 0)
+    {
+        Sleep(delay)
+    }
 
     return true
 }

@@ -114,6 +114,25 @@ For diagnostics, add `"notifyOnMatch": true` to a rule. After all configured mat
 }
 ```
 
+If the target field is not focused automatically, a rule can send keys before pasting. Currently the supported focus method is `keys`; `focusDelay` adds an optional pause after the key sequence.
+
+```json
+{
+  "name": "Example login",
+  "exe": "msedge.exe",
+  "url": "https://example.com/login",
+  "notifyOnMatch": true,
+  "focus": {
+    "method": "keys",
+    "keys": "{Tab 2}"
+  },
+  "focusDelay": 150,
+  "passwordKey": "ExamplePassword"
+}
+```
+
+The order is: match window/URL → optional match notification → `delay` → activate the window → apply `focus` → `focusDelay` → paste.
+
 Passwords must not be stored directly in JSON. Use `passwordKey` to point to an encrypted entry in the active profile's `[Passwords]` section. AutoPaste reads the value and decrypts it using the existing RC4 key from `[Settings]` / `Secret` immediately before pasting.
 
 ```json

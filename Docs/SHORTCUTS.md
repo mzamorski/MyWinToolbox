@@ -323,6 +323,8 @@ Browser URLs are read with Windows UI Automation when available; the fallback ad
 
 Set `"notifyOnMatch": true` on a rule to show a Windows notification after all match criteria succeed and before the paste is attempted. The notification includes the matched rule, executable, title, and URL when applicable, which is useful for diagnosing whether a failure is in matching or in the later focus/paste step.
 
+To move keyboard focus before pasting, use `"focus": { "method": "keys", "keys": "{Tab 2}" }`. An optional `focusDelay` in milliseconds is applied after the focus keys and before the paste.
+
 For secrets, use `passwordKey` and keep only the encrypted value in the profile configuration.
 
 ---
