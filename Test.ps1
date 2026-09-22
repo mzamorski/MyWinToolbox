@@ -52,11 +52,35 @@ $failures = 0
 
 foreach ($testScript in $testScripts) {
     Write-Host "Running $($testScript.Name)..."
-    & $autoHotkey $testScript.FullName
 
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed: $($testScript.Name)"
-        $failures++
+    $stdoutPath = [IO.Path]::GetTempFileName()
+    $stderrPath = [IO.Path]::GetTempFileName()
+
+    try {
+        $process = Start-Process -FilePath $autoHotkey `
+            -ArgumentList ('"{0}"' -f $testScript.FullName) `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath `
+            -Wait -PassThru
+
+        $stdout = Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue
+        $stderr = Get-Content -LiteralPath $stderrPath -Raw -ErrorAction SilentlyContinue
+
+        if ($stdout) {
+            Write-Host $stdout.TrimEnd()
+        }
+
+        if ($stderr) {
+            Write-Host $stderr.TrimEnd() -ForegroundColor Red
+        }
+
+        if ($process.ExitCode -ne 0) {
+            Write-Host "Failed: $($testScript.Name)" -ForegroundColor Red
+            $failures++
+        }
+    }
+    finally {
+        Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
     }
 }
 
