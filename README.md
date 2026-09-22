@@ -30,6 +30,17 @@ For a non-interactive deployment or a custom destination, pass parameters explic
 .\Install.ps1 -Profile Work -Destination 'D:\Tools\MyWinToolbox'
 ```
 
+
+### Tests
+
+Run the lightweight AutoHotkey regression tests with:
+
+```powershell
+.\Test.ps1
+```
+
+If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration validation, legacy focus normalization, and trigger-mode keys without interacting with browser UI.
+
 ## Shared functionality
 
 ### Menus and hotkeys
