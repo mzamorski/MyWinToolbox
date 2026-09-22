@@ -510,6 +510,29 @@ emojiMenu.Add("💨 — Dashing Away", (itemName, *) => Send("💨"))
 ;========================================================================================================================
 
 ;--------------------------------------------------------------------------------
+; Open shortcut sheet PDF.
+
+^#F1::		; Ctrl + Win + F1
+{
+    shortcutSheetPath := A_ScriptDir "\\Docs\\SHORTCUTS.pdf"
+
+    if !FileExist(shortcutSheetPath)
+    {
+        MsgBox("Shortcut sheet PDF was not found:`n" shortcutSheetPath, "MyWinToolbox", "Iconx")
+        return
+    }
+
+    try
+    {
+        Run(shortcutSheetPath)
+    }
+    catch Error as e
+    {
+        MsgBox("Unable to open shortcut sheet:`n" e.Message, "MyWinToolbox", "Iconx")
+    }
+}
+
+;--------------------------------------------------------------------------------
 ; Show 'FormatMenu'
 
 #^f::
