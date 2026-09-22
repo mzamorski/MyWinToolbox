@@ -8,6 +8,8 @@ global TimerIntervalInMs := 500
 global AutoPasteEntries := []
 global ProcessedHwnds := Map()
 global NotifiedMatches := Map()
+global AutoPasteLastCleanupTick := 0
+global AutoPasteCleanupIntervalInMs := 5000
 
 ; --------------------------------------------------------------------------------
 ; Create watcher for `AutoPaste` functionality.
@@ -29,6 +31,46 @@ AutoPaste_Register(entries)
     else
     {
         SetTimer(AutoPaste_Run, 0)
+    }
+}
+
+AutoPaste_CleanupStaleWindows()
+{
+    global ProcessedHwnds, NotifiedMatches
+    global AutoPasteLastCleanupTick, AutoPasteCleanupIntervalInMs
+
+    currentTick := A_TickCount
+    if (
+        AutoPasteLastCleanupTick != 0
+        && currentTick >= AutoPasteLastCleanupTick
+        && currentTick - AutoPasteLastCleanupTick < AutoPasteCleanupIntervalInMs
+    )
+    {
+        return
+    }
+
+    AutoPasteLastCleanupTick := currentTick
+    staleHwnds := []
+
+    for trackedHwnd, processedState in ProcessedHwnds
+    {
+        if (!WinExist("ahk_id " trackedHwnd))
+        {
+            staleHwnds.Push(trackedHwnd)
+        }
+    }
+
+    for trackedHwnd in staleHwnds
+    {
+        if (ProcessedHwnds.Has(trackedHwnd))
+        {
+            ProcessedHwnds.Delete(trackedHwnd)
+        }
+
+        if (NotifiedMatches.Has(trackedHwnd))
+        {
+            NotifiedMatches.Delete(trackedHwnd)
+        }
     }
 }
 
@@ -291,6 +333,8 @@ AutoPaste_GetRuleLabel(entry, entryIndex)
 AutoPaste_Run(*)
 {
     global AutoPasteEntries, ProcessedHwnds, NotifiedMatches
+
+    AutoPaste_CleanupStaleWindows()
 
     hwnd := WinExist("A")
     if (!hwnd)
