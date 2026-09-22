@@ -15,7 +15,7 @@
 ;========================================================================================================================
 
 conflictingScriptName := "MyWinWork.ahk"
-if WinExist(conflictingScriptName)
+if WinExist(conflictingScriptName . " ahk_class AutoHotkey")
 {
     MsgBox("Another instance of a conflicting script '" . conflictingScriptName . "' is already running.`n`nThis script cannot operate concurrently and will now terminate."
         ,"Execution Blocked", "Iconx"
