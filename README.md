@@ -142,6 +142,8 @@ For example, a login form that needs keyboard navigation can be expressed as one
 
 One action must contain one operation only. Use separate items such as `{ "keys": "{Tab}" }`, `{ "delay": 200 }` rather than combining `keys` and `delay` in one object. The top-level `delay` remains an entry-level wait performed after matching and before window activation.
 
+AutoPaste validates the complete configuration during startup. Invalid rule fields, unsupported match modes, malformed actions, ambiguous top-level action sources, and actions with more than one operation stop registration immediately with a message that includes the rule/action location.
+
 The complete action list is validated before execution. If any action is invalid, AutoPaste executes none of the actions, avoiding partial form fills followed by repeated retries from the timer.
 
 Simple rules may continue to use top-level `text` or `passwordKey`; internally these are treated like a one-item action list. The older `focus` and `focusDelay` fields are still accepted for backward compatibility, but are normalized into leading `keys` and `delay` actions. New configurations should use `actions` only.

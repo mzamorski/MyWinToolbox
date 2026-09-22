@@ -16,6 +16,8 @@ AutoPaste_Register(entries)
 {
     global AutoPasteEntries, ProcessedHwnds, NotifiedMatches
 
+    AutoPaste_ValidateEntries(entries)
+
     AutoPasteEntries := entries
     ProcessedHwnds.Clear()
     NotifiedMatches.Clear()
@@ -28,6 +30,247 @@ AutoPaste_Register(entries)
     {
         SetTimer(AutoPaste_Run, 0)
     }
+}
+
+AutoPaste_ValidateEntries(entries)
+{
+    if (!IsObject(entries) || Type(entries) != "Array")
+    {
+        throw Error("AutoPastes.json: root value must be an array.")
+    }
+
+    allowedEntryFields := Map(
+        "name", true,
+        "exe", true,
+        "class", true,
+        "title", true,
+        "titleMatchMode", true,
+        "url", true,
+        "urlMatchMode", true,
+        "notifyOnMatch", true,
+        "delay", true,
+        "focus", true,
+        "focusDelay", true,
+        "passwordKey", true,
+        "text", true,
+        "actions", true
+    )
+
+    for entryIndex, entry in entries
+    {
+        ruleLabel := AutoPaste_GetRuleLabel(entry, entryIndex)
+
+        if (!IsObject(entry) || !(entry is Map))
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": rule must be an object.")
+        }
+
+        for fieldName, fieldValue in entry
+        {
+            if (!allowedEntryFields.Has(fieldName))
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": unknown field '" fieldName "'.")
+            }
+        }
+
+        hasMatcher := entry.Has("exe")
+            || entry.Has("class")
+            || entry.Has("title")
+            || entry.Has("url")
+
+        if (!hasMatcher)
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": at least one matcher (exe, class, title, url) is required.")
+        }
+
+        for fieldName in ["name", "exe", "class", "title", "url", "text", "passwordKey"]
+        {
+            if (entry.Has(fieldName) && Type(entry[fieldName]) != "String")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' must be a string.")
+            }
+        }
+
+        for fieldName in ["exe", "class", "title", "url", "passwordKey"]
+        {
+            if (entry.Has(fieldName) && Trim(entry[fieldName]) = "")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' cannot be empty.")
+            }
+        }
+
+        for fieldName in ["titleMatchMode", "urlMatchMode"]
+        {
+            if (entry.Has(fieldName))
+            {
+                mode := StrLower("" entry[fieldName])
+                if (mode != "contains" && mode != "equals")
+                {
+                    throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' must be 'contains' or 'equals'.")
+                }
+            }
+        }
+
+        for fieldName in ["delay", "focusDelay"]
+        {
+            if (entry.Has(fieldName))
+            {
+                value := entry[fieldName]
+                if (!IsNumber(value) || value < 0)
+                {
+                    throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' must be a non-negative number.")
+                }
+            }
+        }
+
+        if (entry.Has("notifyOnMatch"))
+        {
+            value := entry["notifyOnMatch"]
+            if (!IsNumber(value) || (value != 0 && value != 1))
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": 'notifyOnMatch' must be true or false.")
+            }
+        }
+
+        if (entry.Has("focus"))
+        {
+            focus := entry["focus"]
+            if (!IsObject(focus) || !(focus is Map))
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": legacy 'focus' must be an object.")
+            }
+
+            for fieldName, fieldValue in focus
+            {
+                if (fieldName != "method" && fieldName != "keys")
+                {
+                    throw Error("AutoPastes.json / " ruleLabel ": unknown focus field '" fieldName "'.")
+                }
+            }
+
+            method := focus.Has("method") ? StrLower("" focus["method"]) : "keys"
+            if (method != "keys")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": legacy focus method must be 'keys'.")
+            }
+
+            if (!focus.Has("keys") || Type(focus["keys"]) != "String" || focus["keys"] = "")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": legacy focus requires non-empty 'keys'.")
+            }
+        }
+        else if (entry.Has("focusDelay"))
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": 'focusDelay' requires legacy 'focus'.")
+        }
+
+        sourceCount := 0
+        for fieldName in ["actions", "passwordKey", "text"]
+        {
+            if (entry.Has(fieldName))
+            {
+                sourceCount += 1
+            }
+        }
+
+        if (sourceCount > 1)
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": use only one of actions, passwordKey, or text.")
+        }
+
+        if (entry.Has("actions"))
+        {
+            AutoPaste_ValidateActions(entry["actions"], ruleLabel)
+        }
+        else if (sourceCount = 0 && !entry.Has("focus"))
+        {
+            throw Error("AutoPastes.json / " ruleLabel ": rule has no executable action.")
+        }
+    }
+}
+
+AutoPaste_ValidateActions(actions, ruleLabel)
+{
+    if (!IsObject(actions) || Type(actions) != "Array" || actions.Length = 0)
+    {
+        throw Error("AutoPastes.json / " ruleLabel ": 'actions' must be a non-empty array.")
+    }
+
+    allowedActionFields := Map(
+        "keys", true,
+        "delay", true,
+        "passwordKey", true,
+        "text", true
+    )
+
+    for actionIndex, action in actions
+    {
+        actionLabel := ruleLabel " / action #" actionIndex
+
+        if (!IsObject(action) || !(action is Map))
+        {
+            throw Error("AutoPastes.json / " actionLabel ": action must be an object.")
+        }
+
+        for fieldName, fieldValue in action
+        {
+            if (!allowedActionFields.Has(fieldName))
+            {
+                throw Error("AutoPastes.json / " actionLabel ": unknown field '" fieldName "'.")
+            }
+        }
+
+        operationCount := 0
+        for fieldName in ["keys", "delay", "passwordKey", "text"]
+        {
+            if (action.Has(fieldName))
+            {
+                operationCount += 1
+            }
+        }
+
+        if (operationCount != 1)
+        {
+            throw Error("AutoPastes.json / " actionLabel ": action must contain exactly one operation (keys, delay, passwordKey, text).")
+        }
+
+        if (action.Has("delay"))
+        {
+            value := action["delay"]
+            if (!IsNumber(value) || value < 0)
+            {
+                throw Error("AutoPastes.json / " actionLabel ": 'delay' must be a non-negative number.")
+            }
+        }
+        else
+        {
+            for fieldName in ["keys", "passwordKey", "text"]
+            {
+                if (action.Has(fieldName) && Type(action[fieldName]) != "String")
+                {
+                    throw Error("AutoPastes.json / " actionLabel ": '" fieldName "' must be a string.")
+                }
+            }
+
+            for fieldName in ["keys", "passwordKey"]
+            {
+                if (action.Has(fieldName) && Trim(action[fieldName]) = "")
+                {
+                    throw Error("AutoPastes.json / " actionLabel ": '" fieldName "' cannot be empty.")
+                }
+            }
+        }
+    }
+}
+
+AutoPaste_GetRuleLabel(entry, entryIndex)
+{
+    if (IsObject(entry) && entry is Map && entry.Has("name") && Type(entry["name"]) = "String" && entry["name"] != "")
+    {
+        return entry["name"] " (#" entryIndex ")"
+    }
+
+    return "rule #" entryIndex
 }
 
 AutoPaste_Run(*)
