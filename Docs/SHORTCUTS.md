@@ -357,13 +357,3 @@ These parts of the cheat sheet can change without editing the AHK code:
 - `TextSnippets.json` — snippet categories and content.
 - `AutoPastes.json` — automatic window-matching paste rules.
 
----
-
-## Implementation notes
-
-Two timer-related details are worth checking in the current code:
-
-1. **Task Runner shutdown presets** pass `HOUR_IN_MILLISECONDS` into a function that multiplies the value by `SECOND_IN_MILLISECONDS` again. The labels say 1h/2h, but the actual timer value appears to be 1000× larger than intended.
-2. **NoSleep pointer nudge** checks `A_TimeIdle > 10 * SECOND_IN_MILLISECONDS` and the handler itself runs every 60 seconds. That differs from the README wording that mentions 10 minutes.
-
-These notes describe the current implementation and are separate from the intended UI labels above.
