@@ -48,6 +48,7 @@ AutoPaste_ValidateEntries(entries)
         "url", true,
         "urlMatchMode", true,
         "notifyOnMatch", true,
+        "triggerMode", true,
         "delay", true,
         "focus", true,
         "focusDelay", true,
@@ -108,6 +109,20 @@ AutoPaste_ValidateEntries(entries)
                 {
                     throw Error("AutoPastes.json / " ruleLabel ": '" fieldName "' must be 'contains' or 'equals'.")
                 }
+            }
+        }
+
+        if (entry.Has("triggerMode"))
+        {
+            triggerMode := StrLower("" entry["triggerMode"])
+            if (triggerMode != "onceperwindow" && triggerMode != "onceperurl" && triggerMode != "always")
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": 'triggerMode' must be 'oncePerWindow', 'oncePerUrl', or 'always'.")
+            }
+
+            if (triggerMode = "onceperurl" && !entry.Has("url"))
+            {
+                throw Error("AutoPastes.json / " ruleLabel ": triggerMode 'oncePerUrl' requires a 'url' matcher.")
             }
         }
 
@@ -331,18 +346,54 @@ AutoPaste_Run(*)
             notifiedEntries[entryIndex] := notificationValue
         }
 
-        ; A rule may paste successfully only once for a given top-level HWND.
-        ; URL changes within the same browser window must not re-trigger it.
-        if (processedEntries.Has(entryIndex))
+        triggerKey := AutoPaste_GetTriggerKey(entry, matchContext)
+
+        if (
+            triggerKey != ""
+            && processedEntries.Has(entryIndex)
+            && processedEntries[entryIndex].Has(triggerKey)
+        )
         {
             continue
         }
 
-        if (AutoPaste_Paste(hwnd, entry))
+        if (AutoPaste_Paste(hwnd, entry) && triggerKey != "")
         {
-            processedEntries[entryIndex] := true
+            if (!processedEntries.Has(entryIndex))
+            {
+                processedEntries[entryIndex] := Map()
+            }
+
+            processedEntries[entryIndex][triggerKey] := true
         }
     }
+}
+
+AutoPaste_GetTriggerMode(entry)
+{
+    if (!entry.Has("triggerMode"))
+    {
+        return "onceperwindow"
+    }
+
+    return StrLower("" entry["triggerMode"])
+}
+
+AutoPaste_GetTriggerKey(entry, matchContext)
+{
+    triggerMode := AutoPaste_GetTriggerMode(entry)
+
+    if (triggerMode = "always")
+    {
+        return ""
+    }
+
+    if (triggerMode = "onceperurl")
+    {
+        return matchContext["url"]
+    }
+
+    return "__window__"
 }
 
 AutoPaste_IsMatched(hwnd, entry, matchContext)

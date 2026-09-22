@@ -94,13 +94,14 @@ Browser-specific rules can match the active tab URL. It is recommended to includ
   "exe": "msedge.exe",
   "url": "https://example.com/login",
   "urlMatchMode": "contains",
+  "triggerMode": "oncePerWindow",
   "text": "Hello from AutoPaste"
 }
 ```
 
 AutoPaste reads the browser URL through Windows UI Automation when possible. If that is unavailable, it falls back to copying the address bar while preserving and restoring the existing clipboard content. URL lookup is only attempted for rules that contain `url` and only after the other configured window criteria have matched.
 
-Each rule is processed once for the current matching window state. For URL rules, navigating to a different URL causes the rule to be evaluated again, so another page in the same browser window can trigger its own AutoPaste rule.
+By default, each rule can paste only once per top-level window (`"triggerMode": "oncePerWindow"`). You can opt into `"oncePerUrl"` for URL rules to allow one paste per distinct URL in the same browser window, or `"always"` to execute every time the timer observes a match. `oncePerUrl` requires a `url` matcher.
 
 For diagnostics, add `"notifyOnMatch": true` to a rule. After all configured match criteria have succeeded—and before AutoPaste attempts to paste—Windows shows a notification containing the rule name, executable, window title, and the current URL for URL-based rules. This makes it possible to distinguish a matching problem from a focus/paste problem.
 
