@@ -114,35 +114,24 @@ For diagnostics, add `"notifyOnMatch": true` to a rule. After all configured mat
 }
 ```
 
-If the target field is not focused automatically, a rule can send keys before pasting. Currently the supported focus method is `keys`; `focusDelay` adds an optional pause after the key sequence.
+Execution after a match is modeled as an ordered `actions` list. Each action contains exactly one operation:
 
-```json
-{
-  "name": "Example login",
-  "exe": "msedge.exe",
-  "url": "https://example.com/login",
-  "notifyOnMatch": true,
-  "focus": {
-    "method": "keys",
-    "keys": "{Tab 2}"
-  },
-  "focusDelay": 150,
-  "passwordKey": "ExamplePassword"
-}
-```
+- `{ "keys": "{Tab 2}" }` — send AutoHotkey key syntax, including focus/navigation keys.
+- `{ "delay": 150 }` — wait the specified number of milliseconds.
+- `{ "text": "value" }` — paste literal text.
+- `{ "passwordKey": "ExamplePassword" }` — decrypt the named value from the active profile's `[Passwords]` section and paste it.
 
-The order is: match window/URL → optional match notification → `delay` → activate the window → apply `focus` → `focusDelay` → paste.
-
-Passwords must not be stored directly in JSON. Use `passwordKey` to point to an encrypted entry in the active profile's `[Passwords]` section. AutoPaste reads the value and decrypts it using the existing RC4 key from `[Settings]` / `Secret` immediately before pasting.
-
-For forms that require multiple values, use `actions`. Actions run in order and can paste literal `text`, decrypt and paste a `passwordKey`, send `keys`, or wait for a `delay` in milliseconds. The existing top-level `text` and `passwordKey` formats remain supported.
+For example, a login form that needs keyboard navigation can be expressed as one sequence:
 
 ```json
 {
   "name": "Example credentials",
   "exe": "msedge.exe",
   "url": "https://example.com/login",
+  "notifyOnMatch": true,
   "actions": [
+    { "keys": "{Tab 2}" },
+    { "delay": 150 },
     { "passwordKey": "ExampleLogin" },
     { "keys": "{Tab}" },
     { "passwordKey": "ExamplePassword" },
@@ -151,7 +140,13 @@ For forms that require multiple values, use `actions`. Actions run in order and 
 }
 ```
 
-Both values in this example are encrypted entries in the active profile's `[Passwords]` section. A delay can be a separate action, for example `{ "delay": 200 }`, or be added to another action to wait before it runs.
+One action must contain one operation only. Use separate items such as `{ "keys": "{Tab}" }`, `{ "delay": 200 }` rather than combining `keys` and `delay` in one object. The top-level `delay` remains an entry-level wait performed after matching and before window activation.
+
+The complete action list is validated before execution. If any action is invalid, AutoPaste executes none of the actions, avoiding partial form fills followed by repeated retries from the timer.
+
+Simple rules may continue to use top-level `text` or `passwordKey`; internally these are treated like a one-item action list. The older `focus` and `focusDelay` fields are still accepted for backward compatibility, but are normalized into leading `keys` and `delay` actions. New configurations should use `actions` only.
+
+Passwords must not be stored directly in JSON. Use `passwordKey` to point to an encrypted entry in the active profile's `[Passwords]` section. AutoPaste reads the value and decrypts it using the existing RC4 key from `[Settings]` / `Secret` immediately before pasting.
 
 ```json
 {

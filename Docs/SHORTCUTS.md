@@ -323,11 +323,7 @@ Browser URLs are read with Windows UI Automation when available; the fallback ad
 
 Set `"notifyOnMatch": true` on a rule to show a Windows notification after all match criteria succeed and before the paste is attempted. The notification includes the matched rule, executable, title, and URL when applicable, which is useful for diagnosing whether a failure is in matching or in the later focus/paste step.
 
-To move keyboard focus before pasting, use `"focus": { "method": "keys", "keys": "{Tab 2}" }`. An optional `focusDelay` in milliseconds is applied after the focus keys and before the paste.
-
-For secrets, use `passwordKey` and keep only the encrypted value in the profile configuration.
-
-For login forms with more than one field, use an ordered `actions` list. Each action can paste `text`, decrypt and paste a `passwordKey`, send `keys`, or apply a millisecond `delay`:
+Use an ordered `actions` list for keyboard focus/navigation and multi-field forms. Each action has exactly one operation: `keys`, `delay`, `text`, or `passwordKey`.
 
 ```json
 {
@@ -335,6 +331,8 @@ For login forms with more than one field, use an ordered `actions` list. Each ac
   "exe": "msedge.exe",
   "url": "https://example.com/login",
   "actions": [
+    { "keys": "{Tab 2}" },
+    { "delay": 150 },
     { "passwordKey": "ExampleLogin" },
     { "keys": "{Tab}" },
     { "passwordKey": "ExamplePassword" },
@@ -342,6 +340,8 @@ For login forms with more than one field, use an ordered `actions` list. Each ac
   ]
 }
 ```
+
+Simple top-level `text` and `passwordKey` rules remain supported. Legacy `focus` / `focusDelay` are accepted only for backward compatibility and are normalized into leading actions; new rules should use `actions` only. The action list is validated before execution, so an invalid item prevents the entire sequence from starting.
 
 ---
 

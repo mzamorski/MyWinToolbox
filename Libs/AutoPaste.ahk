@@ -245,45 +245,20 @@ AutoPaste_Paste(hwnd, entry)
         }
     }
 
-    if (!AutoPaste_ApplyFocus(entry))
-    {
-        return false
-    }
-
     return AutoPaste_ExecuteEntry(entry)
 }
 
 AutoPaste_ExecuteEntry(entry)
 {
-    if (!entry.Has("actions"))
-    {
-        text := AutoPaste_GetText(entry)
-        Std_Paste(text)
-        return true
-    }
-
-    actions := entry["actions"]
-    if (actions.Length = 0)
+    actions := AutoPaste_GetActions(entry)
+    if (actions.Length = 0 || !AutoPaste_ActionsAreValid(actions))
     {
         return false
     }
 
     for action in actions
     {
-        if (action.Has("delay") && action["delay"] > 0)
-        {
-            Sleep(action["delay"])
-        }
-
-        if (action.Has("keys"))
-        {
-            Send(action["keys"])
-        }
-        else if (action.Has("passwordKey") || action.Has("text"))
-        {
-            Std_Paste(AutoPaste_GetText(action))
-        }
-        else if (!action.Has("delay"))
+        if (!AutoPaste_ExecuteAction(action))
         {
             return false
         }
@@ -292,41 +267,103 @@ AutoPaste_ExecuteEntry(entry)
     return true
 }
 
-AutoPaste_ApplyFocus(entry)
+AutoPaste_GetActions(entry)
 {
-    if (!entry.Has("focus"))
+    actions := []
+
+    ; Backward compatibility: normalize the legacy focus/focusDelay fields
+    ; into ordinary actions. New configurations should use actions only.
+    if (entry.Has("focus"))
     {
-        return true
+        focus := entry["focus"]
+        method := focus.Has("method")
+            ? StrLower(focus["method"])
+            : "keys"
+
+        if (method != "keys" || !focus.Has("keys"))
+        {
+            return []
+        }
+
+        actions.Push(Map("keys", focus["keys"]))
+
+        if (entry.Has("focusDelay") && entry["focusDelay"] > 0)
+        {
+            actions.Push(Map("delay", entry["focusDelay"]))
+        }
     }
 
-    focus := entry["focus"]
-    method := focus.Has("method")
-        ? StrLower(focus["method"])
-        : "keys"
-
-    if (method = "keys")
+    if (entry.Has("actions"))
     {
-        if (!focus.Has("keys"))
+        for action in entry["actions"]
+        {
+            actions.Push(action)
+        }
+    }
+    else if (entry.Has("passwordKey"))
+    {
+        actions.Push(Map("passwordKey", entry["passwordKey"]))
+    }
+    else if (entry.Has("text"))
+    {
+        actions.Push(Map("text", entry["text"]))
+    }
+
+    return actions
+}
+
+AutoPaste_ActionsAreValid(actions)
+{
+    for action in actions
+    {
+        if (!AutoPaste_IsValidAction(action))
         {
             return false
         }
-
-        Send(focus["keys"])
     }
-    else
+
+    return true
+}
+
+AutoPaste_IsValidAction(action)
+{
+    operationCount := 0
+    for propertyName in ["keys", "delay", "passwordKey", "text"]
+    {
+        if (action.Has(propertyName))
+        {
+            operationCount += 1
+        }
+    }
+
+    return operationCount = 1
+}
+
+AutoPaste_ExecuteAction(action)
+{
+    if (!AutoPaste_IsValidAction(action))
     {
         return false
     }
 
-    delay := entry.Has("focusDelay")
-        ? entry["focusDelay"]
-        : 0
-
-    if (delay > 0)
+    if (action.Has("keys"))
     {
-        Sleep(delay)
+        Send(action["keys"])
+        return true
     }
 
+    if (action.Has("delay"))
+    {
+        delay := action["delay"]
+        if (delay > 0)
+        {
+            Sleep(delay)
+        }
+
+        return true
+    }
+
+    Std_Paste(AutoPaste_GetText(action))
     return true
 }
 
