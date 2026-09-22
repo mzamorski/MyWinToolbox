@@ -251,7 +251,7 @@ AutoPaste_Paste(hwnd, entry)
 AutoPaste_ExecuteEntry(entry)
 {
     actions := AutoPaste_GetActions(entry)
-    if (actions.Length = 0)
+    if (actions.Length = 0 || !AutoPaste_ActionsAreValid(actions))
     {
         return false
     }
@@ -312,7 +312,20 @@ AutoPaste_GetActions(entry)
     return actions
 }
 
-AutoPaste_ExecuteAction(action)
+AutoPaste_ActionsAreValid(actions)
+{
+    for action in actions
+    {
+        if (!AutoPaste_IsValidAction(action))
+        {
+            return false
+        }
+    }
+
+    return true
+}
+
+AutoPaste_IsValidAction(action)
 {
     operationCount := 0
     for propertyName in ["keys", "delay", "passwordKey", "text"]
@@ -323,8 +336,12 @@ AutoPaste_ExecuteAction(action)
         }
     }
 
-    ; Keep actions unambiguous: one action = one operation.
-    if (operationCount != 1)
+    return operationCount = 1
+}
+
+AutoPaste_ExecuteAction(action)
+{
+    if (!AutoPaste_IsValidAction(action))
     {
         return false
     }

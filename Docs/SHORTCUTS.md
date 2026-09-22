@@ -341,9 +341,7 @@ Use an ordered `actions` list for keyboard focus/navigation and multi-field form
 }
 ```
 
-Simple top-level `text` and `passwordKey` rules remain supported. Legacy `focus` / `focusDelay` are accepted only for backward compatibility and are normalized into leading actions; new rules should use `actions` only.
-
-```
+Simple top-level `text` and `passwordKey` rules remain supported. Legacy `focus` / `focusDelay` are accepted only for backward compatibility and are normalized into leading actions; new rules should use `actions` only. The action list is validated before execution, so an invalid item prevents the entire sequence from starting.
 
 ---
 
