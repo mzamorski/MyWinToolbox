@@ -26,7 +26,7 @@ MyWinToolbox is a collection of AutoHotkey v2 tools for common Windows, clipboar
 | `Ctrl + Win + F4` | Closes all windows with the same class as the active window. |
 | `Win + Space` | Copies the pixel color under the pointer and briefly shows a swatch. |
 | `Ctrl + Win + M` | Moves selected Explorer files or folders into a newly named subdirectory. |
-| `Win + Ctrl + Volume Mute` | Toggles mute for the active application's process. Requires `nircmd.exe`, included in the repository. |
+| `Win + Ctrl + Volume Mute` | Toggles mute for the active application's process through the native Windows Core Audio API. |
 
 ### Format menu
 

@@ -7,14 +7,49 @@
 
 FileEncoding("UTF-8")
 
-Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN) 
+Ini_GetUtf8Section(filePath, section)
 {
-    if !FileExist(filePath) 
+    if !FileExist(filePath)
     {
         throw IOError(filePath)
-    } 
+    }
 
-    value := IniRead(filePath, section, key, defaultValue)
+    entries := Map()
+    entries.CaseSense := false
+    currentSection := ""
+
+    ; The Windows INI API treats a BOM-less UTF-8 file as an ANSI file.
+    ; Parse it directly so localized values retain their Unicode characters.
+    fileContent := FileRead(filePath, "UTF-8")
+    for line in StrSplit(fileContent, "`n", "`r")
+    {
+        trimmedLine := Trim(line)
+        if RegExMatch(trimmedLine, "^\[(.*)\]$", &sectionMatch)
+        {
+            currentSection := Trim(sectionMatch[1])
+            continue
+        }
+
+        if (currentSection != section || trimmedLine = "" || SubStr(trimmedLine, 1, 1) = ";")
+        {
+            continue
+        }
+
+        separatorPos := InStr(line, "=")
+        if (separatorPos)
+        {
+            entryKey := Trim(SubStr(line, 1, separatorPos - 1))
+            entries[entryKey] := Trim(SubStr(line, separatorPos + 1))
+        }
+    }
+
+    return entries
+}
+
+Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN)
+{
+    entries := Ini_GetUtf8Section(filePath, section)
+    value := entries.Has(key) ? entries[key] : defaultValue
     value := StringUtils.RemoveComments(value)
     value := StrReplace(value, "\n", "`n")
 
@@ -31,13 +66,10 @@ Ini_GetSectionEntries(filePath, section)
     entries := OrderedMap()
     entries.CaseSense := false
 
-    entryLines := IniRead(filePath, section)
-    for line in StrSplit(entryLines, "`n")
+    for key, value in Ini_GetUtf8Section(filePath, section)
     {
-        key := StrSplit(line, "=")[1]
-        value := Ini_ReadOrDefault(filePath, section, key)
-
-        entries[key] := value
+        value := StringUtils.RemoveComments(value)
+        entries[key] := StrReplace(value, "\n", "`n")
     }
 
     return entries

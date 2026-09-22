@@ -18,6 +18,7 @@
 #Include Libs\CopyWindowInfo.ahk
 #Include Libs\DynamicHotStrings.ahk
 #Include Libs\AutoPaste.ahk
+#Include Libs\Sound.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
@@ -55,6 +56,9 @@ try
 	; Home/Work config
 	global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
 	global UserSignatures := Ini_GetSectionEntries(ConfigFilePath, "UserSignatures")
+	global AudioDeviceHeadphones := Ini_ReadOrDefault(ConfigFilePath, "AudioDevices", "Headphones", STRING_EMPTY)
+	global AudioDeviceMonitor := Ini_ReadOrDefault(ConfigFilePath, "AudioDevices", "Monitor", STRING_EMPTY)
+	global AudioDeviceLaptop := Ini_ReadOrDefault(ConfigFilePath, "AudioDevices", "Laptop", STRING_EMPTY)
 }
 catch Error as e
 {
@@ -687,19 +691,40 @@ HotKey_CloseAllWindows(withSameTitle := false)
 	}
 }
 
-NirCmd() => A_ScriptDir "\Libs\Externals\nircmd\nircmd.exe"
+; Fn is handled by the keyboard firmware and usually emits the corresponding
+; Numpad key. Register both NumLock states so the shortcuts work in either mode.
+^Numpad4::
+^NumpadLeft::
+{
+    Sound.SetDefaultDevice(AudioDeviceHeadphones, "Headphones")
+}
+
+^Numpad8::
+^NumpadUp::
+{
+    Sound.SetDefaultDevice(AudioDeviceMonitor, "Monitor")
+}
+
+^Numpad6::
+^NumpadRight::
+{
+    Sound.SetDefaultDevice(AudioDeviceLaptop, "Laptop")
+}
 
 ; --------------------------------------------------------------------------------
 ; Sound - Toggle mute of the active window
 #^Volume_Mute:: {
-	global NIRCMD
-
     procName := WinGetProcessName("A")
-
-    Run(NirCmd() ' muteappvolume "' procName '" 2', , "Hide")  ; 2 = toggle
-
-    ToolTip("Toggle mute: " procName)
-    SetTimer(() => ToolTip(), -2000)
+    procId := WinGetPID("A")
+    try
+    {
+        isMuted := Sound.ToggleProcessMute(procId)
+        Sound.ShowToolTip((isMuted ? "Muted: " : "Unmuted: ") procName)
+    }
+    catch Error as e
+    {
+        Sound.ShowToolTip("Unable to toggle mute: " procName "`n" e.Message, 6000)
+    }
 }
 
 ;========================================================================================================================
