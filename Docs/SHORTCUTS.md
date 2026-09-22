@@ -297,7 +297,7 @@ These are active only when `ssms.exe` is the foreground application.
 
 ## 🤖 AutoPaste
 
-`AutoPastes.json` defines automatic paste actions triggered when a matching window appears. Matching can use executable, window class, and title. A window handle is processed only once.
+`AutoPastes.json` defines automatic paste actions triggered when a matching window appears. Matching can use executable, window class, title, and—when a browser is active—the current tab URL. Title and URL criteria use containment by default and support exact matching with `titleMatchMode: "equals"` or `urlMatchMode: "equals"`.
 
 Current repository examples:
 
@@ -306,6 +306,20 @@ Current repository examples:
 | **Notepad** | `notepad.exe` | Paste `Hello World!`. |
 | **Notepad++** | `notepad++.exe` | Paste `Hello World++!`. |
 | **Cisco Secure Client** | executable + class + title | Decrypt the configured `CiscoSecurityPassword` and paste it. |
+
+Example browser rule:
+
+```json
+{
+  "name": "Example login",
+  "exe": "msedge.exe",
+  "url": "https://example.com/login",
+  "urlMatchMode": "contains",
+  "text": "Hello from AutoPaste"
+}
+```
+
+Browser URLs are read with Windows UI Automation when available; the fallback address-bar method preserves the clipboard. URL lookup only runs for rules that declare `url` and after their other window filters match. A URL rule can be triggered again after navigation changes the active tab URL.
 
 For secrets, use `passwordKey` and keep only the encrypted value in the profile configuration.
 

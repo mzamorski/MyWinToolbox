@@ -78,7 +78,7 @@ Additional dynamic hotstrings are configured in `HotStrings.json`. They support 
 
 ### AutoPaste
 
-`AutoPastes.json` defines actions that paste text when the active window matches optional `exe`, `class`, and `title` criteria. A title is matched by containment by default; use `"titleMatchMode": "equals"` for an exact match. Each window handle is processed once and an optional `delay` may be specified in milliseconds.
+`AutoPastes.json` defines actions that paste text when the active window matches optional `exe`, `class`, `title`, and `url` criteria. Title and URL matching use containment by default; use `"titleMatchMode": "equals"` or `"urlMatchMode": "equals"` for an exact match. An optional `delay` may be specified in milliseconds.
 
 For ordinary entries, use `text`:
 
@@ -86,15 +86,31 @@ For ordinary entries, use `text`:
 { "name": "Notepad", "exe": "notepad.exe", "text": "Hello World!" }
 ```
 
+Browser-specific rules can match the active tab URL. It is recommended to include the browser executable as an additional filter:
+
+```json
+{
+  "name": "Example login",
+  "exe": "msedge.exe",
+  "url": "https://example.com/login",
+  "urlMatchMode": "contains",
+  "text": "Hello from AutoPaste"
+}
+```
+
+AutoPaste reads the browser URL through Windows UI Automation when possible. If that is unavailable, it falls back to copying the address bar while preserving and restoring the existing clipboard content. URL lookup is only attempted for rules that contain `url` and only after the other configured window criteria have matched.
+
+Each rule is processed once for the current matching window state. For URL rules, navigating to a different URL causes the rule to be evaluated again, so another page in the same browser window can trigger its own AutoPaste rule.
+
 Passwords must not be stored directly in JSON. Use `passwordKey` to point to an encrypted entry in the active profile's `[Passwords]` section. AutoPaste reads the value and decrypts it using the existing RC4 key from `[Settings]` / `Secret` immediately before pasting.
 
 ```json
 {
-	"name": "Cisco Secure Client",
-	"exe": "csc_ui.exe",
-	"class": "#32770",
-	"title": "Klient Cisco Secure |",
-	"passwordKey": "CiscoSecurityPassword"
+    "name": "Cisco Secure Client",
+    "exe": "csc_ui.exe",
+    "class": "#32770",
+    "title": "Klient Cisco Secure |",
+    "passwordKey": "CiscoSecurityPassword"
 }
 ```
 
