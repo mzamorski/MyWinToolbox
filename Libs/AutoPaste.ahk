@@ -61,24 +61,17 @@ AutoPaste_Run(*)
     {
         if (!AutoPaste_IsMatched(hwnd, entry, matchContext))
         {
-            ; URL rules may become valid again after navigating away and back.
-            if (entry.Has("url"))
+            ; Notifications may fire again after navigating away and back,
+            ; but a successful paste remains processed for this HWND.
+            if (entry.Has("url") && notifiedEntries.Has(entryIndex))
             {
-                if (processedEntries.Has(entryIndex))
-                {
-                    processedEntries.Delete(entryIndex)
-                }
-
-                if (notifiedEntries.Has(entryIndex))
-                {
-                    notifiedEntries.Delete(entryIndex)
-                }
+                notifiedEntries.Delete(entryIndex)
             }
 
             continue
         }
 
-        processedValue := entry.Has("url")
+        notificationValue := entry.Has("url")
             ? matchContext["url"]
             : "__matched__"
 
@@ -87,25 +80,24 @@ AutoPaste_Run(*)
             && entry["notifyOnMatch"]
             && (
                 !notifiedEntries.Has(entryIndex)
-                || notifiedEntries[entryIndex] != processedValue
+                || notifiedEntries[entryIndex] != notificationValue
             )
         )
         {
             AutoPaste_ShowMatchNotification(hwnd, entry, matchContext)
-            notifiedEntries[entryIndex] := processedValue
+            notifiedEntries[entryIndex] := notificationValue
         }
 
-        if (
-            processedEntries.Has(entryIndex)
-            && processedEntries[entryIndex] = processedValue
-        )
+        ; A rule may paste successfully only once for a given top-level HWND.
+        ; URL changes within the same browser window must not re-trigger it.
+        if (processedEntries.Has(entryIndex))
         {
             continue
         }
 
         if (AutoPaste_Paste(hwnd, entry))
         {
-            processedEntries[entryIndex] := processedValue
+            processedEntries[entryIndex] := true
         }
     }
 }
