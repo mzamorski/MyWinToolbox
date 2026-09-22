@@ -198,6 +198,8 @@ To create the encrypted value, copy the password to the clipboard, press `Ctrl +
 
 Keep profile configuration private: it can contain personal details and encrypted password values. The repository's sample configuration is intentionally generic.
 
+Runtime diagnostics are written to `%LOCALAPPDATA%\MyWinToolbox\MyWinToolbox.log` (rotated at 2 MB). Set `[Logging] Debug = true` in `MyWinShared.ahk.config` for additional debug-level entries. Logging failures are intentionally non-fatal.
+
 ### Screenshots
 Here are some screenshots showcasing the functionalities of MyWinToolbox:
 

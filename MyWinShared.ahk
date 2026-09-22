@@ -7,6 +7,7 @@
 #Include Libs\CryptoUtils.ahk
 #Include Libs\DateTimeUtils.ahk
 #Include Libs\ConfigUtils.ahk
+#Include Libs\Logger.ahk
 #Include Libs\WinAPI.ahk
 #Include Libs\MenuUtils.ahk
 #include Libs\Externals\_JXON.ahk
@@ -44,6 +45,8 @@ if (MainScriptName = CurrentScriptName)
 global ConfigFilePath := MainScriptName . CONFIG_FILE_EXTENSION
 global SharedConfigFilePath := CurrentScriptName . CONFIG_FILE_EXTENSION
 
+Logger.Configure(false)
+
 ; --------------------------------------------------------------------------------
 ; Config/Main/INI
 
@@ -52,6 +55,9 @@ try
 	; Shared config
 	global SpacesPerIndent  := Ini_ReadOrDefault(SharedConfigFilePath, "Settings", "SpacesPerIndent")
 	global DummyText := Ini_ReadOrDefault(SharedConfigFilePath, "Content", "DummyText")
+	debugLoggingText := StrLower(Trim("" Ini_ReadOrDefault(SharedConfigFilePath, "Logging", "Debug", "false")))
+	global DebugLogging := (debugLoggingText = "true" || debugLoggingText = "1")
+	Logger.Configure(DebugLogging)
 
 	; Home/Work config
 	global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")
@@ -62,6 +68,7 @@ try
 }
 catch Error as e
 {
+	Logger.Error(e.Message . " | Line: " . e.Line . " / " . e.What, "Config")
 	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
 		,"Config error"
 	)
@@ -101,6 +108,7 @@ try
 }
 catch Error as e
 {
+	Logger.Error(e.Message . " | Line: " . e.Line . " / " . e.What, "Config")
 	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
 		, "Config error"
 	)
@@ -122,6 +130,7 @@ try
 }
 catch Error as e
 {
+	Logger.Error(e.Message . " | Line: " . e.Line . " / " . e.What, "Config")
 	MsgBox(e.Message . "`nLine: " . e.Line . " / " . e.What
 		, "Config error"
 	)

@@ -27,6 +27,7 @@ AutoPaste_Register(entries)
     if (AutoPasteEntries.Length > 0)
     {
         SetTimer(AutoPaste_Run, TimerIntervalInMs)
+        Logger.Info("Registered " AutoPasteEntries.Length " rule(s).", "AutoPaste")
     }
     else
     {
@@ -401,8 +402,15 @@ AutoPaste_Run(*)
             continue
         }
 
-        if (AutoPaste_Paste(hwnd, entry) && triggerKey != "")
+        if (AutoPaste_Paste(hwnd, entry))
         {
+            Logger.Info("Executed " AutoPaste_GetRuleLabel(entry, entryIndex) " for HWND " hwnd ".", "AutoPaste")
+
+            if (triggerKey = "")
+            {
+                continue
+            }
+
             if (!processedEntries.Has(entryIndex))
             {
                 processedEntries[entryIndex] := Map()
