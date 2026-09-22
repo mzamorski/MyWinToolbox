@@ -17,6 +17,7 @@ MyWinToolbox is a collection of AutoHotkey v2 tools for common Windows, clipboar
 
 | Shortcut | Function |
 | --- | --- |
+| `Ctrl + Win + F1` | Opens the bundled **PDF Shortcut Sheet**. |
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
