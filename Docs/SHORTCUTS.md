@@ -321,6 +321,8 @@ Example browser rule:
 
 Browser URLs are read with Windows UI Automation when available; the fallback address-bar method preserves the clipboard. URL lookup only runs for rules that declare `url` and after their other window filters match. A URL rule can be triggered again after navigation changes the active tab URL.
 
+Set `"notifyOnMatch": true` on a rule to show a Windows notification after all match criteria succeed and before the paste is attempted. The notification includes the matched rule, executable, title, and URL when applicable, which is useful for diagnosing whether a failure is in matching or in the later focus/paste step.
+
 For secrets, use `passwordKey` and keep only the encrypted value in the profile configuration.
 
 ---

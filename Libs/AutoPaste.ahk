@@ -7,16 +7,18 @@ global TimerIntervalInMs := 500
 
 global AutoPasteEntries := []
 global ProcessedHwnds := Map()
+global NotifiedMatches := Map()
 
 ; --------------------------------------------------------------------------------
 ; Create watcher for `AutoPaste` functionality.
 
 AutoPaste_Register(entries)
 {
-    global AutoPasteEntries, ProcessedHwnds
+    global AutoPasteEntries, ProcessedHwnds, NotifiedMatches
 
     AutoPasteEntries := entries
     ProcessedHwnds.Clear()
+    NotifiedMatches.Clear()
 
     if (AutoPasteEntries.Length > 0)
     {
@@ -30,7 +32,7 @@ AutoPaste_Register(entries)
 
 AutoPaste_Run(*)
 {
-    global AutoPasteEntries, ProcessedHwnds
+    global AutoPasteEntries, ProcessedHwnds, NotifiedMatches
 
     hwnd := WinExist("A")
     if (!hwnd)
@@ -43,7 +45,13 @@ AutoPaste_Run(*)
         ProcessedHwnds[hwnd] := Map()
     }
 
+    if (!NotifiedMatches.Has(hwnd))
+    {
+        NotifiedMatches[hwnd] := Map()
+    }
+
     processedEntries := ProcessedHwnds[hwnd]
+    notifiedEntries := NotifiedMatches[hwnd]
     matchContext := Map(
         "urlLoaded", false,
         "url", ""
@@ -54,9 +62,17 @@ AutoPaste_Run(*)
         if (!AutoPaste_IsMatched(hwnd, entry, matchContext))
         {
             ; URL rules may become valid again after navigating away and back.
-            if (entry.Has("url") && processedEntries.Has(entryIndex))
+            if (entry.Has("url"))
             {
-                processedEntries.Delete(entryIndex)
+                if (processedEntries.Has(entryIndex))
+                {
+                    processedEntries.Delete(entryIndex)
+                }
+
+                if (notifiedEntries.Has(entryIndex))
+                {
+                    notifiedEntries.Delete(entryIndex)
+                }
             }
 
             continue
@@ -65,6 +81,19 @@ AutoPaste_Run(*)
         processedValue := entry.Has("url")
             ? matchContext["url"]
             : "__matched__"
+
+        if (
+            entry.Has("notifyOnMatch")
+            && entry["notifyOnMatch"]
+            && (
+                !notifiedEntries.Has(entryIndex)
+                || notifiedEntries[entryIndex] != processedValue
+            )
+        )
+        {
+            AutoPaste_ShowMatchNotification(hwnd, entry, matchContext)
+            notifiedEntries[entryIndex] := processedValue
+        }
 
         if (
             processedEntries.Has(entryIndex)
@@ -156,6 +185,42 @@ AutoPaste_MatchesValue(actualValue, matchValue, matchMode)
     }
 
     return InStr(actualValue, matchValue, false) > 0
+}
+
+AutoPaste_ShowMatchNotification(hwnd, entry, matchContext)
+{
+    ruleName := entry.Has("name") ? entry["name"] : "(unnamed)"
+    winExe := WinGetProcessName("ahk_id " hwnd)
+    winTitle := AutoPaste_Truncate(WinGetTitle("ahk_id " hwnd), 120)
+
+    message := "Rule: " ruleName
+        . "`nEXE: " winExe
+
+    if (winTitle != "")
+    {
+        message .= "`nTitle: " winTitle
+    }
+
+    if (entry.Has("url"))
+    {
+        url := AutoPaste_Truncate(matchContext["url"], 180)
+        if (url != "")
+        {
+            message .= "`nURL: " url
+        }
+    }
+
+    TrayTip(message, "AutoPaste matched")
+}
+
+AutoPaste_Truncate(value, maxLength)
+{
+    if (StrLen(value) <= maxLength)
+    {
+        return value
+    }
+
+    return SubStr(value, 1, maxLength - 3) . "..."
 }
 
 AutoPaste_Paste(hwnd, entry)

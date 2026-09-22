@@ -102,6 +102,18 @@ AutoPaste reads the browser URL through Windows UI Automation when possible. If 
 
 Each rule is processed once for the current matching window state. For URL rules, navigating to a different URL causes the rule to be evaluated again, so another page in the same browser window can trigger its own AutoPaste rule.
 
+For diagnostics, add `"notifyOnMatch": true` to a rule. After all configured match criteria have succeeded—and before AutoPaste attempts to paste—Windows shows a notification containing the rule name, executable, window title, and the current URL for URL-based rules. This makes it possible to distinguish a matching problem from a focus/paste problem.
+
+```json
+{
+  "name": "Example login",
+  "exe": "msedge.exe",
+  "url": "https://example.com/login",
+  "notifyOnMatch": true,
+  "text": "Hello from AutoPaste"
+}
+```
+
 Passwords must not be stored directly in JSON. Use `passwordKey` to point to an encrypted entry in the active profile's `[Passwords]` section. AutoPaste reads the value and decrypts it using the existing RC4 key from `[Settings]` / `Secret` immediately before pasting.
 
 ```json
