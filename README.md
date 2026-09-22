@@ -11,6 +11,25 @@ MyWinToolbox is a collection of AutoHotkey v2 tools for common Windows, clipboar
 - Shared settings are read from `MyWinShared.ahk.config`.
 - Reload the active script with `Ctrl + Win + Home`; exit it with `Ctrl + Win + End`.
 
+## Production deployment
+
+Run `Install.ps1` from PowerShell to deploy the scripts to `C:\Program Files\MyWinToolbox`:
+
+```powershell
+.\Install.ps1
+```
+
+The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. It copies only the selected profile entry script, `MyWinShared.ahk`, and the required `Libs` tree. Files are compared by SHA-256, so unchanged scripts are skipped.
+
+Production configuration is preserved: the installer never copies or overwrites `*.config`, `AutoPastes.json`, `HotStrings.json`, or `TextSnippets.json`. Create and maintain these files directly in the installation directory.
+
+For a non-interactive deployment or a custom destination, pass parameters explicitly:
+
+```powershell
+.\Install.ps1 -Profile Home
+.\Install.ps1 -Profile Work -Destination 'D:\Tools\MyWinToolbox'
+```
+
 ## Shared functionality
 
 ### Menus and hotkeys
