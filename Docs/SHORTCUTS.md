@@ -319,7 +319,7 @@ Example browser rule:
 }
 ```
 
-Browser URLs are read with Windows UI Automation when available; the fallback address-bar method preserves the clipboard. URL lookup only runs for rules that declare `url` and after their other window filters match. The default trigger mode is `oncePerWindow`; URL rules can opt into `oncePerUrl`, while `always` disables processed-state suppression.
+Browser URLs are read with Windows UI Automation when available; the fallback address-bar method preserves the clipboard. URL lookup only runs for rules that declare `url` and after their other window filters match. The default trigger mode is `oncePerWindow`; URL rules can opt into `oncePerUrl`, while `always` disables processed-state suppression and repeats on each 500 ms timer match.
 
 Set `"notifyOnMatch": true` on a rule to show a Windows notification after all match criteria succeed and before the paste is attempted. The notification includes the matched rule, executable, title, and URL when applicable, which is useful for diagnosing whether a failure is in matching or in the later focus/paste step.
 

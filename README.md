@@ -20,7 +20,7 @@ Run `Install.ps1` from PowerShell to deploy the scripts to `C:\Program Files\MyW
 .\Install.ps1
 ```
 
-The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. It copies only the selected profile entry script, `MyWinShared.ahk`, and the required `Libs` tree. Files are compared by SHA-256, so unchanged scripts are skipped.
+The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. It deploys the selected profile entry script, `MyWinShared.ahk`, the required `Libs` and `Shared` trees, and the shortcut-sheet PDF. Files are compared by SHA-256, so unchanged files are skipped.
 
 Production configuration is preserved: the installer never copies or overwrites `*.config`, `AutoPastes.json`, `HotStrings.json`, or `TextSnippets.json`. Create and maintain these files directly in the installation directory.
 
@@ -119,7 +119,7 @@ Browser-specific rules can match the active tab URL. It is recommended to includ
 
 AutoPaste reads the browser URL through Windows UI Automation when possible. If that is unavailable, it falls back to copying the address bar while preserving and restoring the existing clipboard content. URL lookup is only attempted for rules that contain `url` and only after the other configured window criteria have matched.
 
-By default, each rule can paste only once per top-level window (`"triggerMode": "oncePerWindow"`). You can opt into `"oncePerUrl"` for URL rules to allow one paste per distinct URL in the same browser window, or `"always"` to execute every time the timer observes a match. `oncePerUrl` requires a `url` matcher.
+By default, each rule can paste only once per top-level window (`"triggerMode": "oncePerWindow"`). You can opt into `"oncePerUrl"` for URL rules to allow one paste per distinct URL in the same browser window, or `"always"` to execute every time the 500 ms AutoPaste timer observes a match. `oncePerUrl` requires a `url` matcher. Use `always` only for actions that are intentionally safe to repeat.
 
 For diagnostics, add `"notifyOnMatch": true` to a rule. After all configured match criteria have succeeded—and before AutoPaste attempts to paste—Windows shows a notification containing the rule name, executable, window title, and the current URL for URL-based rules. This makes it possible to distinguish a matching problem from a focus/paste problem.
 
@@ -207,7 +207,7 @@ To create the encrypted value, copy the password to the clipboard, press `Ctrl +
 
 | File | Purpose |
 | --- | --- |
-| `MyWinShared.ahk.config` | Shared settings such as `SpacesPerIndent` and `DummyText`. |
+| `MyWinShared.ahk.config` | Shared settings such as `SpacesPerIndent`, `DummyText`, and runtime logging. |
 | `MyWinHome.ahk.config` | Home email, shipping address, RC4 secret, signatures, and encrypted passwords. |
 | `MyWinWork.ahk.config` | Work email, RC4 secret, signatures, and optionally encrypted passwords used by AutoPaste. |
 | `HotStrings.json` | Dynamic hotstring definitions and window scopes. |
