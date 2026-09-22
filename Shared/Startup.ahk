@@ -30,6 +30,10 @@ try
 	debugLoggingText := StrLower(Trim("" Ini_ReadOrDefault(SharedConfigFilePath, "Logging", "Debug", "false")))
 	global DebugLogging := (debugLoggingText = "true" || debugLoggingText = "1")
 	Logger.Configure(DebugLogging)
+	if (DebugLogging)
+	{
+		Logger.Debug("Debug logging enabled.", "Startup")
+	}
 
 	; Home/Work config
 	global Secret := Ini_ReadOrDefault(ConfigFilePath, "Settings", "Secret")

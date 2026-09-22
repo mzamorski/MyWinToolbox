@@ -28,6 +28,15 @@ AutoPaste_Register(entries)
     {
         SetTimer(AutoPaste_Run, TimerIntervalInMs)
         Logger.Info("Registered " AutoPasteEntries.Length " rule(s).", "AutoPaste")
+
+        for entryIndex, entry in AutoPasteEntries
+        {
+            Logger.Debug(
+                AutoPaste_GetRuleLabel(entry, entryIndex)
+                    . " triggerMode=" AutoPaste_GetTriggerMode(entry),
+                "AutoPaste"
+            )
+        }
     }
     else
     {
@@ -72,6 +81,8 @@ AutoPaste_CleanupStaleWindows()
         {
             NotifiedMatches.Delete(trackedHwnd)
         }
+
+        Logger.Debug("Removed stale state for HWND " trackedHwnd ".", "AutoPaste")
     }
 }
 
