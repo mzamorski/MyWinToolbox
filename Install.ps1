@@ -5,7 +5,11 @@ param(
 
     [string]$Destination = (Join-Path $env:ProgramFiles 'MyWinToolbox'),
 
-    [switch]$NoElevation
+    [switch]$NoElevation,
+
+    [switch]$Verify,
+
+    [switch]$Restart
 )
 
 $ErrorActionPreference = 'Stop'
@@ -53,6 +57,14 @@ if ($destinationIsInProgramFiles -and -not $NoElevation -and -not (Test-IsAdmini
         '-Destination', ('"{0}"' -f $destinationPath)
     )
 
+    if ($Verify) {
+        $arguments += '-Verify'
+    }
+
+    if ($Restart) {
+        $arguments += '-Restart'
+    }
+
     Write-Host 'Administrator permission is required to deploy to Program Files.'
     $process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $arguments -Wait -PassThru
     exit $process.ExitCode
@@ -62,6 +74,7 @@ $entryScript = "MyWin$Profile.ahk"
 $files = @(
     $entryScript
     'MyWinShared.ahk'
+    'Docs\SHORTCUTS.pdf'
 )
 
 $libFiles = Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'Libs') -File -Recurse -Filter '*.ahk'
@@ -99,7 +112,47 @@ foreach ($relativePath in $files) {
     }
 }
 
+if ($Verify) {
+    $verificationErrors = @()
+
+    foreach ($relativePath in $files) {
+        $sourcePath = Join-Path $sourceRoot $relativePath
+        $targetPath = Join-Path $destinationPath $relativePath
+
+        if (-not (Test-Path -LiteralPath $targetPath -PathType Leaf)) {
+            $verificationErrors += "Missing target file: $relativePath"
+            continue
+        }
+
+        $sourceHash = (Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash
+        $targetHash = (Get-FileHash -LiteralPath $targetPath -Algorithm SHA256).Hash
+
+        if ($sourceHash -ne $targetHash) {
+            $verificationErrors += "Hash mismatch: $relativePath"
+        }
+    }
+
+    if ($verificationErrors.Count -gt 0) {
+        throw ("Deployment verification failed:`n - " + ($verificationErrors -join "`n - "))
+    }
+
+    Write-Host "Verification passed for $($files.Count) deployed files." -ForegroundColor Green
+}
+
 Write-Host ''
 Write-Host "MyWinToolbox $Profile deployed to: $destinationPath" -ForegroundColor Green
 Write-Host "Updated files: $copied; unchanged files: $unchanged"
 Write-Host 'Configuration and JSON data files were not changed.'
+
+if ($Restart) {
+    $targetEntryScript = Join-Path $destinationPath $entryScript
+
+    if (-not (Test-Path -LiteralPath $targetEntryScript -PathType Leaf)) {
+        throw "Cannot restart MyWinToolbox; profile entry script was not found: $targetEntryScript"
+    }
+
+    Write-Host "Restarting MyWinToolbox $Profile..."
+    # Launch through the user's Explorer shell so an elevated installer does not
+    # accidentally leave the AutoHotkey profile running elevated.
+    Start-Process -FilePath 'explorer.exe' -ArgumentList ('"{0}"' -f $targetEntryScript)
+}

@@ -30,6 +30,12 @@ For a non-interactive deployment or a custom destination, pass parameters explic
 .\Install.ps1 -Profile Work -Destination 'D:\Tools\MyWinToolbox'
 ```
 
+Use `-Verify` to compare SHA-256 hashes after deployment and `-Restart` to start/reload the selected installed profile. The installer also deploys `Docs\SHORTCUTS.pdf`, which is required by the `Ctrl + Win + F1` shortcut.
+
+```powershell
+.\Install.ps1 -Profile Work -Verify -Restart
+```
+
 
 ### Tests
 
