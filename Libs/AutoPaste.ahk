@@ -114,7 +114,10 @@ AutoPaste_IsMatched(hwnd, entry, matchContext)
 {
     if (entry.Has("exe"))
     {
-        winExe := WinGetProcessName("ahk_id " hwnd)
+        if (!AutoPaste_TryGetProcessName(hwnd, &winExe))
+        {
+            return false
+        }
 
         if (StrLower(winExe) != StrLower(entry["exe"]))
         {
@@ -124,7 +127,10 @@ AutoPaste_IsMatched(hwnd, entry, matchContext)
 
     if (entry.Has("class"))
     {
-        winClass := WinGetClass("ahk_id " hwnd)
+        if (!AutoPaste_TryGetClass(hwnd, &winClass))
+        {
+            return false
+        }
 
         if (StrLower(winClass) != StrLower(entry["class"]))
         {
@@ -134,7 +140,11 @@ AutoPaste_IsMatched(hwnd, entry, matchContext)
 
     if (entry.Has("title"))
     {
-        winTitle := WinGetTitle("ahk_id " hwnd)
+        if (!AutoPaste_TryGetTitle(hwnd, &winTitle))
+        {
+            return false
+        }
+
         matchMode := entry.Has("titleMatchMode")
             ? entry["titleMatchMode"]
             : "contains"
@@ -177,6 +187,51 @@ AutoPaste_IsMatched(hwnd, entry, matchContext)
     return true
 }
 
+AutoPaste_TryGetProcessName(hwnd, &value)
+{
+    value := ""
+
+    try
+    {
+        value := WinGetProcessName("ahk_id " hwnd)
+        return true
+    }
+    catch Error
+    {
+        return false
+    }
+}
+
+AutoPaste_TryGetClass(hwnd, &value)
+{
+    value := ""
+
+    try
+    {
+        value := WinGetClass("ahk_id " hwnd)
+        return true
+    }
+    catch Error
+    {
+        return false
+    }
+}
+
+AutoPaste_TryGetTitle(hwnd, &value)
+{
+    value := ""
+
+    try
+    {
+        value := WinGetTitle("ahk_id " hwnd)
+        return true
+    }
+    catch Error
+    {
+        return false
+    }
+}
+
 AutoPaste_MatchesValue(actualValue, matchValue, matchMode)
 {
     if (matchMode = "equals")
@@ -190,8 +245,15 @@ AutoPaste_MatchesValue(actualValue, matchValue, matchMode)
 AutoPaste_ShowMatchNotification(hwnd, entry, matchContext)
 {
     ruleName := entry.Has("name") ? entry["name"] : "(unnamed)"
-    winExe := WinGetProcessName("ahk_id " hwnd)
-    winTitle := AutoPaste_Truncate(WinGetTitle("ahk_id " hwnd), 120)
+
+    winExe := ""
+    AutoPaste_TryGetProcessName(hwnd, &winExe)
+
+    winTitle := ""
+    if (AutoPaste_TryGetTitle(hwnd, &rawWinTitle))
+    {
+        winTitle := AutoPaste_Truncate(rawWinTitle, 120)
+    }
 
     message := "Rule: " ruleName
         . "`nEXE: " winExe
