@@ -55,10 +55,20 @@ catch Error as e
 ; --------------------------------------------------------------------------------
 ; Config/TextSnippets/JSON
 
+global TextSnippetsJson := Map()
+
 try
 {
-	fileContent := FileRead("TextSnippets.json")
-	global TextSnippetsJson := jxon_load(&fileContent)
+	textSnippetsFilePath := "TextSnippets.json"
+	if FileExist(textSnippetsFilePath)
+	{
+		fileContent := FileRead(textSnippetsFilePath)
+		TextSnippetsJson := jxon_load(&fileContent)
+	}
+	else
+	{
+		Logger.Warning(textSnippetsFilePath . " was not found; the Text Snippets menu will be empty.", "Config")
+	}
 }
 catch Error as e
 {
