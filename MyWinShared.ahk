@@ -514,7 +514,7 @@ emojiMenu.Add("💨 — Dashing Away", (itemName, *) => Send("💨"))
 
 ^#F1::		; Ctrl + Win + F1
 {
-    shortcutSheetPath := A_ScriptDir "\\Docs\\SHORTCUTS.pdf"
+    shortcutSheetPath := A_ScriptDir "\Docs\SHORTCUTS.pdf"
 
     if !FileExist(shortcutSheetPath)
     {
