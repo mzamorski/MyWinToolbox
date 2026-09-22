@@ -10,7 +10,13 @@ class Logger
     static Configure(debugEnabled := false)
     {
         Logger.DebugEnabled := !!debugEnabled
-        Logger.LogDirectory := A_LocalAppData "\MyWinToolbox"
+        localAppData := EnvGet("LOCALAPPDATA")
+        if (localAppData = "")
+        {
+            localAppData := A_AppData
+        }
+
+        Logger.LogDirectory := localAppData "\MyWinToolbox"
         Logger.LogPath := Logger.LogDirectory "\MyWinToolbox.log"
 
         try
