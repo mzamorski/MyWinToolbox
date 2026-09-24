@@ -29,5 +29,6 @@ Persistent
 ; Shared feature modules are included in execution order.
 #Include Shared\Startup.ahk
 #Include Shared\Menus.ahk
+#Include Shared\TaskRunner.ahk
 #Include Shared\Hotkeys.ahk
 #Include Shared\Hotstrings.ahk

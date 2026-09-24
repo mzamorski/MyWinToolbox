@@ -35,6 +35,19 @@ Both profiles include everything from `MyWinShared.ahk`.
 | `Win + Ctrl + D` | Paste the current local date/time. |
 | `Ctrl + Tab` | Insert the configured number of spaces (`SpacesPerIndent`). |
 | `Win + Space` | Copy the pixel color under the mouse pointer and briefly show a color swatch. |
+| `Ctrl + Win + A` | Toggle **NoSleep**. Keeps system/display execution state active and periodically nudges the pointer while idle. |
+| `Ctrl + Win + T` | Open **Task Runner** menu. |
+
+### Task Runner
+
+| Menu item | Action |
+| --- | --- |
+| **NoSleep** | Toggle the same NoSleep state as `Ctrl + Win + A`. |
+| **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. |
+| **Shutdown → 1h** | Schedule shutdown using the menu's 1-hour preset. |
+| **Shutdown → 2h** | Schedule shutdown using the menu's 2-hour preset. |
+| **Shutdown → Cancel** | Cancel the pending shutdown timer created by Task Runner. |
+| **Clipboard → Trim** | Continuously trim leading/trailing spaces, tabs, CR, and LF from clipboard updates. |
 
 ### Windows and Explorer
 
@@ -267,18 +280,6 @@ Run `MyWinWork.ahk`.
 | Shortcut / hotstring | Action |
 | --- | --- |
 | `@k=` | Paste configured work email. |
-| `Ctrl + Win + A` | Toggle **NoSleep**. Keeps system/display execution state active and periodically nudges the pointer while idle. |
-| `Ctrl + Win + T` | Open **Task Runner** menu. |
-
-### Task Runner
-
-| Menu item | Action |
-| --- | --- |
-| **NoSleep** | Toggle the same NoSleep state as `Ctrl + Win + A`. |
-| **Shutdown → 1h** | Schedule shutdown using the menu's 1-hour preset. |
-| **Shutdown → 2h** | Schedule shutdown using the menu's 2-hour preset. |
-| **Shutdown → Cancel** | Cancel the pending shutdown timer created by Task Runner. |
-| **Clipboard → Trim** | Continuously trim leading/trailing spaces, tabs, CR, and LF from clipboard updates. |
 
 ### SQL Server Management Studio hotstrings
 

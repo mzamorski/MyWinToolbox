@@ -67,6 +67,8 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Win + Space` | Copies the pixel color under the pointer and briefly shows a swatch. |
 | `Ctrl + Win + M` | Moves selected Explorer files or folders into a newly named subdirectory. |
 | `Win + Ctrl + Volume Mute` | Toggles mute for the active application's process through the native Windows Core Audio API. |
+| `Ctrl + Win + A` | Enables or disables NoSleep. While enabled, it keeps the system and display awake and moves the pointer slightly after 10 minutes of idle time. |
+| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
 
 ### Format menu
 
@@ -197,11 +199,9 @@ To create the encrypted value, copy the password to the clipboard, press `Ctrl +
 
 ## Work profile
 
-`MyWinWork.ahk` adds database and task-runner shortcuts:
+`MyWinWork.ahk` adds database shortcuts:
 
 - In SQL Server Management Studio, `try=`, `break=`, `nl=`, `dt=`, `sel=`, and `dirty` expand to common T-SQL templates. `sel=` uses the current clipboard content as the table name.
-- `Ctrl + Win + A` enables or disables NoSleep. While enabled, it keeps the system and display awake and moves the pointer slightly after 10 minutes of idle time.
-- `Ctrl + Win + T` opens the Task Runner menu, with options for NoSleep, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates.
 
 ## Configuration files
 

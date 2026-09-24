@@ -2,10 +2,12 @@
 
 #Include Std.ahk
 #Include Browser.ahk
+#Include Logger.ahk
 
 global TimerIntervalInMs := 500
 
 global AutoPasteEntries := []
+global AutoPasteEnabled := false
 global ProcessedHwnds := Map()
 global NotifiedMatches := Map()
 global AutoPasteLastCleanupTick := 0
@@ -26,7 +28,7 @@ AutoPaste_Register(entries)
 
     if (AutoPasteEntries.Length > 0)
     {
-        SetTimer(AutoPaste_Run, TimerIntervalInMs)
+        AutoPaste_SetEnabled(true)
         Logger.Info("Registered " AutoPasteEntries.Length " rule(s).", "AutoPaste")
 
         for entryIndex, entry in AutoPasteEntries
@@ -40,8 +42,30 @@ AutoPaste_Register(entries)
     }
     else
     {
-        SetTimer(AutoPaste_Run, 0)
+        AutoPaste_SetEnabled(false)
     }
+}
+
+AutoPaste_IsEnabled()
+{
+    global AutoPasteEnabled
+
+    return AutoPasteEnabled
+}
+
+AutoPaste_SetEnabled(enabled)
+{
+    global AutoPasteEnabled, AutoPasteEntries, TimerIntervalInMs
+
+    AutoPasteEnabled := enabled && AutoPasteEntries.Length > 0
+    SetTimer(AutoPaste_Run, AutoPasteEnabled ? TimerIntervalInMs : 0)
+
+    return AutoPasteEnabled
+}
+
+AutoPaste_Toggle()
+{
+    return AutoPaste_SetEnabled(!AutoPaste_IsEnabled())
 }
 
 AutoPaste_CleanupStaleWindows()
