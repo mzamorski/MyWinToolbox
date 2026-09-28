@@ -2,31 +2,34 @@
 
 #Requires AutoHotkey v2.0
 
-#!c:: {
-    hwnd := WinExist("A")
-    if !hwnd
-        return
+CopyWindowInfo_Copy(hwnd, showTooltip := true)
+{
+    if (!hwnd || !WinExist("ahk_id " hwnd))
+    {
+        return ""
+    }
 
-    ; Basic window props
     title := WinGetTitle("ahk_id " hwnd)
-    cls   := WinGetClass("ahk_id " hwnd)
-    pid   := WinGetPID("ahk_id " hwnd)
-    exe   := ""
-    try exe := WinGetProcessPath("ahk_id " hwnd)
-    if !exe
+    cls := WinGetClass("ahk_id " hwnd)
+    pid := WinGetPID("ahk_id " hwnd)
+    exe := ""
+
+    try
+    {
+        exe := WinGetProcessPath("ahk_id " hwnd)
+    }
+
+    if (!exe)
+    {
         exe := WinGetProcessName("ahk_id " hwnd)
+    }
 
-    ; Geometry
-    WinGetPos &x, &y, &w, &h, "ahk_id " hwnd
+    WinGetPos(&x, &y, &w, &h, "ahk_id " hwnd)
 
-    ; Monitor + DPI
     monIdx := GetMonitorIndexFromWindow(hwnd)
-    dpi    := GetDpiForHwnd(hwnd)
-
-    ; Optional resource (Explorer path)
+    dpi := GetDpiForHwnd(hwnd)
     resource := GetExplorerPathForHwnd(hwnd)
 
-    ; Build clipboard text (multi-line, human-friendly)
     info :=
     (
     "Title: "         title        "`n"
@@ -43,10 +46,22 @@
 
     A_Clipboard := info
 
-    ; Short confirmation
-    ToolTip "Window info copied"
-    SetTimer () => ToolTip(), -800
-    return
+    if (showTooltip)
+    {
+        ToolTip("Window info copied")
+        SetTimer(() => ToolTip(), -800)
+    }
+
+    return info
+}
+
+#!c::
+{
+    hwnd := WinExist("A")
+    if (hwnd)
+    {
+        CopyWindowInfo_Copy(hwnd)
+    }
 }
 
 ; -------- Helpers --------
