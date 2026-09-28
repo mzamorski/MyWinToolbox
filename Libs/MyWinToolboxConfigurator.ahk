@@ -1485,13 +1485,49 @@ class MyWinToolboxConfigurator
         )
     }
 
+    MakeUniqueHotStringValue(fieldName, baseValue)
+    {
+        definitions := this.HotStringsState.GetDefinitions()
+        candidate := baseValue
+        suffix := 2
+
+        while true
+        {
+            exists := false
+
+            for definition in definitions
+            {
+                if (
+                    definition.Has(fieldName)
+                    && StrLower(Trim("" definition[fieldName]))
+                        = StrLower(Trim(candidate))
+                )
+                {
+                    exists := true
+                    break
+                }
+            }
+
+            if (!exists)
+            {
+                return candidate
+            }
+
+            candidate := baseValue suffix
+            suffix += 1
+        }
+    }
+
     OnAddHotString(*)
     {
         definitions := this.HotStringsState.GetDefinitions()
 
+        newId := this.MakeUniqueHotStringValue("Id", "new")
+        newTrigger := this.MakeUniqueHotStringValue("Trigger", "new")
+
         definitions.Push(Map(
-            "Id", "new",
-            "Trigger", "new",
+            "Id", newId,
+            "Trigger", newTrigger,
             "Text", "",
             "IncludeScopes", ["*"],
             "ExcludeScopes", [],
@@ -1518,12 +1554,18 @@ class MyWinToolboxConfigurator
 
         if (clone.Has("Id"))
         {
-            clone["Id"] := clone["Id"] "-copy"
+            clone["Id"] := this.MakeUniqueHotStringValue(
+                "Id",
+                clone["Id"] "-copy"
+            )
         }
 
         if (clone.Has("Trigger"))
         {
-            clone["Trigger"] := clone["Trigger"] "-copy"
+            clone["Trigger"] := this.MakeUniqueHotStringValue(
+                "Trigger",
+                clone["Trigger"] "-copy"
+            )
         }
 
         insertIndex := this.SelectedHotStringIndex + 1
