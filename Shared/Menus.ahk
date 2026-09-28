@@ -330,8 +330,8 @@ BuildTextSnippetsMenu()
     global TextSnippetsJson, textSnippetsMenu
     global SNIPPET_TITLE_PROPERY, SNIPPET_CONTENT_PROPERY, SNIPPET_CONTENT_SEPARATOR
 
-    menu := Menu()
-    menu.SetColor("b6e0e7")
+    snippetsMenu := Menu()
+    snippetsMenu.SetColor("b6e0e7")
 
     for snippetName in TextSnippetsJson
     {
@@ -339,7 +339,7 @@ BuildTextSnippetsMenu()
 
         if (snippetName = SNIPPET_CONTENT_SEPARATOR)
         {
-            menu.Add()
+            snippetsMenu.Add()
             continue
         }
 
@@ -364,11 +364,11 @@ BuildTextSnippetsMenu()
                 subMenu.Add(title, Menu_TextSnippetCallback.Bind(,,, content))
             }
 
-            menu.Add(snippetName, subMenu)
+            snippetsMenu.Add(snippetName, subMenu)
         }
     }
 
-    textSnippetsMenu := menu
+    textSnippetsMenu := snippetsMenu
     return textSnippetsMenu
 }
 
