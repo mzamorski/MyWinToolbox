@@ -20,7 +20,7 @@ Run `Install.ps1` from PowerShell to deploy the scripts to `C:\Program Files\MyW
 .\Install.ps1
 ```
 
-The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. It deploys the selected profile entry script, `MyWinShared.ahk`, the required `Libs` and `Shared` trees, and the shortcut-sheet PDF. Files are compared by SHA-256, so unchanged files are skipped.
+The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. Before copying files it stops the Windows Scheduled Task named `MyWinToolbox`; after a successful deployment it starts the task again. It deploys the selected profile entry script, `MyWinShared.ahk`, the required `Libs` and `Shared` trees, and the shortcut-sheet PDF. Files are compared by SHA-256, so unchanged files are skipped.
 
 Production configuration is preserved: the installer never copies or overwrites `*.config`, `AutoPastes.json`, `HotStrings.json`, or `TextSnippets.json`. Create and maintain these files directly in the installation directory.
 
@@ -31,10 +31,10 @@ For a non-interactive deployment or a custom destination, pass parameters explic
 .\Install.ps1 -Profile Work -Destination 'D:\Tools\MyWinToolbox'
 ```
 
-Use `-Verify` to compare SHA-256 hashes after deployment and `-Restart` to start/reload the selected installed profile. The installer also deploys `Docs\SHORTCUTS.pdf`, which is required by the `Ctrl + Win + F1` shortcut.
+Use `-Verify` to compare SHA-256 hashes after deployment. Restarting is automatic through the `MyWinToolbox` Scheduled Task, so `-Restart` is no longer required and is retained only for backward compatibility. If the task does not exist, deployment still succeeds and a warning is shown. The installer also deploys `Docs\SHORTCUTS.pdf`, which is required by the `Ctrl + Win + F1` shortcut.
 
 ```powershell
-.\Install.ps1 -Profile Work -Verify -Restart
+.\Install.ps1 -Profile Work -Verify
 ```
 
 
