@@ -62,6 +62,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
 | `Win + Ctrl + Page Up` | Toggles always-on-top for the active window. |
+| `Win + Ctrl + K` | Toggles per-window KeepAlive. Sends a tiny background `WM_MOUSEMOVE` pulse every 60 seconds without activating the target window or moving the physical pointer. |
 | `Win + Alt + F4` | Closes windows with the same class and title as the active window. |
 | `Ctrl + Win + F4` | Closes all windows with the same class as the active window. |
 | `Win + Space` | Copies the pixel color under the pointer and briefly shows a swatch. |
