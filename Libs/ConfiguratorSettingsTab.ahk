@@ -350,7 +350,7 @@ class ConfiguratorSettingsTab
         this.EmailEdit := this.Window.AddEdit("x45 y298 w495 h25")
         this.EmailEdit.OnEvent("Change", ObjBindMethod(this, "OnFieldChanged"))
 
-        this.Window.AddText("x45 y335 w100", "Secret")
+        this.Window.AddText("x45 y335 w140", "Legacy RC4 Secret")
         this.SecretEdit := this.Window.AddEdit("x45 y355 w390 h25 Password")
         this.SecretEdit.OnEvent("Change", ObjBindMethod(this, "OnFieldChanged"))
 
@@ -403,7 +403,7 @@ class ConfiguratorSettingsTab
         this.Window.AddText("x800 y362 w80", "Name")
         this.PasswordNameEdit := this.Window.AddEdit("x800 y382 w315 h25 ReadOnly")
 
-        this.Window.AddText("x800 y420 w120", "Encrypted value")
+        this.Window.AddText("x800 y420 w180", "Stored encrypted value")
         this.PasswordValueEdit := this.Window.AddEdit("x800 y440 w315 h65")
         this.PasswordValueEdit.OnEvent(
             "Change",
@@ -420,7 +420,7 @@ class ConfiguratorSettingsTab
         this.PasswordDeleteButton.OnEvent("Click", ObjBindMethod(this, "OnDeletePassword"))
 
         this.PasswordSetPlainButton := this.Window.AddButton(
-            "x850 y566 w130 h28",
+            "x842 y566 w126 h28",
             "Set plaintext..."
         )
         this.PasswordSetPlainButton.OnEvent(
@@ -428,9 +428,18 @@ class ConfiguratorSettingsTab
             ObjBindMethod(this, "OnSetPasswordPlaintext")
         )
 
+        this.PasswordMigrateButton := this.Window.AddButton(
+            "x976 y566 w139 h28",
+            "Migrate RC4 -> DPAPI"
+        )
+        this.PasswordMigrateButton.OnEvent(
+            "Click",
+            ObjBindMethod(this, "OnMigrateLegacyPasswords")
+        )
+
         this.Window.AddText(
-            "x800 y515 w315 h38",
-            "Changing Secret does not re-encrypt existing passwords."
+            "x800 y515 w315 h42",
+            "New passwords use Windows DPAPI. Secret is required only for legacy RC4 values."
         )
     }
 
@@ -536,9 +545,12 @@ class ConfiguratorSettingsTab
             throw Error("SpacesPerIndent must be an integer from 1 to 32.")
         }
 
-        if (Trim(this.SecretEdit.Value) = "")
+        if (this.HasLegacyPasswords() && Trim(this.SecretEdit.Value) = "")
         {
-            throw Error("Profile Secret cannot be empty.")
+            throw Error(
+                "Legacy RC4 passwords still exist, so [Settings] / Secret cannot be empty. "
+                    "Migrate them to DPAPI first."
+            )
         }
 
         ConfiguratorSettingsTab.ValidateNamedEntries(
@@ -581,12 +593,13 @@ class ConfiguratorSettingsTab
 
         if (
             newSecret != this.OriginalSecret
-            && this.Passwords.Length > 0
+            && this.HasLegacyPasswords()
         )
         {
             answer := MsgBox(
-                "The profile Secret changed while encrypted passwords exist.`n`n"
-                    "Existing password values are NOT automatically re-encrypted and may stop decrypting.`n`n"
+                "The profile Secret changed while legacy RC4 passwords still exist.`n`n"
+                    "Those RC4 values depend on the old Secret and may stop decrypting.`n"
+                    "DPAPI values are not affected.`n`n"
                     "Save anyway?",
                 "MyWinToolbox Configurator",
                 "YesNo Icon!"
@@ -904,7 +917,16 @@ class ConfiguratorSettingsTab
             names := []
             for entry in this.Passwords
             {
-                names.Push(entry["Name"])
+                value := "" entry["Value"]
+                protectionLabel := value = ""
+                    ? "empty"
+                    : (
+                        CryptoUtils.IsProtectedValue(value)
+                            ? "DPAPI"
+                            : "RC4"
+                    )
+
+                names.Push(entry["Name"] " [" protectionLabel "]")
             }
 
             if (names.Length > 0)
@@ -1093,20 +1115,9 @@ class ConfiguratorSettingsTab
             return
         }
 
-        secret := this.SecretEdit.Value
-        if (Trim(secret) = "")
-        {
-            MsgBox(
-                "Set a profile Secret first.",
-                "MyWinToolbox Configurator",
-                "Iconx"
-            )
-            return
-        }
-
         result := InputBox(
             "Plaintext password for '" entry["Name"] "':",
-            "Set encrypted password",
+            "Set DPAPI-protected password",
             "w420 h140 Password"
         )
 
@@ -1115,9 +1126,119 @@ class ConfiguratorSettingsTab
             return
         }
 
-        entry["Value"] := CryptoUtils.Encrypt(result.Value, secret)
+        entry["Value"] := CryptoUtils.Protect(result.Value)
         this.SetDirty()
-        this.LoadSelectedPassword()
+        this.RefreshPasswords(this.SelectedPasswordIndex)
+    }
+
+    OnMigrateLegacyPasswords(*)
+    {
+        legacyCount := this.GetLegacyPasswordCount()
+
+        if (legacyCount = 0)
+        {
+            MsgBox(
+                "There are no legacy RC4 passwords to migrate.",
+                "MyWinToolbox Configurator",
+                "Iconi"
+            )
+            return
+        }
+
+        if (Trim(this.OriginalSecret) = "")
+        {
+            MsgBox(
+                "The profile did not contain a Secret when the Configurator was opened.`n"
+                    "Legacy RC4 passwords cannot be migrated without their original key.",
+                "MyWinToolbox Configurator",
+                "Iconx"
+            )
+            return
+        }
+
+        answer := MsgBox(
+            "Migrate " legacyCount " legacy RC4 password(s) to Windows DPAPI?`n`n"
+                "The conversion happens in memory first. Nothing is written until you click Save.`n"
+                "After migration, these passwords no longer depend on the profile Secret.",
+            "MyWinToolbox Configurator",
+            "YesNo Icon!"
+        )
+
+        if (answer != "Yes")
+        {
+            return
+        }
+
+        migratedValues := []
+
+        try
+        {
+            for index, entry in this.Passwords
+            {
+                value := "" entry["Value"]
+
+                if (value = "" || CryptoUtils.IsProtectedValue(value))
+                {
+                    continue
+                }
+
+                migratedValues.Push(
+                    Map(
+                        "Index", index,
+                        "Value", CryptoUtils.MigrateToDpapi(
+                            value,
+                            this.OriginalSecret
+                        )
+                    )
+                )
+            }
+        }
+        catch Error as e
+        {
+            MsgBox(
+                "Migration failed before any in-memory values were changed:`n" e.Message,
+                "MyWinToolbox Configurator",
+                "Iconx"
+            )
+            return
+        }
+
+        for migrated in migratedValues
+        {
+            this.Passwords[migrated["Index"]]["Value"] := migrated["Value"]
+        }
+
+        this.SetDirty()
+        this.RefreshPasswords(this.SelectedPasswordIndex)
+
+        MsgBox(
+            migratedValues.Length " password(s) migrated in memory.`n`n"
+                "Click Save (or Save + Reload) to persist the DPAPI values.",
+            "MyWinToolbox Configurator",
+            "Iconi"
+        )
+    }
+
+    GetLegacyPasswordCount()
+    {
+        count := 0
+
+        for entry in this.Passwords
+        {
+            value := "" entry["Value"]
+
+            if (value != "" && !CryptoUtils.IsProtectedValue(value))
+            {
+                count += 1
+            }
+        }
+
+        return count
+    }
+
+    HasLegacyPasswords()
+    {
+        return this.GetLegacyPasswordCount() > 0
     }
 
     EntryNameExists(entries, name, ignoredIndex := 0)
@@ -1157,5 +1278,6 @@ class ConfiguratorSettingsTab
         this.PasswordRenameButton.Enabled := hasEntry
         this.PasswordDeleteButton.Enabled := hasEntry
         this.PasswordSetPlainButton.Enabled := hasEntry
+        this.PasswordMigrateButton.Enabled := this.HasLegacyPasswords()
     }
 }
