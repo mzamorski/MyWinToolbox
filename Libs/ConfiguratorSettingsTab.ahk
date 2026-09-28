@@ -55,6 +55,39 @@ class ConfiguratorIniDocument
         return !!startIndex
     }
 
+    HasSection(sectionName)
+    {
+        return this.FindSection(sectionName, &startIndex, &endIndex)
+    }
+
+    HasKey(sectionName, keyName)
+    {
+        if (!this.FindSection(sectionName, &startIndex, &endIndex))
+        {
+            return false
+        }
+
+        Loop endIndex - startIndex - 1
+        {
+            index := startIndex + A_Index
+            line := this.Lines[index]
+            separatorPos := InStr(line, "=")
+
+            if (!separatorPos)
+            {
+                continue
+            }
+
+            candidateKey := Trim(SubStr(line, 1, separatorPos - 1))
+            if (StrLower(candidateKey) = StrLower(keyName))
+            {
+                return true
+            }
+        }
+
+        return false
+    }
+
     Get(sectionName, keyName, defaultValue := "")
     {
         if (!this.FindSection(sectionName, &startIndex, &endIndex))
@@ -284,6 +317,13 @@ class ConfiguratorSettingsTab
         this.Dirty := false
         this.UpdatingControls := false
         this.OriginalSecret := this.ProfileDoc.Get("Settings", "Secret", "")
+        this.HadShippingAddress := this.ProfileDoc.HasKey(
+            "Settings",
+            "ShippingAddress"
+        )
+        this.HadAudioDevices := this.ProfileDoc.HasSection("AudioDevices")
+        this.HadSignatures := this.ProfileDoc.HasSection("UserSignatures")
+        this.HadPasswords := this.ProfileDoc.HasSection("Passwords")
 
         this.Build()
         this.LoadFields()
@@ -590,39 +630,55 @@ class ConfiguratorSettingsTab
             this.SecretEdit.Value
         )
 
-        this.ProfileDoc.Set(
-            "Settings",
-            "ShippingAddress",
-            this.ShippingEdit.Value
-        )
+        if (this.HadShippingAddress || this.ShippingEdit.Value != "")
+        {
+            this.ProfileDoc.Set(
+                "Settings",
+                "ShippingAddress",
+                this.ShippingEdit.Value
+            )
+        }
 
-        this.ProfileDoc.Set(
-            "AudioDevices",
-            "Headphones",
-            this.HeadphonesEdit.Value
-        )
+        hasAudioValues := this.HeadphonesEdit.Value != ""
+            || this.MonitorEdit.Value != ""
+            || this.LaptopEdit.Value != ""
 
-        this.ProfileDoc.Set(
-            "AudioDevices",
-            "Monitor",
-            this.MonitorEdit.Value
-        )
+        if (this.HadAudioDevices || hasAudioValues)
+        {
+            this.ProfileDoc.Set(
+                "AudioDevices",
+                "Headphones",
+                this.HeadphonesEdit.Value
+            )
 
-        this.ProfileDoc.Set(
-            "AudioDevices",
-            "Laptop",
-            this.LaptopEdit.Value
-        )
+            this.ProfileDoc.Set(
+                "AudioDevices",
+                "Monitor",
+                this.MonitorEdit.Value
+            )
 
-        this.ProfileDoc.ReplaceSectionEntries(
-            "UserSignatures",
-            this.Signatures
-        )
+            this.ProfileDoc.Set(
+                "AudioDevices",
+                "Laptop",
+                this.LaptopEdit.Value
+            )
+        }
 
-        this.ProfileDoc.ReplaceSectionEntries(
-            "Passwords",
-            this.Passwords
-        )
+        if (this.HadSignatures || this.Signatures.Length > 0)
+        {
+            this.ProfileDoc.ReplaceSectionEntries(
+                "UserSignatures",
+                this.Signatures
+            )
+        }
+
+        if (this.HadPasswords || this.Passwords.Length > 0)
+        {
+            this.ProfileDoc.ReplaceSectionEntries(
+                "Passwords",
+                this.Passwords
+            )
+        }
     }
 
     Save()
