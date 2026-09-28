@@ -49,6 +49,26 @@
 	textSnippetsMenu.Show()
 }
 
+TextSnippetsEditor_OnSaved(data)
+{
+    global TextSnippetsJson
+
+    TextSnippetsJson := data
+    BuildTextSnippetsMenu()
+    TrayTip("Text Snippets", "Saved and menu refreshed.")
+}
+
++#^s::		; Shift + Win + Ctrl + s
+{
+    global TextSnippetsJson, TextSnippetsFilePath
+
+    TextSnippetsEditor.Show(
+        TextSnippetsJson,
+        TextSnippetsFilePath,
+        TextSnippetsEditor_OnSaved
+    )
+}
+
 ;--------------------------------------------------------------------------------
 ; Show 'EmocjiMenu'
 
