@@ -202,9 +202,25 @@ class ConfiguratorHotStringsState
                 }
             }
 
-            if (aliasDefinition.Has("TitleRegex") && Type(aliasDefinition["TitleRegex"]) != "String")
+            if (aliasDefinition.Has("TitleRegex"))
             {
-                throw Error("Scope '" aliasName "' field 'TitleRegex' must be a string.")
+                if (Type(aliasDefinition["TitleRegex"]) != "String")
+                {
+                    throw Error("Scope '" aliasName "' field 'TitleRegex' must be a string.")
+                }
+
+                titleRegex := aliasDefinition["TitleRegex"]
+                if (titleRegex != "")
+                {
+                    try
+                    {
+                        RegExMatch("", titleRegex)
+                    }
+                    catch Error
+                    {
+                        throw Error("Scope '" aliasName "' contains an invalid TitleRegex.")
+                    }
+                }
             }
         }
 
