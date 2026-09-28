@@ -5,11 +5,25 @@
 #^2::Win_Third(2)
 #^3::Win_Third(3)
 
-Win_Third(n) {
+Win_Third(n)
+{
     hwnd := WinExist("A")
-    if (!hwnd)
+    if (hwnd)
     {
-        return
+        Win_ThirdForWindow(hwnd, n)
+    }
+}
+
+Win_ThirdForWindow(hwnd, n)
+{
+    if (!hwnd || !WinExist("ahk_id " hwnd))
+    {
+        return false
+    }
+
+    if (n < 1 || n > 3)
+    {
+        throw Error("Third index must be between 1 and 3.")
     }
 
     Monitor_GetWorkAreaFromWindow(hwnd, &l, &t, &r, &b)
@@ -17,10 +31,10 @@ Win_Third(n) {
     w := (r - l) // 3
     x := l + (n - 1) * w
 
-    ; Optional: ensure not maximized (some apps ignore move while maximized)
     try WinRestore("ahk_id " hwnd)
 
     WinMove(x, t, w, (b - t), "ahk_id " hwnd)
+    return true
 }
 
 ; Returns work area of the monitor on which the given window (hwnd) resides.
