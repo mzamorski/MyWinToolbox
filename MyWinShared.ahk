@@ -20,6 +20,7 @@
 #Include Libs\DynamicHotStrings.ahk
 #Include Libs\AutoPaste.ahk
 #Include Libs\Sound.ahk
+#Include Libs\WindowKeepAlive.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
