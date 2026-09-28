@@ -245,7 +245,7 @@ HotKey_CloseAllWindows(withSameTitle := false)
 
 
 ; --------------------------------------------------------------------------------
-; Window KeepAlive - Toggle background mouse activity for the active window
+; Window KeepAlive - Toggle foreground input pulse for the active window
 #^k:: {
     hwnd := WinExist("A")
     if (!hwnd)
