@@ -2,8 +2,7 @@
 
 class WindowKeepAlive
 {
-    static WM_MOUSEMOVE := 0x0200
-    static PulseIntervalMs := 60000
+    static PulseIntervalMs := 5 * 60 * 1000
     static Targets := Map()
     static TimerCallback := 0
     static IsTimerRunning := false
@@ -25,7 +24,7 @@ class WindowKeepAlive
         processId := WinGetPID("ahk_id " hwnd)
         WindowKeepAlive.Targets[hwnd] := {
             ProcessId: processId,
-            NextCoordinate: 1
+            NextDelta: 1
         }
 
         WindowKeepAlive.EnsureTimer()
@@ -46,15 +45,11 @@ class WindowKeepAlive
                     continue
                 }
 
-                coordinate := target.NextCoordinate
-                target.NextCoordinate := (coordinate = 1) ? 2 : 1
-
-                lParam := WindowKeepAlive.MakeLParam(coordinate, coordinate)
-                PostMessage(WindowKeepAlive.WM_MOUSEMOVE, 0, lParam, , "ahk_id " hwnd)
+                WindowKeepAlive.PulseWindow(hwnd, target)
             }
             catch Error
             {
-                ; Keep the target registered. A transient access/message failure should not
+                ; Keep the target registered. A transient activation/input failure should not
                 ; silently disable KeepAlive for a still-running window.
             }
         }
@@ -67,9 +62,59 @@ class WindowKeepAlive
         WindowKeepAlive.StopTimerIfIdle()
     }
 
-    static MakeLParam(x, y)
+    static PulseWindow(hwnd, target)
     {
-        return (x & 0xFFFF) | ((y & 0xFFFF) << 16)
+        selector := "ahk_id " hwnd
+        previousHwnd := WinExist("A")
+        wasMinimized := WinGetMinMax(selector) = -1
+        previousCoordMode := A_CoordModeMouse
+
+        try
+        {
+            if (wasMinimized)
+            {
+                WinRestore(selector)
+            }
+
+            WinActivate(selector)
+            if (!WinWaitActive(selector, , 2))
+            {
+                throw Error("Unable to activate the target window.")
+            }
+
+            CoordMode("Mouse", "Screen")
+            MouseGetPos(&mouseX, &mouseY)
+
+            delta := target.NextDelta
+            target.NextDelta := -delta
+
+            ; Generate real foreground mouse input instead of posting WM_MOUSEMOVE.
+            ; The second move restores the cursor to its original screen position.
+            MouseMove(delta, delta, 0, "R")
+            Sleep(50)
+            MouseMove(mouseX, mouseY, 0)
+        }
+        finally
+        {
+            CoordMode("Mouse", previousCoordMode)
+
+            if (previousHwnd && previousHwnd != hwnd && WinExist("ahk_id " previousHwnd))
+            {
+                try
+                {
+                    WinActivate("ahk_id " previousHwnd)
+                    WinWaitActive("ahk_id " previousHwnd, , 2)
+                }
+            }
+
+            if (wasMinimized && WinExist(selector))
+            {
+                try
+                {
+                    WinMinimize(selector)
+                }
+            }
+        }
     }
 
     static EnsureTimer()
