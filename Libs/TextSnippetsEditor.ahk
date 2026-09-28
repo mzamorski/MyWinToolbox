@@ -48,8 +48,8 @@ class TextSnippetsEditor
         this.CategoryList := this.Gui.AddListBox("x12 y36 w220 h460")
         this.CategoryList.OnEvent("Change", ObjBindMethod(this, "OnCategoryChanged"))
 
-        this.SnippetList := this.Gui.AddListBox("x248 y36 w280 h460")
-        this.SnippetList.OnEvent("Change", ObjBindMethod(this, "OnSnippetChanged"))
+        this.SnippetList := this.Gui.AddListView("x248 y36 w280 h460 -Hdr -Multi", ["Snippet"])
+        this.SnippetList.OnEvent("ItemSelect", ObjBindMethod(this, "OnSnippetChanged"))
         this.SnippetList.OnEvent("DoubleClick", ObjBindMethod(this, "OnSnippetDoubleClick"))
 
         this.Gui.AddText("x544 y38 w80", "Title")
@@ -111,8 +111,56 @@ class TextSnippetsEditor
         return jxon_load(&json)
     }
 
+    static ValidateData(data)
+    {
+        if (!IsObject(data) || !(data is Map))
+        {
+            throw Error("TextSnippets.json root value must be an object.")
+        }
+
+        for categoryName, snippets in data
+        {
+            if (Type(categoryName) != "String" || Trim(categoryName) = "")
+            {
+                throw Error("Category names must be non-empty strings.")
+            }
+
+            if (!IsObject(snippets) || Type(snippets) != "Array")
+            {
+                throw Error("Category '" categoryName "' must contain an array.")
+            }
+
+            for snippetIndex, snippet in snippets
+            {
+                if (!IsObject(snippet) || !(snippet is Map))
+                {
+                    throw Error("Category '" categoryName "', snippet #" snippetIndex " must be an object.")
+                }
+
+                if (!snippet.Has("Content") || Type(snippet["Content"]) != "String")
+                {
+                    throw Error("Category '" categoryName "', snippet #" snippetIndex " requires string Content.")
+                }
+
+                for optionalField in ["Title", "Description"]
+                {
+                    if (snippet.Has(optionalField) && Type(snippet[optionalField]) != "String")
+                    {
+                        throw Error(
+                            "Category '" categoryName "', snippet #" snippetIndex
+                            " field '" optionalField "' must be a string."
+                        )
+                    }
+                }
+            }
+        }
+
+        return true
+    }
+
     static SaveData(filePath, data)
     {
+        TextSnippetsEditor.ValidateData(data)
         json := Jxon_dump(data, 4)
         tempPath := filePath ".tmp"
         backupPath := filePath ".bak"
@@ -249,7 +297,10 @@ class TextSnippetsEditor
 
             if (labels.Length > 0)
             {
-                this.SnippetList.Add(labels)
+                for label in labels
+                {
+                    this.SnippetList.Add("", label)
+                }
 
                 selectedIndex := preferredIndex
                 if (selectedIndex < 1 || selectedIndex > labels.Length)
@@ -257,7 +308,7 @@ class TextSnippetsEditor
                     selectedIndex := 1
                 }
 
-                this.SnippetList.Choose(selectedIndex)
+                this.SnippetList.Modify(selectedIndex, "Select Focus Vis")
                 this.SelectedSnippetIndex := selectedIndex
             }
             else
@@ -335,20 +386,20 @@ class TextSnippetsEditor
         this.RefreshSnippets()
     }
 
-    OnSnippetChanged(*)
+    OnSnippetChanged(control, rowNumber, selected)
     {
-        if (this.UpdatingControls || this.SnippetList.Value = 0)
+        if (this.UpdatingControls || !selected || rowNumber = 0)
         {
             return
         }
 
-        this.SelectedSnippetIndex := this.SnippetList.Value
+        this.SelectedSnippetIndex := rowNumber
         this.LoadSelectedSnippet()
         this.UpdateEditorEnabledState()
         this.UpdateStatus()
     }
 
-    OnSnippetDoubleClick(*)
+    OnSnippetDoubleClick(control, rowNumber)
     {
         if (this.TitleEdit.Enabled)
         {
@@ -436,9 +487,8 @@ class TextSnippetsEditor
             return
         }
 
-        ; Rebuild the list to keep labels in sync with title/content edits.
-        index := this.SelectedSnippetIndex
-        this.RefreshSnippets(index)
+        label := TextSnippetsEditor.GetSnippetLabel(snippet, this.SelectedSnippetIndex)
+        this.SnippetList.Modify(this.SelectedSnippetIndex, "", label)
     }
 
     OnAddCategory(*)
@@ -545,7 +595,6 @@ class TextSnippetsEditor
         this.SetDirty()
         this.RefreshSnippets(snippets.Length)
         this.TitleEdit.Focus()
-        this.TitleEdit.Select()
     }
 
     OnDuplicateSnippet(*)
