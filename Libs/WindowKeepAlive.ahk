@@ -81,7 +81,7 @@ class WindowKeepAlive
 
         if (!WindowKeepAlive.TimerCallback)
         {
-            WindowKeepAlive.TimerCallback := WindowKeepAlive.Tick.Bind()
+            WindowKeepAlive.TimerCallback := ObjBindMethod(WindowKeepAlive, "Tick")
         }
 
         SetTimer(WindowKeepAlive.TimerCallback, WindowKeepAlive.PulseIntervalMs)
