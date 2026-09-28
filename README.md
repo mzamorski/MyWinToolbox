@@ -58,7 +58,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
-| `Ctrl + Win + Shift + S` | Opens the **Text Snippets Editor** GUI for managing categories and snippets in `TextSnippets.json`. |
+| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for managing Text Snippets, dynamic HotStrings, and HotString scope aliases. |
 | `Ctrl + Win + E` | Opens the emoji menu. |
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
@@ -85,7 +85,7 @@ The Format menu transforms clipboard content and pastes the result. It provides:
 
 ### String generator and snippets
 
-The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens a GUI editor where categories and snippets can be added, renamed, duplicated, reordered, deleted, and edited without touching JSON manually. Saving creates `TextSnippets.json.bak` and refreshes the live snippets menu immediately. The emoji menu pastes a small set of frequently used symbols.
+The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. Its **Text Snippets** tab manages categories, snippets, descriptions, separators and ordering; saving creates `TextSnippets.json.bak` and refreshes the live snippets menu immediately. The **HotStrings** tab edits triggers, IDs, options, send mode, text, tags, include/exclude scopes and enabled state, while **HotString Scopes** edits reusable process/class/title-regex aliases. HotString changes are saved to `HotStrings.json` with a `.bak` backup and take effect after reload; use **Save + Reload** to apply them immediately. The emoji menu pastes a small set of frequently used symbols.
 
 ### Built-in hotstrings
 
@@ -96,7 +96,7 @@ The String Generator creates GUIDs, random strings (16 or 32 characters), dummy 
 - In Command Prompt or Windows Terminal, `s30m=`, `s1h=`, and `s2h=` insert shutdown commands for 30 minutes, 1 hour, and 2 hours.
 - In TortoiseGit dialogs, `r=` expands to `Refactoring.`.
 
-Additional dynamic hotstrings are configured in `HotStrings.json`. They support triggers, AHK options, replacement text, enabled state, sending mode, and inclusion/exclusion scopes based on process, window class, or title.
+Additional dynamic hotstrings are configured in `HotStrings.json`. They support triggers, AHK options, replacement text, enabled state, sending mode, tags, and inclusion/exclusion scopes based on process, window class, or title. They can be edited from the **HotStrings** and **HotString Scopes** tabs of `Ctrl + Win + Shift + S`, so manual JSON editing is no longer required for normal changes.
 
 ### AutoPaste
 
