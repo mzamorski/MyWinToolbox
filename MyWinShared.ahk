@@ -21,6 +21,7 @@
 #Include Libs\AutoPaste.ahk
 #Include Libs\Sound.ahk
 #Include Libs\WindowKeepAlive.ahk
+#Include Libs\TextSnippetsEditor.ahk
 
 SendMode("Input")
 SetTitleMatchMode("2")
