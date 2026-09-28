@@ -225,7 +225,7 @@ Keep profile configuration private: it can contain personal details and encrypte
 
 ### Configuration backup and restore
 
-The Configurator **Backup / Restore** tab creates ZIP snapshots under `Documents\MyWinToolbox\Backups`. A snapshot contains the active profile `.config`, `MyWinShared.ahk.config`, `TextSnippets.json`, `HotStrings.json`, `AutoPastes.json`, and a versioned manifest. Missing optional JSON files are skipped.
+The Configurator **Backup / Restore** tab creates ZIP snapshots under `Documents\MyWinToolbox\Backups`. A snapshot contains the active profile `.config`, `MyWinShared.ahk.config`, `TextSnippets.json`, `HotStrings.json`, `AutoPastes.json`, and a versioned manifest. Missing optional JSON files are skipped. Backup operates on files already saved to disk, so pending Configurator edits must be saved first.
 
 Restore accepts only backups whose manifest matches the currently active Home/Work profile. It extracts only whitelisted root-level configuration files, creates a separate `pre-restore` safety backup of the current on-disk configuration, then replaces files from the selected archive and reloads MyWinToolbox. Files not present in the archive are left unchanged. Writing into an installation under `Program Files` may trigger a Windows UAC prompt.
 
