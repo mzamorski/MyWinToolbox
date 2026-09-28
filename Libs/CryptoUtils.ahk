@@ -4,7 +4,7 @@
 
 class CryptoUtils
 {
-    static DpapiPrefix := "dpapi:"
+    static DpapiPrefix := "dpapi:v1:"
 
     ; Legacy RC4 helpers kept for backward compatibility and the Format menu.
     static Encrypt(input, key)
@@ -33,13 +33,13 @@ class CryptoUtils
 
         success := DllCall(
             "Crypt32\CryptProtectData",
-            "Ptr", inputBlob,
+            "Ptr", inputBlob.Ptr,
             "WStr", "MyWinToolbox password",
             "Ptr", 0,
             "Ptr", 0,
             "Ptr", 0,
             "UInt", CRYPTPROTECT_UI_FORBIDDEN,
-            "Ptr", outputBlob,
+            "Ptr", outputBlob.Ptr,
             "Int"
         )
 
