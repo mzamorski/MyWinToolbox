@@ -325,48 +325,54 @@ Menu_TextSnippetCallback(itemName, itemPos, menu, content := unset)
 	SendInput(content)
 }
 
-textSnippetsMenu := Menu()
-textSnippetsMenu.SetColor("b6e0e7")
-
-for snippetName in TextSnippetsJson
+BuildTextSnippetsMenu()
 {
-	subMenu := Menu()
+    global TextSnippetsJson, textSnippetsMenu
+    global SNIPPET_TITLE_PROPERY, SNIPPET_CONTENT_PROPERY, SNIPPET_CONTENT_SEPARATOR
 
-	if (snippetName = SNIPPET_CONTENT_SEPARATOR)
-	{
-		textSnippetsMenu.Add()
-		continue
-	}
+    menu := Menu()
+    menu.SetColor("b6e0e7")
 
-    snippets := TextSnippetsJson[snippetName]
-
-    if (snippets.Length > 0)
+    for snippetName in TextSnippetsJson
     {
-        for snippet in snippets
+        subMenu := Menu()
+
+        if (snippetName = SNIPPET_CONTENT_SEPARATOR)
         {
-            content := snippet[SNIPPET_CONTENT_PROPERY]
-
-			if (content = SNIPPET_CONTENT_SEPARATOR)
-			{
-				subMenu.Add()
-				continue
-			}
-
-            if (snippet.Has(SNIPPET_TITLE_PROPERY))
-            {
-                title := snippet[SNIPPET_TITLE_PROPERY]
-            }
-            else
-            {
-                title := content
-            }
-    
-            subMenu.Add(title, Menu_TextSnippetCallback.Bind(,,, content))
+            menu.Add()
+            continue
         }
 
-        textSnippetsMenu.Add(snippetName, subMenu)
+        snippets := TextSnippetsJson[snippetName]
+
+        if (snippets.Length > 0)
+        {
+            for snippet in snippets
+            {
+                content := snippet[SNIPPET_CONTENT_PROPERY]
+
+                if (content = SNIPPET_CONTENT_SEPARATOR)
+                {
+                    subMenu.Add()
+                    continue
+                }
+
+                title := snippet.Has(SNIPPET_TITLE_PROPERY)
+                    ? snippet[SNIPPET_TITLE_PROPERY]
+                    : content
+
+                subMenu.Add(title, Menu_TextSnippetCallback.Bind(,,, content))
+            }
+
+            menu.Add(snippetName, subMenu)
+        }
     }
+
+    textSnippetsMenu := menu
+    return textSnippetsMenu
 }
+
+BuildTextSnippetsMenu()
 
 ;--------------------------------------------------------------------------------
 ; Create 'EmojiMenu' menu. 
