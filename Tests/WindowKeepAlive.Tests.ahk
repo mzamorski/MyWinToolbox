@@ -4,10 +4,15 @@
 
 try
 {
+    if (WindowKeepAlive.PulseIntervalMs != 5 * 60 * 1000)
+    {
+        throw Error("Unexpected KeepAlive interval.")
+    }
+
     WindowKeepAlive.EnsureTimer()
 
     ; Invoke the exact function object registered with SetTimer. This catches
-    ; missing hidden "this" binding on class methods without waiting 60 seconds.
+    ; missing hidden "this" binding on class methods without waiting for the timer.
     WindowKeepAlive.TimerCallback.Call()
 
     if (WindowKeepAlive.IsTimerRunning)
