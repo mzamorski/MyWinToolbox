@@ -43,7 +43,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | Menu item | Action |
 | --- | --- |
 | **NoSleep** | Toggle the same NoSleep state as `Ctrl + Win + A`. |
-| **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. |
+| **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. AutoPaste starts **disabled** after every script start/reload. |
 | **Shutdown → 1h** | Schedule shutdown using the menu's 1-hour preset. |
 | **Shutdown → 2h** | Schedule shutdown using the menu's 2-hour preset. |
 | **Shutdown → Cancel** | Cancel the pending shutdown timer created by Task Runner. |
@@ -299,7 +299,7 @@ These are active only when `ssms.exe` is the foreground application.
 
 ## 🤖 AutoPaste
 
-`AutoPastes.json` defines automatic paste actions triggered when a matching window appears. Matching can use executable, window class, title, and—when a browser is active—the current tab URL. Title and URL criteria use containment by default and support exact matching with `titleMatchMode: "equals"` or `urlMatchMode: "equals"`.
+`AutoPastes.json` defines automatic paste actions triggered when a matching window appears. Rules are loaded and validated at startup, but AutoPaste itself starts **disabled**; enable it from `Ctrl + Win + T` → **AutoPaste**. Matching can use executable, window class, title, and—when a browser is active—the current tab URL. Title and URL criteria use containment by default and support exact matching with `titleMatchMode: "equals"` or `urlMatchMode: "equals"`.
 
 Current repository examples:
 
@@ -321,7 +321,7 @@ Example browser rule:
 }
 ```
 
-Browser URLs are read with Windows UI Automation when available; the fallback address-bar method preserves the clipboard. URL lookup only runs for rules that declare `url` and after their other window filters match. The default trigger mode is `oncePerWindow`; URL rules can opt into `oncePerUrl`, while `always` disables processed-state suppression and repeats on each 500 ms timer match.
+Browser URLs are read non-interactively through Windows UI Automation. AutoPaste does **not** use the `Ctrl+L` / `Ctrl+C` address-bar fallback: if UIA cannot expose the URL, the URL rule simply does not match, so browsing focus and clipboard contents are left untouched. URL lookup only runs for rules that declare `url` and after their other window filters match. The default trigger mode is `oncePerWindow`; URL rules can opt into `oncePerUrl`, while `always` disables processed-state suppression and repeats on each 500 ms timer match.
 
 Set `"notifyOnMatch": true` on a rule to show a Windows notification after all match criteria succeed and before the paste is attempted. The notification includes the matched rule, executable, title, and URL when applicable, which is useful for diagnosing whether a failure is in matching or in the later focus/paste step.
 
