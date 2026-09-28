@@ -46,7 +46,7 @@ Run the lightweight AutoHotkey regression tests with:
 .\Test.ps1
 ```
 
-If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, legacy focus normalization, trigger-mode keys, browser URL normalization, DPAPI/legacy-RC4 password compatibility, and MyWinToolbox Configurator JSON/INI validation, backup, and round-trip behavior without interacting with browser UI.
+If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, legacy focus normalization, trigger-mode keys, browser URL normalization, DPAPI/legacy-RC4 password compatibility, Configurator JSON/INI validation, and configuration ZIP backup/manifest round-trips without interacting with browser UI.
 
 ## Shared functionality
 
@@ -90,7 +90,7 @@ The Format menu transforms clipboard content and pastes the result. It provides:
 
 ### String generator and snippets
 
-The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries. New password values are protected with Windows DPAPI under the current Windows user; legacy RC4 values remain readable during migration. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
+The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries; **Backup / Restore** creates and restores versioned ZIP snapshots of the active configuration. New password values are protected with Windows DPAPI under the current Windows user; legacy RC4 values remain readable during migration. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
 
 ### Built-in hotstrings
 
@@ -222,6 +222,14 @@ Create or replace password values from `Ctrl + Win + Shift + S` → **Settings**
 | `AutoPastes.json` | Window-matching automatic paste rules. |
 
 Keep profile configuration private: it can contain personal details and encrypted password values. The repository's sample configuration is intentionally generic. The Configurator **Settings** tab edits known fields without exposing a raw INI editor. **Set plaintext...** protects new passwords with Windows DPAPI; the stored value begins with `dpapi:v1:`. The password list marks entries as `[DPAPI]`, `[RC4]`, or `[empty]`. **Migrate RC4 -> DPAPI** converts legacy values in memory using the `Secret` that was loaded with the profile; nothing is written until Save. Once no RC4 password values remain, `Secret` is no longer required for password storage. DPAPI values are intentionally tied to the Windows user context that protected them; when moving MyWinToolbox to another Windows account or machine, recreate those password values through **Set plaintext...** rather than copying the `dpapi:v1:` blobs.
+
+### Configuration backup and restore
+
+The Configurator **Backup / Restore** tab creates ZIP snapshots under `Documents\MyWinToolbox\Backups`. A snapshot contains the active profile `.config`, `MyWinShared.ahk.config`, `TextSnippets.json`, `HotStrings.json`, `AutoPastes.json`, and a versioned manifest. Missing optional JSON files are skipped.
+
+Restore accepts only backups whose manifest matches the currently active Home/Work profile. It extracts only whitelisted root-level configuration files, creates a separate `pre-restore` safety backup of the current on-disk configuration, then replaces files from the selected archive and reloads MyWinToolbox. Files not present in the archive are left unchanged. Writing into an installation under `Program Files` may trigger a Windows UAC prompt.
+
+DPAPI-protected password blobs are included in backups, but they remain tied to the Windows user context that originally protected them. A ZIP can therefore restore general configuration on another machine, but DPAPI password entries must be recreated there through **Set plaintext...**.
 
 Runtime diagnostics are written to `%LOCALAPPDATA%\MyWinToolbox\MyWinToolbox.log` (rotated at 2 MB). Set `[Logging] Debug = true` in `MyWinShared.ahk.config` for additional debug-level entries. Logging failures are intentionally non-fatal.
 
