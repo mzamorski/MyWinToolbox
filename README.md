@@ -46,7 +46,7 @@ Run the lightweight AutoHotkey regression tests with:
 .\Test.ps1
 ```
 
-If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration validation, legacy focus normalization, and trigger-mode keys without interacting with browser UI.
+If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, legacy focus normalization, trigger-mode keys, and browser URL normalization without interacting with browser UI.
 
 ## Shared functionality
 
@@ -99,7 +99,7 @@ Additional dynamic hotstrings are configured in `HotStrings.json`. They support 
 
 ### AutoPaste
 
-`AutoPastes.json` defines actions that paste text when the active window matches optional `exe`, `class`, `title`, and `url` criteria. Title and URL matching use containment by default; use `"titleMatchMode": "equals"` or `"urlMatchMode": "equals"` for an exact match. An optional `delay` may be specified in milliseconds.
+`AutoPastes.json` defines actions that paste text when the active window matches optional `exe`, `class`, `title`, and `url` criteria. AutoPaste is **disabled by default after startup**; enable it explicitly from `Ctrl + Win + T` → **AutoPaste** when needed. Title and URL matching use containment by default; use `"titleMatchMode": "equals"` or `"urlMatchMode": "equals"` for an exact match. An optional `delay` may be specified in milliseconds.
 
 For ordinary entries, use `text`:
 
@@ -120,7 +120,7 @@ Browser-specific rules can match the active tab URL. It is recommended to includ
 }
 ```
 
-AutoPaste reads the browser URL through Windows UI Automation when possible. If that is unavailable, it falls back to copying the address bar while preserving and restoring the existing clipboard content. URL lookup is only attempted for rules that contain `url` and only after the other configured window criteria have matched.
+AutoPaste reads browser URLs non-interactively through Windows UI Automation. It searches the browser's `Edit`/address-bar accessibility elements first and can also use the document value exposed by Chromium. **AutoPaste never falls back to `Ctrl+L` / `Ctrl+C`**, so a failed UIA lookup simply means the URL rule does not match; it will not steal focus or touch the clipboard. URL lookup is only attempted for rules that contain `url` and only after the other configured window criteria have matched.
 
 By default, each rule can paste only once per top-level window (`"triggerMode": "oncePerWindow"`). You can opt into `"oncePerUrl"` for URL rules to allow one paste per distinct URL in the same browser window, or `"always"` to execute every time the 500 ms AutoPaste timer observes a match. `oncePerUrl` requires a `url` matcher. Use `always` only for actions that are intentionally safe to repeat.
 
