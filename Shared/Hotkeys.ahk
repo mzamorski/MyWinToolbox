@@ -242,3 +242,39 @@ HotKey_CloseAllWindows(withSameTitle := false)
         Sound.ShowToolTip("Unable to toggle mute: " procName "`n" e.Message, 6000)
     }
 }
+
+
+; --------------------------------------------------------------------------------
+; Window KeepAlive - Toggle background mouse activity for the active window
+#^k:: {
+    hwnd := WinExist("A")
+    if (!hwnd)
+    {
+        return
+    }
+
+    try
+    {
+        procName := WinGetProcessName("ahk_id " hwnd)
+    }
+    catch Error
+    {
+        procName := WinGetTitle("ahk_id " hwnd)
+        if (procName = "")
+        {
+            procName := "window"
+        }
+    }
+
+    try
+    {
+        isEnabled := WindowKeepAlive.ToggleActiveWindow()
+        WindowKeepAlive.ShowToolTip(
+            (isEnabled ? "KeepAlive ON: " : "KeepAlive OFF: ") procName
+        )
+    }
+    catch Error as e
+    {
+        WindowKeepAlive.ShowToolTip("Unable to toggle KeepAlive: " procName "`n" e.Message, 6000)
+    }
+}
