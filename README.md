@@ -71,6 +71,11 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Win + Ctrl + Volume Mute` | Toggles mute for the active application's process through the native Windows Core Audio API. |
 | `Ctrl + Win + A` | Enables or disables NoSleep. While enabled, it keeps the system and display awake and moves the pointer slightly after 10 minutes of idle time. |
 | `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
+| `Ctrl + Win + W` | Opens **Window Toolbox** for the currently active window. |
+
+### Window Toolbox
+
+`Ctrl + Win + W` opens a context menu bound to the window that was active when the toolbox was invoked. It can toggle always-on-top, KeepAlive, and per-process mute; center the window; move it to left/middle/right thirds; move it to the previous or next monitor while preserving its state; copy detailed window information; close windows with the same class or the same class/title; and create a new AutoPaste rule draft from the selected window. The AutoPaste draft is opened in the existing Configurator and is not written to disk until you explicitly save it.
 
 ### Format menu
 
