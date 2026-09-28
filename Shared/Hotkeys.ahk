@@ -82,7 +82,7 @@ Configurator_OnAutoPasteSaved(data)
     TrayTip("MyWinToolbox", "AutoPaste rules saved and refreshed.")
 }
 
-+#^s::		; Shift + Win + Ctrl + s
+Configurator_Show()
 {
     global TextSnippetsJson, TextSnippetsFilePath
     global HotStringsJson, HotStringsFilePath
@@ -102,6 +102,53 @@ Configurator_OnAutoPasteSaved(data)
         Configurator_OnHotStringsSaved,
         Configurator_OnAutoPasteSaved
     )
+}
+
+Configurator_OpenAutoPasteDraftFromWindow(hwnd)
+{
+    if (!hwnd || !WinExist("ahk_id " hwnd))
+    {
+        return
+    }
+
+    selector := "ahk_id " hwnd
+
+    try
+    {
+        if (!WinActive(selector))
+        {
+            WinActivate(selector)
+            WinWaitActive(selector, , 1)
+        }
+
+        info := ConfiguratorAutoPasteTab.GetWindowInfo(hwnd)
+        rule := ConfiguratorAutoPasteTab.CreateRuleFromWindowInfo(info)
+
+        Configurator_Show()
+
+        if (MyWinToolboxConfigurator.Instance)
+        {
+            MyWinToolboxConfigurator.Instance.OpenAutoPasteDraft(rule)
+        }
+    }
+    catch Error as e
+    {
+        MsgBox(
+            "Unable to create AutoPaste draft:`n" e.Message,
+            "MyWinToolbox",
+            "Iconx"
+        )
+    }
+}
+
++#^s::		; Shift + Win + Ctrl + s
+{
+    Configurator_Show()
+}
+
+^#w::		; Ctrl + Win + w
+{
+    WindowToolbox.Show(Configurator_OpenAutoPasteDraftFromWindow)
 }
 
 ;--------------------------------------------------------------------------------
