@@ -355,7 +355,7 @@ The entire `AutoPastes.json` file is validated at startup. Configuration errors 
 
 The **Settings** tab in `Win + Ctrl + Shift + S` edits known shared/profile INI fields, audio devices, signatures and encrypted passwords. New passwords use Windows DPAPI and are marked `[DPAPI]`; legacy entries are marked `[RC4]` and can be converted with **Migrate RC4 -> DPAPI**. JSON/INI saves create `.bak` backups; use **Save + Reload** when changing HotStrings or Settings.
 
-The **Backup / Restore** tab creates versioned ZIP snapshots in `Documents\MyWinToolbox\Backups` containing the active profile config, shared config, Text Snippets, HotStrings, AutoPaste, and a manifest. Restore validates the active profile and allowed filenames, makes a `pre-restore` safety backup, restores only files present in the ZIP, and reloads MyWinToolbox. DPAPI password blobs can be restored only under the Windows user context that created them.
+The **Backup / Restore** tab creates versioned ZIP snapshots in `Documents\MyWinToolbox\Backups` containing the active profile config, shared config, Text Snippets, HotStrings, AutoPaste, and a manifest. Pending Configurator edits must be saved before Backup all. Restore validates the active profile and allowed filenames, makes a `pre-restore` safety backup, restores only files present in the ZIP, and reloads MyWinToolbox. DPAPI password blobs can be restored only under the Windows user context that created them.
 
 These parts of the cheat sheet can change without editing the AHK code:
 
