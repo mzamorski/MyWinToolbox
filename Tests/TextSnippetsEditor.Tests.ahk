@@ -67,6 +67,11 @@ AssertThrows(
     "snippet without Content should be rejected"
 )
 
+AssertThrows(
+    () => TextSnippetsEditor.ValidateData(Map("Broken", [Map("Content", "")])),
+    "snippet without title or content should be rejected"
+)
+
 tempPath := A_Temp "\MyWinToolbox-TextSnippetsEditor-" A_TickCount ".json"
 
 try
