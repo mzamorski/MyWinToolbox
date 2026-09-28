@@ -2094,9 +2094,20 @@ class MyWinToolboxConfigurator
             snippetsSaved := false
             hotStringsSaved := false
 
+            ; Validate every modified document before writing either one, so a
+            ; validation error cannot leave only half of Save All persisted.
             if (this.SnippetsDirty)
             {
                 MyWinToolboxConfigurator.ValidateSnippets(this.SnippetsData)
+            }
+
+            if (this.HotStringsState.Dirty)
+            {
+                this.HotStringsState.Validate()
+            }
+
+            if (this.SnippetsDirty)
+            {
                 ConfiguratorJsonStore.SaveWithBackup(
                     this.SnippetsFilePath,
                     this.SnippetsData
