@@ -8,12 +8,11 @@ class WindowKeepAlive
     static TimerCallback := 0
     static IsTimerRunning := false
 
-    static ToggleActiveWindow()
+    static ToggleWindow(hwnd)
     {
-        hwnd := WinExist("A")
-        if (!hwnd)
+        if (!hwnd || !WinExist("ahk_id " hwnd))
         {
-            throw Error("No active window.")
+            throw Error("The target window no longer exists.")
         }
 
         if (WindowKeepAlive.Targets.Has(hwnd))
