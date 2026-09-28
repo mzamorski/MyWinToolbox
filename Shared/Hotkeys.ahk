@@ -66,18 +66,41 @@ Configurator_OnHotStringsSaved(data)
     TrayTip("MyWinToolbox", "HotStrings saved. Reload MyWinToolbox to apply them.")
 }
 
+Configurator_OnAutoPasteSaved(data)
+{
+    global AutoPastesJson
+
+    wasEnabled := AutoPaste_IsEnabled()
+    AutoPastesJson := data
+    AutoPaste_Register(AutoPastesJson)
+
+    if (wasEnabled)
+    {
+        AutoPaste_SetEnabled(true)
+    }
+
+    TrayTip("MyWinToolbox", "AutoPaste rules saved and refreshed.")
+}
+
 +#^s::		; Shift + Win + Ctrl + s
 {
     global TextSnippetsJson, TextSnippetsFilePath
     global HotStringsJson, HotStringsFilePath
+    global AutoPastesJson, AutoPastesFilePath
+    global SharedConfigAbsolutePath, ProfileConfigFilePath
 
     MyWinToolboxConfigurator.Show(
         TextSnippetsJson,
         TextSnippetsFilePath,
         HotStringsJson,
         HotStringsFilePath,
+        AutoPastesJson,
+        AutoPastesFilePath,
+        SharedConfigAbsolutePath,
+        ProfileConfigFilePath,
         Configurator_OnTextSnippetsSaved,
-        Configurator_OnHotStringsSaved
+        Configurator_OnHotStringsSaved,
+        Configurator_OnAutoPasteSaved
     )
 }
 
