@@ -1077,7 +1077,7 @@ class ConfiguratorAutoPasteTab
                 return 0
             }
 
-            return this.GetTargetWindowInfo(targetHwnd)
+            return ConfiguratorAutoPasteTab.GetWindowInfo(targetHwnd)
         }
         finally
         {
@@ -1087,7 +1087,7 @@ class ConfiguratorAutoPasteTab
         }
     }
 
-    GetTargetWindowInfo(hwnd)
+    static GetWindowInfo(hwnd)
     {
         info := Map(
             "hwnd", hwnd,
@@ -1139,6 +1139,51 @@ class ConfiguratorAutoPasteTab
         }
 
         return info
+    }
+
+    static CreateRuleFromWindowInfo(info)
+    {
+        rule := Map(
+            "triggerMode", "oncePerWindow",
+            "notifyOnMatch", false,
+            "actions", [Map("text", "")]
+        )
+
+        if (info["exe"] != "")
+        {
+            rule["exe"] := info["exe"]
+            rule["name"] := RegExReplace(info["exe"], "i)\.exe$", "")
+        }
+        else
+        {
+            rule["name"] := "Captured window"
+        }
+
+        if (info["class"] != "")
+        {
+            rule["class"] := info["class"]
+        }
+
+        if (info["title"] != "")
+        {
+            rule["title"] := info["title"]
+        }
+
+        if (info["isBrowser"] && info["url"] != "")
+        {
+            rule["url"] := info["url"]
+        }
+
+        return rule
+    }
+
+    AddRule(rule)
+    {
+        this.Data.Push(ConfiguratorJsonStore.Clone(rule))
+        this.SetDirty()
+        this.RefreshRules(this.Data.Length)
+        this.NameEdit.Focus()
+        return this.Data.Length
     }
 
     static EvaluateRuleMatchers(rule, info)
