@@ -480,6 +480,14 @@ class MyWinToolboxConfigurator
         this.UpdateStatus()
     }
 
+    OpenAutoPasteDraft(rule)
+    {
+        this.Tabs.Choose(4)
+        this.AutoPasteTab.AddRule(rule)
+        this.Window.Show()
+        WinActivate("ahk_id " this.Window.Hwnd)
+    }
+
     ; ========================================================================
     ; Text Snippets
     ; ========================================================================
