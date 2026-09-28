@@ -127,13 +127,13 @@ class CryptoUtils
 
         success := DllCall(
             "Crypt32\CryptUnprotectData",
-            "Ptr", inputBlob,
+            "Ptr", inputBlob.Ptr,
             "Ptr", 0,
             "Ptr", 0,
             "Ptr", 0,
             "Ptr", 0,
             "UInt", CRYPTPROTECT_UI_FORBIDDEN,
-            "Ptr", outputBlob,
+            "Ptr", outputBlob.Ptr,
             "Int"
         )
 
@@ -207,7 +207,7 @@ class CryptoUtils
             "Ptr", dataPointer,
             "UInt", dataSize,
             "UInt", flags,
-            "Ptr", output,
+            "Ptr", output.Ptr,
             "UInt*", &charCount,
             "Int"
         )
@@ -215,7 +215,7 @@ class CryptoUtils
             throw OSError()
         }
 
-        return StrGet(output, "UTF-16")
+        return StrGet(output.Ptr, "UTF-16")
     }
 
     static Base64ToBinary(input, &outputSize)
@@ -246,7 +246,7 @@ class CryptoUtils
             "WStr", input,
             "UInt", 0,
             "UInt", CRYPT_STRING_BASE64,
-            "Ptr", output,
+            "Ptr", output.Ptr,
             "UInt*", &outputSize,
             "Ptr", 0,
             "Ptr", 0,
