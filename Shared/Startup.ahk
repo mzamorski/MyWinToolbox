@@ -56,18 +56,18 @@ catch Error as e
 ; Config/TextSnippets/JSON
 
 global TextSnippetsJson := Map()
+global TextSnippetsFilePath := A_ScriptDir "\TextSnippets.json"
 
 try
 {
-	textSnippetsFilePath := "TextSnippets.json"
-	if FileExist(textSnippetsFilePath)
+	if FileExist(TextSnippetsFilePath)
 	{
-		fileContent := FileRead(textSnippetsFilePath)
+		fileContent := FileRead(TextSnippetsFilePath)
 		TextSnippetsJson := jxon_load(&fileContent)
 	}
 	else
 	{
-		Logger.Warning(textSnippetsFilePath . " was not found; the Text Snippets menu will be empty.", "Config")
+		Logger.Warning(TextSnippetsFilePath . " was not found; the Text Snippets menu will be empty.", "Config")
 	}
 }
 catch Error as e
