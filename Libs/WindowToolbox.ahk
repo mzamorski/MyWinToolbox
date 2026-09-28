@@ -26,7 +26,7 @@ class WindowToolbox
         windowMenu.SetColor("d9e8fb")
 
         header := WindowToolbox.GetWindowLabel(hwnd)
-        windowMenu.Add(header, (*) => 0)
+        windowMenu.Add(header, ObjBindMethod(WindowToolbox, "NoOp"))
         windowMenu.Disable(header)
         windowMenu.Add()
 
@@ -469,6 +469,10 @@ class WindowToolbox
         {
             return false
         }
+    }
+
+    static NoOp(*)
+    {
     }
 
     static ShowTip(message, duration := 1800)
