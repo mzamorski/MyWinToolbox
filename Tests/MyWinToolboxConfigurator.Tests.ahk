@@ -1,7 +1,10 @@
 #Requires AutoHotkey v2.0
 
 #Include ..\Libs\Collections.ahk
+#Include ..\Libs\StringUtils.ahk
 #Include ..\Libs\Externals\_JXON.ahk
+#Include ..\Libs\ConfiguratorAutoPasteTab.ahk
+#Include ..\Libs\ConfiguratorSettingsTab.ahk
 #Include ..\Libs\MyWinToolboxConfigurator.ahk
 
 global TestFailures := []
@@ -115,6 +118,128 @@ AssertThrows(
     () => duplicateState.Validate(),
     "duplicate HotString Id should fail validation case-insensitively"
 )
+
+autoPasteRule := Map(
+    "name", "Browser login",
+    "exe", "msedge.exe",
+    "url", "example.com/login",
+    "actions", [
+        Map("keys", "{Tab}"),
+        Map("passwordKey", "ExamplePassword")
+    ]
+)
+
+autoPasteSummary := ConfiguratorAutoPasteTab.GetRuleMatchSummary(autoPasteRule)
+AssertTrue(
+    InStr(autoPasteSummary, "exe=msedge.exe") > 0,
+    "AutoPaste rule summary should include executable matcher"
+)
+
+actionInfo := ConfiguratorAutoPasteTab.GetActionOperation(
+    Map("passwordKey", "ExamplePassword")
+)
+AssertEqual(
+    "passwordKey",
+    actionInfo["Type"],
+    "AutoPaste action operation should detect passwordKey"
+)
+
+AssertThrows(
+    () => ConfiguratorSettingsTab.ValidateNamedEntries(
+        [
+            Map("Name", "EN", "Value", "one"),
+            Map("Name", "en", "Value", "two")
+        ],
+        "User signature"
+    ),
+    "Settings should reject duplicate entry names case-insensitively"
+)
+
+tempIniPath := A_Temp "\MyWinToolbox-Configurator-" A_TickCount ".ini"
+
+if FileExist(tempIniPath)
+{
+    FileDelete(tempIniPath)
+}
+
+FileAppend(
+    "[Settings]`r`n"
+        "Secret = old-secret ; keep-readable-comment`r`n"
+        "Email = old@example.com`r`n"
+        "`r`n"
+        "[Unknown]`r`n"
+        "KeepMe = yes`r`n",
+    tempIniPath,
+    "UTF-8"
+)
+
+try
+{
+    iniDoc := ConfiguratorIniDocument(tempIniPath)
+    AssertEqual(
+        "old-secret",
+        iniDoc.Get("Settings", "Secret"),
+        "INI reader should strip inline comments"
+    )
+    AssertTrue(
+        iniDoc.HasKey("Settings", "Email"),
+        "INI document should find existing key"
+    )
+
+    iniDoc.Set("Settings", "Email", "new@example.com")
+    iniDoc.Set("Settings", "ShippingAddress", "Line 1`nLine 2")
+    iniDoc.ReplaceSectionEntries(
+        "UserSignatures",
+        [
+            Map("Name", "EN", "Value", "Best regards,`nJohn")
+        ]
+    )
+    iniDoc.SaveWithBackup()
+
+    reloadedIni := ConfiguratorIniDocument(tempIniPath)
+
+    AssertEqual(
+        "new@example.com",
+        reloadedIni.Get("Settings", "Email"),
+        "INI document should persist changed values"
+    )
+    AssertEqual(
+        "Line 1`nLine 2",
+        reloadedIni.Get("Settings", "ShippingAddress"),
+        "INI document should round-trip escaped newlines"
+    )
+    AssertEqual(
+        "yes",
+        reloadedIni.Get("Unknown", "KeepMe"),
+        "INI document should preserve unknown sections"
+    )
+    AssertTrue(
+        FileExist(tempIniPath ".bak"),
+        "INI save should create a backup"
+    )
+
+    signatures := reloadedIni.GetSectionEntries("UserSignatures")
+    AssertEqual(1, signatures.Length, "INI section replacement should persist entries")
+    AssertEqual("EN", signatures[1]["Name"], "INI section entry name should round-trip")
+}
+catch Error as e
+{
+    TestFailures.Push("INI configurator unexpected error: " e.Message)
+}
+finally
+{
+    for filePath in [
+        tempIniPath,
+        tempIniPath ".bak",
+        tempIniPath ".tmp"
+    ]
+    {
+        if FileExist(filePath)
+        {
+            FileDelete(filePath)
+        }
+    }
+}
 
 tempSnippetsPath := A_Temp "\MyWinToolbox-Snippets-" A_TickCount ".json"
 
