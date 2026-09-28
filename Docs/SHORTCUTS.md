@@ -124,7 +124,7 @@ The Format menu copies the current selection through the clipboard, transforms i
 | **SQL.ToQuotedList** | Convert non-empty lines into a comma-separated list of single-quoted SQL values. |
 | **SQL.ToValuesTable** | Convert lines into a `SELECT * FROM (VALUES ...)` table expression. |
 | **Number.AddThousandsSeparators** | Add thousands separators to a number. |
-| **Crypto.RC4 → Encrypt / Decrypt** | Encrypt/decrypt using the active profile's configured `Secret`. |
+| **Crypto.RC4 → Encrypt / Decrypt** | Legacy RC4 clipboard helper using the active profile's configured `Secret`. Password storage now uses Windows DPAPI. |
 | **Crypto.BASE64 → Encrypt / Decrypt** | Base64 encode/decode. |
 | **AHK.ToSpecialKeys** | Convert line breaks/tabs to AutoHotkey key sequences such as `{Enter}` and `{Tab}`. |
 
@@ -270,7 +270,7 @@ Run `MyWinHome.ahk`.
 | `@a=` | Paste configured shipping address. |
 | `Win + Ctrl + P` | Paste a decrypted password. Automatically picks **KeePass** when KeePass is active and **XTB** when the current browser URL contains XTB; otherwise opens the password menu. |
 
-Password values come from the profile's `[Passwords]` section and are decrypted with the configured `Secret`.
+Password values come from the profile's `[Passwords]` section. New entries use Windows DPAPI (`dpapi:v1:`); legacy RC4 entries are still decrypted with the configured `Secret` until migrated.
 
 ---
 
@@ -353,12 +353,12 @@ The entire `AutoPastes.json` file is validated at startup. Configuration errors 
 
 ## Configuration-driven features
 
-The **Settings** tab in `Win + Ctrl + Shift + S` edits known shared/profile INI fields, audio devices, signatures and encrypted passwords. JSON/INI saves create `.bak` backups; use **Save + Reload** when changing HotStrings or Settings.
+The **Settings** tab in `Win + Ctrl + Shift + S` edits known shared/profile INI fields, audio devices, signatures and encrypted passwords. New passwords use Windows DPAPI and are marked `[DPAPI]`; legacy entries are marked `[RC4]` and can be converted with **Migrate RC4 -> DPAPI**. JSON/INI saves create `.bak` backups; use **Save + Reload** when changing HotStrings or Settings.
 
 These parts of the cheat sheet can change without editing the AHK code:
 
 - `MyWinShared.ahk.config` — indent width and dummy text.
-- `MyWinHome.ahk.config` / `MyWinWork.ahk.config` — email, secret, signatures, audio devices, passwords, and profile-specific values.
+- `MyWinHome.ahk.config` / `MyWinWork.ahk.config` — email, signatures, audio devices, DPAPI-protected passwords, profile-specific values, and an optional legacy RC4 `Secret` while unmigrated values remain.
 - `HotStrings.json` — dynamic hotstrings and scopes.
 - `TextSnippets.json` — snippet categories and content.
 - `AutoPastes.json` — automatic window-matching paste rules.
