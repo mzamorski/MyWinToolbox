@@ -21,6 +21,7 @@
 #Include Libs\AutoPaste.ahk
 #Include Libs\Sound.ahk
 #Include Libs\WindowKeepAlive.ahk
+#Include Libs\WindowToolbox.ahk
 #Include Libs\ConfiguratorAutoPasteTab.ahk
 #Include Libs\ConfiguratorSettingsTab.ahk
 #Include Libs\MyWinToolboxConfigurator.ahk
