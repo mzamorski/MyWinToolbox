@@ -472,6 +472,7 @@ class MyWinToolboxConfigurator
                 autoPasteFilePath
             ],
             profileConfigPath,
+            ObjBindMethod(this, "CanCreateBackup"),
             ObjBindMethod(this, "CanRestoreBackup")
         )
 
@@ -2279,6 +2280,23 @@ class MyWinToolboxConfigurator
             || this.HotStringsState.Dirty
             || this.AutoPasteTab.Dirty
             || this.SettingsTab.Dirty
+    }
+
+    CanCreateBackup()
+    {
+        if (!this.HasUnsavedChanges())
+        {
+            return true
+        }
+
+        MsgBox(
+            "Backup captures the configuration currently saved on disk.`n`n"
+                "Save the pending Configurator changes first, then run Backup all again.",
+            "MyWinToolbox configuration backup",
+            "Icon!"
+        )
+
+        return false
     }
 
     CanRestoreBackup()
