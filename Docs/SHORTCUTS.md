@@ -346,7 +346,7 @@ Use an ordered `actions` list for keyboard focus/navigation and multi-field form
 
 Simple top-level `text` and `passwordKey` rules remain supported. Legacy `focus` / `focusDelay` are accepted only for backward compatibility and are normalized into leading actions; new rules should use `actions` only. The action list is validated before execution, so an invalid item prevents the entire sequence from starting.
 
-The entire `AutoPastes.json` file is validated at startup. Configuration errors identify the affected rule and action before any AutoPaste timer starts. The same rules can be edited from `Win + Ctrl + Shift + S` → **AutoPaste**, including matchers, match modes, trigger mode, notifications, delay and ordered actions. Saving refreshes AutoPaste immediately and preserves whether it was enabled.
+The entire `AutoPastes.json` file is validated at startup. Configuration errors identify the affected rule and action before any AutoPaste timer starts. The same rules can be edited from `Win + Ctrl + Shift + S` → **AutoPaste**, including matchers, match modes, trigger mode, notifications, delay and ordered actions. Use **Capture window...** to hide the Configurator and click a target window; EXE, class, title and browser URL (when UIA exposes it) are filled automatically. Use **Test match...** to click a target and see `✓` / `✗` results for every configured matcher without running any AutoPaste action. Saving refreshes AutoPaste immediately and preserves whether it was enabled.
 
 ---
 
