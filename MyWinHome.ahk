@@ -46,7 +46,7 @@ Config_GetPassword(keyName)
     value := Ini_ReadOrDefault(ConfigFilePath, "Passwords", keyName)
     ;InputBox(, , , CryptoUtils.Encrypt(value, Secret))
 
-    return CryptoUtils.Decrypt(value, Secret)
+    return CryptoUtils.Unprotect(value, Secret)
 }
 
 
@@ -66,7 +66,7 @@ Hotstring(":0*:@a=", Config_GetShippingAddress())
 Menu_PastePassword(itemName, itemPos, menu)
 {
     value := PasswordEntries[itemName]
-    output := CryptoUtils.Decrypt(value, Secret)
+    output := CryptoUtils.Unprotect(value, Secret)
 
     Std_Paste(output)
 }
@@ -93,7 +93,7 @@ HandlePassword(appName, entries, secret, outputHandler := Std_Paste)
     {
         if (key = appName) 
         {
-            output := CryptoUtils.Decrypt(value, secret)
+            output := CryptoUtils.Unprotect(value, secret)
             outputHandler.Call(output)
 
             return true
