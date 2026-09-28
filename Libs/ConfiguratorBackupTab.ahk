@@ -20,6 +20,8 @@ class ConfiguratorBackupStore
         profileName := ConfiguratorBackupStore.GetFileName(profileConfigPath)
         profileName := RegExReplace(profileName, "i)\.ahk\.config$", "")
         timestamp := FormatTime(A_Now, "yyyyMMdd-HHmmss")
+            . "-"
+            . Format("{:03}", A_MSec)
         middle := label != "" ? "-" label : ""
 
         return ConfiguratorBackupStore.GetDefaultBackupFolder()
@@ -153,22 +155,32 @@ class ConfiguratorBackupStore
 
         try
         {
+            manifestPath := extractDir
+                . "\"
+                . ConfiguratorBackupStore.ManifestFileName
+
             script :=
             (
             "$ErrorActionPreference = 'Stop'`n"
             "Add-Type -AssemblyName System.IO.Compression.FileSystem`n"
-            "[System.IO.Compression.ZipFile]::ExtractToDirectory("
+            "$zip = [System.IO.Compression.ZipFile]::OpenRead("
                 ConfiguratorBackupStore.PsQuote(archivePath)
-                ", "
-                ConfiguratorBackupStore.PsQuote(extractDir)
                 ")`n"
+            "try {`n"
+            "  $entry = $zip.GetEntry("
+                ConfiguratorBackupStore.PsQuote(
+                    ConfiguratorBackupStore.ManifestFileName
+                )
+                ")`n"
+            "  if ($null -eq $entry) { throw 'Backup manifest is missing.' }`n"
+            "  [System.IO.Compression.ZipFileExtensions]::ExtractToFile("
+                "$entry, "
+                ConfiguratorBackupStore.PsQuote(manifestPath)
+                ", $true)`n"
+            "} finally { $zip.Dispose() }`n"
             )
 
             ConfiguratorBackupStore.RunPowerShell(script)
-
-            manifestPath := extractDir
-                . "\"
-                . ConfiguratorBackupStore.ManifestFileName
 
             if (!FileExist(manifestPath))
             {
@@ -185,6 +197,37 @@ class ConfiguratorBackupStore
                 expectedProfileConfigPath,
                 allowedTargetPaths
             )
+
+            extractScript :=
+                "$ErrorActionPreference = 'Stop'`n"
+                . "Add-Type -AssemblyName System.IO.Compression.FileSystem`n"
+                . "$zip = [System.IO.Compression.ZipFile]::OpenRead("
+                . ConfiguratorBackupStore.PsQuote(archivePath)
+                . ")`n"
+                . "try {`n"
+
+            for fileName in manifest["Files"]
+            {
+                sourcePath := extractDir "\" fileName
+
+                extractScript .=
+                    "  $entry = $zip.GetEntry("
+                    . ConfiguratorBackupStore.PsQuote(fileName)
+                    . ")`n"
+                    . "  if ($null -eq $entry) { throw "
+                    . ConfiguratorBackupStore.PsQuote(
+                        "Backup file is missing: " fileName
+                    )
+                    . " }`n"
+                    . "  [System.IO.Compression.ZipFileExtensions]::ExtractToFile("
+                    . "$entry, "
+                    . ConfiguratorBackupStore.PsQuote(sourcePath)
+                    . ", $true)`n"
+            }
+
+            extractScript .= "} finally { $zip.Dispose() }`n"
+
+            ConfiguratorBackupStore.RunPowerShell(extractScript)
 
             restoreItems := []
             targetByName := Map()
@@ -408,9 +451,13 @@ class ConfiguratorBackupStore
 
             quote := Chr(34)
             command := (elevated ? "*RunAs " : "")
-                . quote powerShellPath quote
+                . quote
+                . powerShellPath
+                . quote
                 . " -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "
-                . quote scriptPath quote
+                . quote
+                . scriptPath
+                . quote
 
             exitCode := RunWait(command, , "Hide")
 
@@ -739,6 +786,6 @@ class ConfiguratorBackupTab
 
     SetStatus(text)
     {
-        this.StatusText.Text := text
+        this.StatusText.Value := text
     }
 }
