@@ -81,16 +81,22 @@ catch Error as e
 ; --------------------------------------------------------------------------------
 ; Config/HotStrings/JSON
 
+global HotStringsJson := Map()
+global HotStringsFilePath := A_ScriptDir "\HotStrings.json"
+
 try
 {
-	hotStringsFilePath := "HotStrings.json"
-	if FileExist(hotStringsFilePath)
+	if FileExist(HotStringsFilePath)
 	{
-		fileContent := FileRead(hotStringsFilePath)
-		hotstringsJson := jxon_load(&fileContent)
+		fileContent := FileRead(HotStringsFilePath)
+		HotStringsJson := jxon_load(&fileContent)
 
-		DynamicHotstrings_Register(hotstringsJson)
+		DynamicHotstrings_Register(HotStringsJson)
 		;DynamicHotstrings_ShowDiagnostics()
+	}
+	else
+	{
+		Logger.Warning(HotStringsFilePath . " was not found; dynamic HotStrings will be empty.", "Config")
 	}
 }
 catch Error as e
