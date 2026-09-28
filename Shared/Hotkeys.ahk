@@ -49,23 +49,35 @@
 	textSnippetsMenu.Show()
 }
 
-TextSnippetsEditor_OnSaved(data)
+Configurator_OnTextSnippetsSaved(data)
 {
     global TextSnippetsJson
 
     TextSnippetsJson := data
     BuildTextSnippetsMenu()
-    TrayTip("Text Snippets", "Saved and menu refreshed.")
+    TrayTip("MyWinToolbox", "Text Snippets saved and menu refreshed.")
+}
+
+Configurator_OnHotStringsSaved(data)
+{
+    global HotStringsJson
+
+    HotStringsJson := data
+    TrayTip("MyWinToolbox", "HotStrings saved. Reload MyWinToolbox to apply them.")
 }
 
 +#^s::		; Shift + Win + Ctrl + s
 {
     global TextSnippetsJson, TextSnippetsFilePath
+    global HotStringsJson, HotStringsFilePath
 
-    TextSnippetsEditor.Show(
+    MyWinToolboxConfigurator.Show(
         TextSnippetsJson,
         TextSnippetsFilePath,
-        TextSnippetsEditor_OnSaved
+        HotStringsJson,
+        HotStringsFilePath,
+        Configurator_OnTextSnippetsSaved,
+        Configurator_OnHotStringsSaved
     )
 }
 
