@@ -54,7 +54,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | Shortcut | Action |
 | --- | --- |
 | `Win + Ctrl + Page Up` | Toggle **Always on Top** for the active window. |
-| `Win + Ctrl + K` | Toggle **KeepAlive** for the active window. While enabled, MyWinToolbox sends a tiny background `WM_MOUSEMOVE` pulse every 60 seconds without moving the physical pointer or activating the window. Each HWND is tracked independently. |
+| `Win + Ctrl + K` | Toggle **KeepAlive** for the active window. Every 5 minutes MyWinToolbox briefly restores/activates the target, sends a tiny real mouse movement, restores the previous cursor/focus, and re-minimizes the target if needed. Each HWND is tracked independently. |
 | `Win + Alt + F4` | Close windows matching the active window's **class + exact title**. |
 | `Ctrl + Win + F4` | Close all windows matching the active window's **class**. |
 | `Ctrl + Win + M` | In Explorer, move selected files/folders into a newly created subfolder. Default folder name is a timestamp. |
