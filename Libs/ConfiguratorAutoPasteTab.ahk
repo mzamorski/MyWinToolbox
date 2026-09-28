@@ -166,10 +166,28 @@ class ConfiguratorAutoPasteTab
         this.RuleDownButton := this.Window.AddButton("x315 y570 w40 h30", "Dn")
         this.RuleDownButton.OnEvent("Click", ObjBindMethod(this, "OnRuleMoveDown"))
 
+        this.CaptureWindowButton := this.Window.AddButton(
+            "x375 y570 w130 h30",
+            "Capture window..."
+        )
+        this.CaptureWindowButton.OnEvent(
+            "Click",
+            ObjBindMethod(this, "OnCaptureWindow")
+        )
+
+        this.TestMatchButton := this.Window.AddButton(
+            "x515 y570 w115 h30",
+            "Test match..."
+        )
+        this.TestMatchButton.OnEvent(
+            "Click",
+            ObjBindMethod(this, "OnTestMatch")
+        )
+
         this.Window.AddText(
-            "x375 y535 w760 h70",
-            "Each rule needs at least one matcher (EXE, class, title, or URL) and at least one action. "
-            "URL matching remains non-interactive: AutoPaste never uses Ctrl+L/Ctrl+C."
+            "x645 y566 w490 h48",
+            "Capture/Test hides the Configurator temporarily. Click the target window. "
+            "Browser URL is read non-interactively through UI Automation."
         )
     }
 
@@ -866,6 +884,395 @@ class ConfiguratorAutoPasteTab
         this.RefreshActions(index + 1)
     }
 
+    OnCaptureWindow(*)
+    {
+        rule := this.GetSelectedRule()
+        if (!rule)
+        {
+            return
+        }
+
+        target := this.PickTargetWindow(
+            "Click the window to capture for this AutoPaste rule."
+        )
+
+        if (!target)
+        {
+            return
+        }
+
+        info := this.GetTargetWindowInfo(target)
+
+        if (info["exe"] != "")
+        {
+            rule["exe"] := info["exe"]
+        }
+
+        if (info["class"] != "")
+        {
+            rule["class"] := info["class"]
+        }
+
+        if (info["title"] != "")
+        {
+            rule["title"] := info["title"]
+
+            if (rule.Has("titleMatchMode"))
+            {
+                rule.Delete("titleMatchMode")
+            }
+        }
+
+        if (info["url"] != "")
+        {
+            rule["url"] := info["url"]
+
+            if (rule.Has("urlMatchMode"))
+            {
+                rule.Delete("urlMatchMode")
+            }
+        }
+
+        if (
+            (!rule.Has("name") || Trim("" rule["name"]) = "" || rule["name"] = "New rule")
+            && info["exe"] != ""
+        )
+        {
+            suggestedName := RegExReplace(info["exe"], "i)\.exe$", "")
+            rule["name"] := suggestedName
+        }
+
+        this.SetDirty()
+        this.RefreshRuleRow()
+        this.LoadSelectedRule()
+
+        message := "Captured:`n"
+            . "EXE: " info["exe"] "`n"
+            . "Class: " info["class"] "`n"
+            . "Title: " info["title"]
+
+        if (info["isBrowser"])
+        {
+            message .= "`nURL: " (
+                info["url"] != ""
+                    ? info["url"]
+                    : "<not available through UI Automation>"
+            )
+        }
+
+        MsgBox(
+            message,
+            "AutoPaste — Capture window",
+            "Iconi"
+        )
+    }
+
+    OnTestMatch(*)
+    {
+        rule := this.GetSelectedRule()
+        if (!rule)
+        {
+            return
+        }
+
+        target := this.PickTargetWindow(
+            "Click the window to test against the selected AutoPaste rule."
+        )
+
+        if (!target)
+        {
+            return
+        }
+
+        info := this.GetTargetWindowInfo(target)
+        result := ConfiguratorAutoPasteTab.EvaluateRuleMatchers(rule, info)
+
+        message := result["Matched"]
+            ? "MATCH — all configured criteria passed."
+            : "NO MATCH — one or more criteria failed."
+
+        message .= "`n`n" result["Details"]
+            . "`n`nTarget:"
+            . "`nEXE: " info["exe"]
+            . "`nClass: " info["class"]
+            . "`nTitle: " info["title"]
+
+        if (rule.Has("url") || info["isBrowser"])
+        {
+            message .= "`nURL: " (
+                info["url"] != ""
+                    ? info["url"]
+                    : "<not available through UI Automation>"
+            )
+        }
+
+        MsgBox(
+            message,
+            "AutoPaste — Test match",
+            result["Matched"] ? "Iconi" : "Icon!"
+        )
+    }
+
+    PickTargetWindow(instruction)
+    {
+        targetHwnd := 0
+        configHwnd := this.Window.Hwnd
+
+        try
+        {
+            this.Window.Hide()
+            Sleep(150)
+
+            ToolTip(
+                instruction
+                    . "`n`nClick the target window within 10 seconds."
+            )
+
+            if (!KeyWait("LButton", "D T10"))
+            {
+                return 0
+            }
+
+            MouseGetPos(, , &targetHwnd)
+            KeyWait("LButton")
+
+            if (!targetHwnd)
+            {
+                return 0
+            }
+
+            rootHwnd := DllCall(
+                "GetAncestor",
+                "Ptr", targetHwnd,
+                "UInt", 2,
+                "Ptr"
+            )
+
+            if (rootHwnd)
+            {
+                targetHwnd := rootHwnd
+            }
+
+            if (
+                !targetHwnd
+                || targetHwnd = configHwnd
+                || !WinExist("ahk_id " targetHwnd)
+                || !WindowApp.IsRealWindow(targetHwnd)
+            )
+            {
+                targetHwnd := 0
+            }
+
+            return targetHwnd
+        }
+        finally
+        {
+            ToolTip()
+            this.Window.Show()
+            WinActivate("ahk_id " this.Window.Hwnd)
+        }
+    }
+
+    GetTargetWindowInfo(hwnd)
+    {
+        info := Map(
+            "hwnd", hwnd,
+            "exe", "",
+            "class", "",
+            "title", "",
+            "url", "",
+            "isBrowser", false
+        )
+
+        AutoPaste_TryGetProcessName(hwnd, &exeName)
+        AutoPaste_TryGetClass(hwnd, &className)
+        AutoPaste_TryGetTitle(hwnd, &title)
+
+        info["exe"] := exeName
+        info["class"] := className
+        info["title"] := title
+
+        for browserExe in WindowApp.KnownBrowsers
+        {
+            if (StrLower(browserExe) = StrLower(exeName))
+            {
+                info["isBrowser"] := true
+                break
+            }
+        }
+
+        if (info["isBrowser"])
+        {
+            selector := "ahk_id " hwnd
+
+            try
+            {
+                if (!WinActive(selector))
+                {
+                    WinActivate(selector)
+                    WinWaitActive(selector, , 1)
+                }
+
+                if (WinActive(selector))
+                {
+                    info["url"] := Browser.GetURL(false)
+                }
+            }
+            catch Error
+            {
+                info["url"] := ""
+            }
+        }
+
+        return info
+    }
+
+    static EvaluateRuleMatchers(rule, info)
+    {
+        lines := []
+        allMatched := true
+        matcherCount := 0
+
+        if (rule.Has("exe"))
+        {
+            matcherCount += 1
+            matched := StrLower(info["exe"]) = StrLower(rule["exe"])
+            allMatched := allMatched && matched
+
+            lines.Push(
+                ConfiguratorAutoPasteTab.FormatMatcherResult(
+                    matched,
+                    "EXE",
+                    rule["exe"],
+                    info["exe"]
+                )
+            )
+        }
+
+        if (rule.Has("class"))
+        {
+            matcherCount += 1
+            matched := StrLower(info["class"]) = StrLower(rule["class"])
+            allMatched := allMatched && matched
+
+            lines.Push(
+                ConfiguratorAutoPasteTab.FormatMatcherResult(
+                    matched,
+                    "Class",
+                    rule["class"],
+                    info["class"]
+                )
+            )
+        }
+
+        if (rule.Has("title"))
+        {
+            matcherCount += 1
+            mode := rule.Has("titleMatchMode")
+                ? rule["titleMatchMode"]
+                : "contains"
+
+            matched := AutoPaste_MatchesValue(
+                info["title"],
+                rule["title"],
+                mode
+            )
+            allMatched := allMatched && matched
+
+            lines.Push(
+                ConfiguratorAutoPasteTab.FormatMatcherResult(
+                    matched,
+                    "Title (" mode ")",
+                    rule["title"],
+                    info["title"]
+                )
+            )
+        }
+
+        if (rule.Has("url"))
+        {
+            matcherCount += 1
+            mode := rule.Has("urlMatchMode")
+                ? rule["urlMatchMode"]
+                : "contains"
+
+            matched := info["url"] != ""
+                && AutoPaste_MatchesValue(
+                    info["url"],
+                    rule["url"],
+                    mode
+                )
+
+            allMatched := allMatched && matched
+
+            lines.Push(
+                ConfiguratorAutoPasteTab.FormatMatcherResult(
+                    matched,
+                    "URL (" mode ")",
+                    rule["url"],
+                    info["url"] != ""
+                        ? info["url"]
+                        : "<unavailable>"
+                )
+            )
+        }
+
+        if (matcherCount = 0)
+        {
+            return Map(
+                "Matched", false,
+                "Details", "✗ Rule has no configured matcher."
+            )
+        }
+
+        return Map(
+            "Matched", allMatched,
+            "Details", ConfiguratorAutoPasteTab.JoinLines(lines)
+        )
+    }
+
+    static FormatMatcherResult(matched, label, expected, actual)
+    {
+        marker := matched ? "✓" : "✗"
+
+        expectedText := ConfiguratorAutoPasteTab.TruncateDiagnostic(
+            "" expected,
+            90
+        )
+
+        actualText := ConfiguratorAutoPasteTab.TruncateDiagnostic(
+            "" actual,
+            120
+        )
+
+        return marker " " label
+            . "`n    expected: " expectedText
+            . "`n    actual:   " actualText
+    }
+
+    static TruncateDiagnostic(value, maxLength)
+    {
+        value := StrReplace(StrReplace(value, "`r", " "), "`n", " ")
+
+        return StrLen(value) > maxLength
+            ? SubStr(value, 1, maxLength - 3) "..."
+            : value
+    }
+
+    static JoinLines(lines)
+    {
+        result := ""
+        separator := ""
+
+        for line in lines
+        {
+            result .= separator line
+            separator := "`n"
+        }
+
+        return result
+    }
+
     UpdateRuleButtons()
     {
         hasRule := !!this.GetSelectedRule()
@@ -883,7 +1290,9 @@ class ConfiguratorAutoPasteTab
             this.DelayEdit,
             this.RuleDuplicateButton,
             this.RuleDeleteButton,
-            this.ActionAddButton
+            this.ActionAddButton,
+            this.CaptureWindowButton,
+            this.TestMatchButton
         ]
         {
             control.Enabled := hasRule
