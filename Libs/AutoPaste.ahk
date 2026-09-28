@@ -819,7 +819,7 @@ AutoPaste_GetText(entry)
             "Passwords",
             entry["passwordKey"]
         )
-        return CryptoUtils.Decrypt(encryptedPassword, Secret)
+        return CryptoUtils.Unprotect(encryptedPassword, Secret)
     }
 
     return entry["text"]
