@@ -46,7 +46,7 @@ Run the lightweight AutoHotkey regression tests with:
 .\Test.ps1
 ```
 
-If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, legacy focus normalization, trigger-mode keys, and browser URL normalization without interacting with browser UI.
+If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, legacy focus normalization, trigger-mode keys, browser URL normalization, and MyWinToolbox Configurator JSON validation/backup behavior without interacting with browser UI.
 
 ## Shared functionality
 
