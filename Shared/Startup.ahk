@@ -14,8 +14,10 @@ if (MainScriptName = CurrentScriptName)
     ExitApp(-1)
 }
 
-global ConfigFilePath := MainScriptName . CONFIG_FILE_EXTENSION
-global SharedConfigFilePath := CurrentScriptName . CONFIG_FILE_EXTENSION
+global ProfileConfigFilePath := A_ScriptDir "\" MainScriptName . CONFIG_FILE_EXTENSION
+global SharedConfigAbsolutePath := A_ScriptDir "\" CurrentScriptName . CONFIG_FILE_EXTENSION
+global ConfigFilePath := ProfileConfigFilePath
+global SharedConfigFilePath := SharedConfigAbsolutePath
 
 Logger.Configure(false)
 
@@ -110,15 +112,21 @@ catch Error as e
 ; --------------------------------------------------------------------------------
 ; Config/AutoPastes/JSON
 
+global AutoPastesJson := []
+global AutoPastesFilePath := A_ScriptDir "\AutoPastes.json"
+
 try
 {
-	autoPastesFilePath := "AutoPastes.json"
-	if FileExist(autoPastesFilePath)
+	if FileExist(AutoPastesFilePath)
 	{
-		fileContent := FileRead(autoPastesFilePath)
-		autoPastesJson := jxon_load(&fileContent)
+		fileContent := FileRead(AutoPastesFilePath)
+		AutoPastesJson := jxon_load(&fileContent)
 
-		AutoPaste_Register(autoPastesJson)
+		AutoPaste_Register(AutoPastesJson)
+	}
+	else
+	{
+		Logger.Warning(AutoPastesFilePath . " was not found; AutoPaste rules will be empty.", "Config")
 	}
 }
 catch Error as e
