@@ -1647,8 +1647,9 @@ class MyWinToolboxConfigurator
         this.Window.AddText("x345 y50 w790", "Scope editor")
 
         this.Window.AddText("x345 y78 w90", "Name")
-        this.ScopeNameEdit := this.Window.AddEdit("x345 y98 w300 h25")
-        this.ScopeNameEdit.OnEvent("Change", ObjBindMethod(this, "OnScopeEditorChanged"))
+        this.ScopeNameEdit := this.Window.AddEdit("x345 y98 w300 h25 ReadOnly")
+        this.ScopeRenameButton := this.Window.AddButton("x655 y96 w90 h29", "Rename")
+        this.ScopeRenameButton.OnEvent("Click", ObjBindMethod(this, "OnRenameScope"))
 
         this.Window.AddText("x345 y138 w180", "Processes (comma-separated)")
         this.ScopeProcessesEdit := this.Window.AddEdit("x345 y158 w790 h80")
@@ -1805,39 +1806,6 @@ class MyWinToolboxConfigurator
             return
         }
 
-        aliases := this.HotStringsState.GetAliases()
-        oldName := this.SelectedScopeName
-        newName := Trim(this.ScopeNameEdit.Value)
-
-        if (newName = "")
-        {
-            return
-        }
-
-        if (newName != oldName)
-        {
-            if (aliases.Has(newName))
-            {
-                this.SetStatus("Scope already exists: " newName)
-                this.UpdatingControls := true
-                this.ScopeNameEdit.Value := oldName
-                this.UpdatingControls := false
-                return
-            }
-
-            renamedAliases := Map()
-            for aliasName, aliasDefinition in aliases
-            {
-                renamedAliases[aliasName = oldName ? newName : aliasName] := aliasDefinition
-            }
-
-            this.HotStringsState.Data["Scopes"]["Aliases"] := renamedAliases
-            this.RenameScopeReferences(oldName, newName)
-            this.SelectedScopeName := newName
-            aliases := renamedAliases
-            scope := aliases[newName]
-        }
-
         processes := ConfiguratorJsonStore.ParseList(this.ScopeProcessesEdit.Value)
         classes := ConfiguratorJsonStore.ParseList(this.ScopeClassesEdit.Value)
         titleRegex := this.ScopeTitleRegexEdit.Value
@@ -1858,7 +1826,59 @@ class MyWinToolboxConfigurator
         }
 
         this.HotStringsState.SetDirty()
-        this.RefreshScopes(this.SelectedScopeName)
+        this.OnDirtyStateChanged()
+    }
+
+    OnRenameScope(*)
+    {
+        if (this.SelectedScopeName = "")
+        {
+            return
+        }
+
+        aliases := this.HotStringsState.GetAliases()
+        oldName := this.SelectedScopeName
+
+        result := InputBox(
+            "New scope name:",
+            "Rename HotString scope",
+            "w360 h120",
+            oldName
+        )
+
+        if (result.Result != "OK")
+        {
+            return
+        }
+
+        newName := Trim(result.Value)
+        if (newName = "" || newName = oldName)
+        {
+            return
+        }
+
+        if (aliases.Has(newName))
+        {
+            MsgBox(
+                "Scope already exists: " newName,
+                "MyWinToolbox Configurator",
+                "Iconx"
+            )
+            return
+        }
+
+        renamedAliases := Map()
+        for aliasName, aliasDefinition in aliases
+        {
+            renamedAliases[aliasName = oldName ? newName : aliasName] := aliasDefinition
+        }
+
+        this.HotStringsState.Data["Scopes"]["Aliases"] := renamedAliases
+        this.RenameScopeReferences(oldName, newName)
+        this.SelectedScopeName := newName
+        this.HotStringsState.SetDirty()
+
+        this.RefreshScopes(newName)
         this.RefreshHotStrings(this.SelectedHotStringIndex)
         this.OnDirtyStateChanged()
     }
@@ -1904,20 +1924,35 @@ class MyWinToolboxConfigurator
     OnAddScope(*)
     {
         aliases := this.HotStringsState.GetAliases()
-        baseName := "NewScope"
-        scopeName := baseName
-        index := 2
 
-        while aliases.Has(scopeName)
+        result := InputBox(
+            "Scope name:",
+            "Add HotString scope",
+            "w360 h120"
+        )
+
+        if (result.Result != "OK")
         {
-            scopeName := baseName index
-            index += 1
+            return
         }
 
-        aliases[scopeName] := Map("Process", [])
+        scopeName := Trim(result.Value)
+        if (scopeName = "")
+        {
+            MsgBox("Scope name cannot be empty.", "MyWinToolbox Configurator", "Iconx")
+            return
+        }
+
+        if (aliases.Has(scopeName))
+        {
+            MsgBox("Scope already exists: " scopeName, "MyWinToolbox Configurator", "Iconx")
+            return
+        }
+
+        aliases[scopeName] := Map()
         this.HotStringsState.SetDirty()
         this.RefreshScopes(scopeName)
-        this.ScopeNameEdit.Focus()
+        this.ScopeProcessesEdit.Focus()
         this.OnDirtyStateChanged()
     }
 
@@ -1953,6 +1988,7 @@ class MyWinToolboxConfigurator
         hasScope := !!this.GetSelectedScope()
 
         this.ScopeNameEdit.Enabled := hasScope
+        this.ScopeRenameButton.Enabled := hasScope
         this.ScopeProcessesEdit.Enabled := hasScope
         this.ScopeClassesEdit.Enabled := hasScope
         this.ScopeTitleRegexEdit.Enabled := hasScope
