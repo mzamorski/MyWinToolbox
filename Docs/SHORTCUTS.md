@@ -31,7 +31,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | `Win + Ctrl + F` | Open **Format** menu. |
 | `Win + Ctrl + I` | Open **String Generator** menu. |
 | `Win + Ctrl + S` | Open **Text Snippets** menu. |
-| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings, and HotString scope aliases. |
+| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, and Settings. |
 | `Win + Ctrl + E` | Open **Emoji** menu. |
 | `Win + Ctrl + D` | Paste the current local date/time. |
 | `Ctrl + Tab` | Insert the configured number of spaces (`SpacesPerIndent`). |
@@ -346,11 +346,13 @@ Use an ordered `actions` list for keyboard focus/navigation and multi-field form
 
 Simple top-level `text` and `passwordKey` rules remain supported. Legacy `focus` / `focusDelay` are accepted only for backward compatibility and are normalized into leading actions; new rules should use `actions` only. The action list is validated before execution, so an invalid item prevents the entire sequence from starting.
 
-The entire `AutoPastes.json` file is validated at startup. Configuration errors identify the affected rule and action before any AutoPaste timer starts.
+The entire `AutoPastes.json` file is validated at startup. Configuration errors identify the affected rule and action before any AutoPaste timer starts. The same rules can be edited from `Win + Ctrl + Shift + S` → **AutoPaste**, including matchers, match modes, trigger mode, notifications, delay and ordered actions. Saving refreshes AutoPaste immediately and preserves whether it was enabled.
 
 ---
 
 ## Configuration-driven features
+
+The **Settings** tab in `Win + Ctrl + Shift + S` edits known shared/profile INI fields, audio devices, signatures and encrypted passwords. JSON/INI saves create `.bak` backups; use **Save + Reload** when changing HotStrings or Settings.
 
 These parts of the cheat sheet can change without editing the AHK code:
 
