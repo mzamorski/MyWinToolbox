@@ -49,6 +49,20 @@ Test_ValidSimpleRule()
     AssertTrue(true, "simple rule should validate")
 }
 
+Test_RegisterDefaultsDisabled()
+{
+    entries := [
+        Map(
+            "name", "disabled by default",
+            "exe", "notepad.exe",
+            "text", "hello"
+        )
+    ]
+
+    AutoPaste_Register(entries)
+    AssertTrue(!AutoPaste_IsEnabled(), "AutoPaste should remain disabled after registration")
+}
+
 Test_ValidActionsRule()
 {
     entries := [
@@ -165,6 +179,7 @@ Test_TriggerKeys()
 
 tests := [
     Test_ValidSimpleRule,
+    Test_RegisterDefaultsDisabled,
     Test_ValidActionsRule,
     Test_InvalidMixedAction,
     Test_InvalidUnknownField,
