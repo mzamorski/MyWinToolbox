@@ -33,7 +33,7 @@ class WindowToolbox
         alwaysOnTopLabel := "Always on top"
         windowMenu.Add(
             alwaysOnTopLabel,
-            WindowToolbox.ToggleAlwaysOnTop.Bind(hwnd)
+            ObjBindMethod(WindowToolbox, "ToggleAlwaysOnTop", hwnd)
         )
 
         if (WindowToolbox.IsAlwaysOnTop(hwnd))
@@ -44,7 +44,7 @@ class WindowToolbox
         keepAliveLabel := "KeepAlive"
         windowMenu.Add(
             keepAliveLabel,
-            WindowToolbox.ToggleKeepAlive.Bind(hwnd)
+            ObjBindMethod(WindowToolbox, "ToggleKeepAlive", hwnd)
         )
 
         if (WindowKeepAlive.Targets.Has(hwnd))
@@ -54,26 +54,26 @@ class WindowToolbox
 
         windowMenu.Add(
             "Toggle process mute",
-            WindowToolbox.ToggleMute.Bind(hwnd)
+            ObjBindMethod(WindowToolbox, "ToggleMute", hwnd)
         )
 
         moveMenu := Menu()
-        moveMenu.Add("Center", WindowToolbox.Center.Bind(hwnd))
+        moveMenu.Add("Center", ObjBindMethod(WindowToolbox, "Center", hwnd))
         moveMenu.Add()
-        moveMenu.Add("Left third", WindowToolbox.MoveThird.Bind(hwnd, 1))
-        moveMenu.Add("Middle third", WindowToolbox.MoveThird.Bind(hwnd, 2))
-        moveMenu.Add("Right third", WindowToolbox.MoveThird.Bind(hwnd, 3))
+        moveMenu.Add("Left third", ObjBindMethod(WindowToolbox, "MoveThird", hwnd, 1))
+        moveMenu.Add("Middle third", ObjBindMethod(WindowToolbox, "MoveThird", hwnd, 2))
+        moveMenu.Add("Right third", ObjBindMethod(WindowToolbox, "MoveThird", hwnd, 3))
 
         if (MonitorGetCount() > 1)
         {
             moveMenu.Add()
             moveMenu.Add(
                 "Previous monitor",
-                WindowToolbox.MoveMonitor.Bind(hwnd, -1)
+                ObjBindMethod(WindowToolbox, "MoveMonitor", hwnd, -1)
             )
             moveMenu.Add(
                 "Next monitor",
-                WindowToolbox.MoveMonitor.Bind(hwnd, 1)
+                ObjBindMethod(WindowToolbox, "MoveMonitor", hwnd, 1)
             )
         }
 
@@ -82,14 +82,16 @@ class WindowToolbox
 
         windowMenu.Add(
             "Copy window info",
-            WindowToolbox.CopyInfo.Bind(hwnd)
+            ObjBindMethod(WindowToolbox, "CopyInfo", hwnd)
         )
 
         if (onCaptureAutoPaste)
         {
             windowMenu.Add(
                 "Create AutoPaste rule...",
-                WindowToolbox.CaptureAutoPaste.Bind(
+                ObjBindMethod(
+                    WindowToolbox,
+                    "CaptureAutoPaste",
                     hwnd,
                     onCaptureAutoPaste
                 )
@@ -99,11 +101,11 @@ class WindowToolbox
         closeMenu := Menu()
         closeMenu.Add(
             "Same title + class",
-            WindowToolbox.CloseSimilar.Bind(hwnd, true)
+            ObjBindMethod(WindowToolbox, "CloseSimilar", hwnd, true)
         )
         closeMenu.Add(
             "Same class",
-            WindowToolbox.CloseSimilar.Bind(hwnd, false)
+            ObjBindMethod(WindowToolbox, "CloseSimilar", hwnd, false)
         )
         windowMenu.Add("Close windows", closeMenu)
 
