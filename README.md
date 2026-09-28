@@ -58,7 +58,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
-| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for managing Text Snippets, dynamic HotStrings, and HotString scope aliases. |
+| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, and shared/profile Settings. |
 | `Ctrl + Win + E` | Opens the emoji menu. |
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
@@ -85,7 +85,7 @@ The Format menu transforms clipboard content and pastes the result. It provides:
 
 ### String generator and snippets
 
-The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. Its **Text Snippets** tab manages categories, snippets, descriptions, separators and ordering; saving creates `TextSnippets.json.bak` and refreshes the live snippets menu immediately. The **HotStrings** tab edits triggers, IDs, options, send mode, text, tags, include/exclude scopes and enabled state, while **HotString Scopes** edits reusable process/class/title-regex aliases. HotString changes are saved to `HotStrings.json` with a `.bak` backup and take effect after reload; use **Save + Reload** to apply them immediately. The emoji menu pastes a small set of frequently used symbols.
+The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
 
 ### Built-in hotstrings
 
@@ -165,7 +165,7 @@ For example, a login form that needs keyboard navigation can be expressed as one
 
 One action must contain one operation only. Use separate items such as `{ "keys": "{Tab}" }`, `{ "delay": 200 }` rather than combining `keys` and `delay` in one object. The top-level `delay` remains an entry-level wait performed after matching and before window activation.
 
-AutoPaste validates the complete configuration during startup. Invalid rule fields, unsupported match modes, malformed actions, ambiguous top-level action sources, and actions with more than one operation stop registration immediately with a message that includes the rule/action location.
+AutoPaste validates the complete configuration during startup. Invalid rule fields, unsupported match modes, malformed actions, ambiguous top-level action sources, and actions with more than one operation stop registration immediately with a message that includes the rule/action location. The same validation is used by the **AutoPaste** tab in `Ctrl + Win + Shift + S`, which saves with a backup and refreshes the running AutoPaste rules while preserving their enabled/disabled state.
 
 The complete action list is validated before execution. If any action is invalid, AutoPaste executes none of the actions, avoiding partial form fills followed by repeated retries from the timer.
 
@@ -216,7 +216,7 @@ To create the encrypted value, copy the password to the clipboard, press `Ctrl +
 | `TextSnippets.json` | Categorized snippet menus. |
 | `AutoPastes.json` | Window-matching automatic paste rules. |
 
-Keep profile configuration private: it can contain personal details and encrypted password values. The repository's sample configuration is intentionally generic.
+Keep profile configuration private: it can contain personal details and encrypted password values. The repository's sample configuration is intentionally generic. The Configurator **Settings** tab edits known fields without exposing a raw INI editor. Passwords can be entered as plaintext through **Set plaintext...**; MyWinToolbox encrypts them with the current profile `Secret` before storing them. Changing `Secret` while encrypted passwords exist requires an explicit confirmation because existing values are not automatically re-encrypted.
 
 Runtime diagnostics are written to `%LOCALAPPDATA%\MyWinToolbox\MyWinToolbox.log` (rotated at 2 MB). Set `[Logging] Debug = true` in `MyWinShared.ahk.config` for additional debug-level entries. Logging failures are intentionally non-fatal.
 
