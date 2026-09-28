@@ -892,16 +892,14 @@ class ConfiguratorAutoPasteTab
             return
         }
 
-        target := this.PickTargetWindow(
+        info := this.PickTargetWindow(
             "Click the window to capture for this AutoPaste rule."
         )
 
-        if (!target)
+        if (!info)
         {
             return
         }
-
-        info := this.GetTargetWindowInfo(target)
 
         if (info["exe"] != "")
         {
@@ -975,16 +973,15 @@ class ConfiguratorAutoPasteTab
             return
         }
 
-        target := this.PickTargetWindow(
+        info := this.PickTargetWindow(
             "Click the window to test against the selected AutoPaste rule."
         )
 
-        if (!target)
+        if (!info)
         {
             return
         }
 
-        info := this.GetTargetWindowInfo(target)
         result := ConfiguratorAutoPasteTab.EvaluateRuleMatchers(rule, info)
 
         message := result["Matched"]
@@ -1063,7 +1060,7 @@ class ConfiguratorAutoPasteTab
                 targetHwnd := 0
             }
 
-            return targetHwnd
+            return this.GetTargetWindowInfo(targetHwnd)
         }
         finally
         {
