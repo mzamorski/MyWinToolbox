@@ -119,6 +119,18 @@ if ($destinationIsInProgramFiles -and -not $NoElevation -and -not (Test-IsAdmini
 $scheduledTaskExists = Test-ScheduledTaskExists
 Stop-MyWinToolboxScheduledTask -TaskExists $scheduledTaskExists
 
+$obsoleteDeploymentFiles = @(
+    'Libs\TextSnippetsEditor.ahk'
+)
+
+foreach ($relativePath in $obsoleteDeploymentFiles) {
+    $obsoletePath = Join-Path $destinationPath $relativePath
+    if (Test-Path -LiteralPath $obsoletePath -PathType Leaf) {
+        Remove-Item -LiteralPath $obsoletePath -Force
+        Write-Host "Removed obsolete file: $relativePath"
+    }
+}
+
 $entryScript = "MyWin$Profile.ahk"
 $files = @(
     $entryScript
