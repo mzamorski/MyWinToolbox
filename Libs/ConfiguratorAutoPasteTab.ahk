@@ -914,21 +914,29 @@ class ConfiguratorAutoPasteTab
         if (info["title"] != "")
         {
             rule["title"] := info["title"]
-
-            if (rule.Has("titleMatchMode"))
-            {
-                rule.Delete("titleMatchMode")
-            }
+        }
+        else if (rule.Has("title"))
+        {
+            rule.Delete("title")
         }
 
-        if (info["url"] != "")
+        if (rule.Has("titleMatchMode"))
+        {
+            rule.Delete("titleMatchMode")
+        }
+
+        if (info["isBrowser"] && info["url"] != "")
         {
             rule["url"] := info["url"]
+        }
+        else if (rule.Has("url"))
+        {
+            rule.Delete("url")
+        }
 
-            if (rule.Has("urlMatchMode"))
-            {
-                rule.Delete("urlMatchMode")
-            }
+        if (rule.Has("urlMatchMode"))
+        {
+            rule.Delete("urlMatchMode")
         }
 
         if (
@@ -1050,14 +1058,23 @@ class ConfiguratorAutoPasteTab
                 targetHwnd := rootHwnd
             }
 
-            if (
-                !targetHwnd
-                || targetHwnd = configHwnd
-                || !WinExist("ahk_id " targetHwnd)
-                || !WindowApp.IsRealWindow(targetHwnd)
-            )
+            isValidTarget := false
+
+            try
             {
-                targetHwnd := 0
+                isValidTarget := targetHwnd
+                    && targetHwnd != configHwnd
+                    && WinExist("ahk_id " targetHwnd)
+                    && WindowApp.IsRealWindow(targetHwnd)
+            }
+            catch Error
+            {
+                isValidTarget := false
+            }
+
+            if (!isValidTarget)
+            {
+                return 0
             }
 
             return this.GetTargetWindowInfo(targetHwnd)
