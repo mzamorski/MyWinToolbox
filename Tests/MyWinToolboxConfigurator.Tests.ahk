@@ -206,6 +206,45 @@ AssertTrue(
     "AutoPaste matcher diagnostics should reject rules without matchers"
 )
 
+capturedInfo := Map(
+    "hwnd", 123,
+    "exe", "chrome.exe",
+    "class", "Chrome_WidgetWin_1",
+    "title", "Example - Chrome",
+    "url", "https://example.com/login",
+    "isBrowser", true
+)
+
+capturedRule := ConfiguratorAutoPasteTab.CreateRuleFromWindowInfo(capturedInfo)
+
+AssertEqual(
+    "chrome",
+    capturedRule["name"],
+    "captured AutoPaste rule should derive name from executable"
+)
+AssertEqual(
+    "chrome.exe",
+    capturedRule["exe"],
+    "captured AutoPaste rule should include executable"
+)
+AssertEqual(
+    "Chrome_WidgetWin_1",
+    capturedRule["class"],
+    "captured AutoPaste rule should include class"
+)
+AssertEqual(
+    "https://example.com/login",
+    capturedRule["url"],
+    "captured browser rule should include URL"
+)
+AssertEqual(
+    "text",
+    ConfiguratorAutoPasteTab.GetActionOperation(
+        capturedRule["actions"][1]
+    )["Type"],
+    "captured rule should start with editable text action"
+)
+
 AssertThrows(
     () => ConfiguratorSettingsTab.ValidateNamedEntries(
         [
