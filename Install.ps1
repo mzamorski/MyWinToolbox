@@ -14,6 +14,52 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$scheduledTaskName = 'MyWinToolbox'
+$scheduledTaskPath = Join-Path $env:SystemRoot 'System32\schtasks.exe'
+
+function Test-ScheduledTaskExists {
+    & $scheduledTaskPath /Query /TN $scheduledTaskName *> $null
+    return $LASTEXITCODE -eq 0
+}
+
+function Stop-MyWinToolboxScheduledTask {
+    param([bool]$TaskExists)
+
+    if (-not $TaskExists) {
+        Write-Warning "Scheduled task '$scheduledTaskName' was not found. Deployment will continue."
+        return
+    }
+
+    Write-Host "Stopping scheduled task '$scheduledTaskName'..."
+    & $scheduledTaskPath /End /TN $scheduledTaskName *> $null
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host 'Scheduled task stopped.'
+        Start-Sleep -Milliseconds 250
+    }
+    else {
+        Write-Host 'Scheduled task was not running or could not be stopped; deployment will continue.' -ForegroundColor Yellow
+    }
+}
+
+function Start-MyWinToolboxScheduledTask {
+    param([bool]$TaskExists)
+
+    if (-not $TaskExists) {
+        Write-Warning "Scheduled task '$scheduledTaskName' was not found, so MyWinToolbox was not started."
+        return
+    }
+
+    Write-Host "Starting scheduled task '$scheduledTaskName'..."
+    & $scheduledTaskPath /Run /TN $scheduledTaskName *> $null
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Deployment succeeded, but scheduled task '$scheduledTaskName' could not be started."
+    }
+
+    Write-Host 'Scheduled task started.' -ForegroundColor Green
+}
+
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
@@ -69,6 +115,9 @@ if ($destinationIsInProgramFiles -and -not $NoElevation -and -not (Test-IsAdmini
     $process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $arguments -Wait -PassThru
     exit $process.ExitCode
 }
+
+$scheduledTaskExists = Test-ScheduledTaskExists
+Stop-MyWinToolboxScheduledTask -TaskExists $scheduledTaskExists
 
 $entryScript = "MyWin$Profile.ahk"
 $files = @(
@@ -150,14 +199,7 @@ Write-Host "Updated files: $copied; unchanged files: $unchanged"
 Write-Host 'Configuration and JSON data files were not changed.'
 
 if ($Restart) {
-    $targetEntryScript = Join-Path $destinationPath $entryScript
-
-    if (-not (Test-Path -LiteralPath $targetEntryScript -PathType Leaf)) {
-        throw "Cannot restart MyWinToolbox; profile entry script was not found: $targetEntryScript"
-    }
-
-    Write-Host "Restarting MyWinToolbox $Profile..."
-    # Launch through the user's Explorer shell so an elevated installer does not
-    # accidentally leave the AutoHotkey profile running elevated.
-    Start-Process -FilePath 'explorer.exe' -ArgumentList ('"{0}"' -f $targetEntryScript)
+    Write-Verbose '-Restart is retained for backward compatibility; the scheduled task is restarted after every successful deployment.'
 }
+
+Start-MyWinToolboxScheduledTask -TaskExists $scheduledTaskExists
