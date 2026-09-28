@@ -28,8 +28,11 @@ AutoPaste_Register(entries)
 
     if (AutoPasteEntries.Length > 0)
     {
-        AutoPaste_SetEnabled(true)
-        Logger.Info("Registered " AutoPasteEntries.Length " rule(s).", "AutoPaste")
+        AutoPaste_SetEnabled(false)
+        Logger.Info(
+            "Registered " AutoPasteEntries.Length " rule(s); AutoPaste is disabled by default.",
+            "AutoPaste"
+        )
 
         for entryIndex, entry in AutoPasteEntries
         {
@@ -537,7 +540,10 @@ AutoPaste_IsMatched(hwnd, entry, matchContext)
 
         if (!matchContext["urlLoaded"])
         {
-            matchContext["url"] := Browser.GetURL()
+            ; Never use the interactive Ctrl+L/Ctrl+C fallback from the AutoPaste
+            ; watcher. If UI Automation cannot read the URL, the rule simply does
+            ; not match instead of stealing focus from the browser.
+            matchContext["url"] := Browser.GetURL(false)
             matchContext["urlLoaded"] := true
         }
 
