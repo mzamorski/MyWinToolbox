@@ -69,6 +69,9 @@ class WindowKeepAlive
         wasMinimized := WinGetMinMax(selector) = -1
         previousCoordMode := A_CoordModeMouse
 
+        CoordMode("Mouse", "Screen")
+        MouseGetPos(&mouseX, &mouseY)
+
         try
         {
             if (wasMinimized)
@@ -82,22 +85,21 @@ class WindowKeepAlive
                 throw Error("Unable to activate the target window.")
             }
 
-            CoordMode("Mouse", "Screen")
-            MouseGetPos(&mouseX, &mouseY)
+            ; Put the pointer inside the target without generating a large SendInput
+            ; movement, then inject only a one-pixel foreground movement.
+            WinGetPos(&windowX, &windowY, &windowWidth, &windowHeight, selector)
+            targetX := Round(windowX + windowWidth / 2)
+            targetY := Round(windowY + windowHeight / 2)
+            DllCall("SetCursorPos", "Int", targetX, "Int", targetY)
 
             delta := target.NextDelta
             target.NextDelta := -delta
 
-            ; Generate real foreground mouse input instead of posting WM_MOUSEMOVE.
-            ; The second move restores the cursor to its original screen position.
             MouseMove(delta, delta, 0, "R")
             Sleep(50)
-            MouseMove(mouseX, mouseY, 0)
         }
         finally
         {
-            CoordMode("Mouse", previousCoordMode)
-
             if (previousHwnd && previousHwnd != hwnd && WinExist("ahk_id " previousHwnd))
             {
                 try
@@ -114,6 +116,10 @@ class WindowKeepAlive
                     WinMinimize(selector)
                 }
             }
+
+            ; Warp back without injecting a large reverse movement into the target.
+            DllCall("SetCursorPos", "Int", mouseX, "Int", mouseY)
+            CoordMode("Mouse", previousCoordMode)
         }
     }
 
