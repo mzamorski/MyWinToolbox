@@ -439,7 +439,7 @@ class ConfiguratorSettingsTab
 
         this.Window.AddText(
             "x800 y515 w315 h42",
-            "New passwords use Windows DPAPI. Secret is required only for legacy RC4 values."
+            "New passwords use Windows DPAPI for the current user. Secret is only for legacy RC4."
         )
     }
 
