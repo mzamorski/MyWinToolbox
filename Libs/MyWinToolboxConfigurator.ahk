@@ -430,7 +430,8 @@ class MyWinToolboxConfigurator
                 "HotStrings",
                 "HotString Scopes",
                 "AutoPaste",
-                "Settings"
+                "Settings",
+                "Backup / Restore"
             ]
         )
 
@@ -458,6 +459,20 @@ class MyWinToolboxConfigurator
             sharedConfigPath,
             profileConfigPath,
             ObjBindMethod(this, "OnDirtyStateChanged")
+        )
+
+        this.Tabs.UseTab(6)
+        this.BackupTab := ConfiguratorBackupTab(
+            this.Window,
+            [
+                profileConfigPath,
+                sharedConfigPath,
+                snippetsFilePath,
+                hotStringsFilePath,
+                autoPasteFilePath
+            ],
+            profileConfigPath,
+            ObjBindMethod(this, "CanRestoreBackup")
         )
 
         this.Tabs.UseTab()
@@ -2258,14 +2273,35 @@ class MyWinToolboxConfigurator
         }
     }
 
-    OnClose(*)
+    HasUnsavedChanges()
     {
-        if (
-            this.SnippetsDirty
+        return this.SnippetsDirty
             || this.HotStringsState.Dirty
             || this.AutoPasteTab.Dirty
             || this.SettingsTab.Dirty
+    }
+
+    CanRestoreBackup()
+    {
+        if (!this.HasUnsavedChanges())
+        {
+            return true
+        }
+
+        answer := MsgBox(
+            "There are unsaved Configurator changes.`n`n"
+                "Restore will discard those in-memory changes and reload MyWinToolbox.`n`n"
+                "Continue with restore?",
+            "Restore MyWinToolbox configuration",
+            "YesNo Icon!"
         )
+
+        return answer = "Yes"
+    }
+
+    OnClose(*)
+    {
+        if (this.HasUnsavedChanges())
         {
             answer := MsgBox(
                 "There are unsaved changes. Close without saving?",
@@ -2292,10 +2328,7 @@ class MyWinToolboxConfigurator
 
     UpdateWindowTitle()
     {
-        dirty := this.SnippetsDirty
-            || this.HotStringsState.Dirty
-            || this.AutoPasteTab.Dirty
-            || this.SettingsTab.Dirty
+        dirty := this.HasUnsavedChanges()
 
         this.Window.Title := "MyWinToolbox Configurator" (dirty ? " *" : "")
     }
