@@ -505,12 +505,14 @@ class ConfiguratorBackupTab
         window,
         filePaths,
         profileConfigPath,
+        canBackupCallback := 0,
         canRestoreCallback := 0
     )
     {
         this.Window := window
         this.FilePaths := filePaths
         this.ProfileConfigPath := profileConfigPath
+        this.CanBackupCallback := canBackupCallback
         this.CanRestoreCallback := canRestoreCallback
         this.BackupFolder := ConfiguratorBackupStore.GetDefaultBackupFolder()
 
@@ -528,7 +530,7 @@ class ConfiguratorBackupTab
         this.Window.AddText(
             "x45 y82 w1040 h46",
             "Backup contains the active profile config, shared config, TextSnippets.json, "
-                "HotStrings.json and AutoPastes.json. Script files and logs are not included."
+                "HotStrings.json and AutoPastes.json. Save pending edits first; backups use on-disk files."
         )
 
         this.FileList := this.Window.AddListView(
@@ -619,6 +621,14 @@ class ConfiguratorBackupTab
 
     OnCreateBackup(*)
     {
+        if (
+            this.CanBackupCallback
+            && !this.CanBackupCallback.Call()
+        )
+        {
+            return
+        }
+
         try
         {
             destinationPath := ConfiguratorBackupStore.BuildBackupPath(
