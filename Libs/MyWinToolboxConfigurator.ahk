@@ -153,10 +153,33 @@ class ConfiguratorHotStringsState
     {
         definitions := this.GetDefinitions()
         aliases := this.GetAliases()
+        defaults := this.Data["Defaults"]
         ids := Map()
+        aliasNames := Map()
+
+        if (!defaults.Has("Options") || Type(defaults["Options"]) != "String")
+        {
+            throw Error("HotStrings Defaults.Options must be a string.")
+        }
+
+        scopeMode := defaults.Has("ScopeMode")
+            ? StrLower(Trim("" defaults["ScopeMode"]))
+            : "include"
+
+        if (scopeMode != "include" && scopeMode != "exclude")
+        {
+            throw Error("HotStrings Defaults.ScopeMode must be include or exclude.")
+        }
 
         for aliasName, aliasDefinition in aliases
         {
+            normalizedAliasName := StrLower(Trim("" aliasName))
+            if (aliasNames.Has(normalizedAliasName))
+            {
+                throw Error("Duplicate HotString scope name: " aliasName)
+            }
+
+            aliasNames[normalizedAliasName] := true
             if (Trim("" aliasName) = "")
             {
                 throw Error("HotString scope names cannot be empty.")
@@ -203,6 +226,16 @@ class ConfiguratorHotStringsState
             if (!definition.Has("Text") || Type(definition["Text"]) != "String")
             {
                 throw Error("HotString #" index " requires string Text.")
+            }
+
+            for stringField in ["Id", "Trigger", "Pattern", "Options", "Description", "SendMode"]
+            {
+                if (definition.Has(stringField) && Type(definition[stringField]) != "String")
+                {
+                    throw Error(
+                        "HotString #" index " field '" stringField "' must be a string."
+                    )
+                }
             }
 
             if (definition.Has("Id") && Trim("" definition["Id"]) != "")
