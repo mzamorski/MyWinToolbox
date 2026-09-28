@@ -24,6 +24,7 @@
 #Include Libs\WindowToolbox.ahk
 #Include Libs\ConfiguratorAutoPasteTab.ahk
 #Include Libs\ConfiguratorSettingsTab.ahk
+#Include Libs\ConfiguratorBackupTab.ahk
 #Include Libs\MyWinToolboxConfigurator.ahk
 
 SendMode("Input")
