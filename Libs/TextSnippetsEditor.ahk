@@ -142,6 +142,18 @@ class TextSnippetsEditor
                     throw Error("Category '" categoryName "', snippet #" snippetIndex " requires string Content.")
                 }
 
+                content := snippet["Content"]
+                hasTitle := snippet.Has("Title") && Type(snippet["Title"]) = "String"
+                    && Trim(snippet["Title"]) != ""
+
+                if (content != "--" && !hasTitle && Trim(content) = "")
+                {
+                    throw Error(
+                        "Category '" categoryName "', snippet #" snippetIndex
+                        " requires a Title or non-empty Content."
+                    )
+                }
+
                 for optionalField in ["Title", "Description"]
                 {
                     if (snippet.Has(optionalField) && Type(snippet[optionalField]) != "String")
