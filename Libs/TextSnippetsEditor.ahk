@@ -11,8 +11,7 @@ class TextSnippetsEditor
             try
             {
                 TextSnippetsEditor.Instance.Gui.Show()
-                TextSnippetsEditor.Instance.Gui.Opt("+AlwaysOnTop")
-                TextSnippetsEditor.Instance.Gui.Opt("-AlwaysOnTop")
+                WinActivate("ahk_id " TextSnippetsEditor.Instance.Gui.Hwnd)
                 return
             }
             catch Error
@@ -49,6 +48,7 @@ class TextSnippetsEditor
         this.CategoryList.OnEvent("Change", ObjBindMethod(this, "OnCategoryChanged"))
 
         this.SnippetList := this.Gui.AddListView("x248 y36 w280 h460 -Hdr -Multi", ["Snippet"])
+        this.SnippetList.ModifyCol(1, 260)
         this.SnippetList.OnEvent("ItemSelect", ObjBindMethod(this, "OnSnippetChanged"))
         this.SnippetList.OnEvent("DoubleClick", ObjBindMethod(this, "OnSnippetDoubleClick"))
 
@@ -181,14 +181,14 @@ class TextSnippetsEditor
 
             FileMove(tempPath, filePath, true)
         }
-        catch
+        catch Error as e
         {
             if FileExist(tempPath)
             {
                 FileDelete(tempPath)
             }
 
-            throw
+            throw e
         }
     }
 
@@ -211,6 +211,7 @@ class TextSnippetsEditor
 
         this.CategoryList.Move(, , leftWidth, contentHeight)
         this.SnippetList.Move(, , middleWidth, contentHeight)
+        this.SnippetList.ModifyCol(1, Max(80, middleWidth - 16))
 
         this.TitleEdit.Move(editorX, , editorWidth)
         this.DescriptionEdit.Move(editorX, , editorWidth)
