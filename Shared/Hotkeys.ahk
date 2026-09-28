@@ -268,7 +268,7 @@ HotKey_CloseAllWindows(withSameTitle := false)
 
     try
     {
-        isEnabled := WindowKeepAlive.ToggleActiveWindow()
+        isEnabled := WindowKeepAlive.ToggleWindow(hwnd)
         WindowKeepAlive.ShowToolTip(
             (isEnabled ? "KeepAlive ON: " : "KeepAlive OFF: ") procName
         )
