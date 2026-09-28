@@ -1012,6 +1012,7 @@ class ConfiguratorSettingsTab
 
         entry["Value"] := this.PasswordValueEdit.Value
         this.SetDirty()
+        this.UpdatePasswordButtons()
     }
 
     OnAddPassword(*)
