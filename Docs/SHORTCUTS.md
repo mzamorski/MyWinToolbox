@@ -31,7 +31,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | `Win + Ctrl + F` | Open **Format** menu. |
 | `Win + Ctrl + I` | Open **String Generator** menu. |
 | `Win + Ctrl + S` | Open **Text Snippets** menu. |
-| `Win + Ctrl + Shift + S` | Open the **Text Snippets Editor** GUI. Changes are saved to `TextSnippets.json`, with a `.bak` backup, and the menu refreshes immediately. |
+| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings, and HotString scope aliases. |
 | `Win + Ctrl + E` | Open **Emoji** menu. |
 | `Win + Ctrl + D` | Paste the current local date/time. |
 | `Ctrl + Tab` | Insert the configured number of spaces (`SpacesPerIndent`). |
@@ -147,7 +147,7 @@ The Format menu copies the current selection through the clipboard, transforms i
 
 ## 📝 Text Snippets — `Win + Ctrl + S`
 
-The menu is generated from `TextSnippets.json`. Use `Win + Ctrl + Shift + S` to edit it in a GUI instead of modifying JSON manually. The editor supports categories, snippets, descriptions, separators, duplication, deletion, reordering, validation, and automatic `.bak` backups.
+The menu is generated from `TextSnippets.json`. Use `Win + Ctrl + Shift + S` to open the shared **MyWinToolbox Configurator** instead of modifying JSON manually. The **Text Snippets** tab supports categories, snippets, descriptions, separators, duplication, deletion, reordering, validation, and automatic `.bak` backups.
 
 ### T-SQL
 
@@ -256,7 +256,7 @@ Loaded from `HotStrings.json`. Current repository examples:
 | `addr` | Multi-line work address | Everywhere |
 | `btw` | `By the way` | Notepad / Notepad++ text-editor scope |
 
-Dynamic entries support enable/disable state, AutoHotkey options, send mode, tags, and include/exclude scopes by process, class, or title.
+Dynamic entries support enable/disable state, AutoHotkey options, send mode, tags, and include/exclude scopes by process, class, or title. Use `Win + Ctrl + Shift + S` → **HotStrings** to edit entries and **HotString Scopes** to manage reusable scope aliases. `Save + Reload` applies HotString changes immediately after saving.
 
 ---
 
