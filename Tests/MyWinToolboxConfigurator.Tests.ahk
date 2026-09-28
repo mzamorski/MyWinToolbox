@@ -144,6 +144,68 @@ AssertEqual(
     "AutoPaste action operation should detect passwordKey"
 )
 
+matcherRule := Map(
+    "exe", "msedge.exe",
+    "class", "Chrome_WidgetWin_1",
+    "title", "Example",
+    "titleMatchMode", "contains",
+    "url", "https://example.com/login",
+    "urlMatchMode", "equals"
+)
+
+matchingTarget := Map(
+    "exe", "msedge.exe",
+    "class", "Chrome_WidgetWin_1",
+    "title", "Example - Microsoft Edge",
+    "url", "https://example.com/login",
+    "isBrowser", true
+)
+
+matchResult := ConfiguratorAutoPasteTab.EvaluateRuleMatchers(
+    matcherRule,
+    matchingTarget
+)
+
+AssertTrue(
+    matchResult["Matched"],
+    "AutoPaste matcher diagnostics should pass matching target"
+)
+AssertTrue(
+    InStr(matchResult["Details"], "✓ EXE") > 0,
+    "AutoPaste matcher diagnostics should include successful EXE check"
+)
+
+nonMatchingTarget := ConfiguratorJsonStore.Clone(matchingTarget)
+nonMatchingTarget["class"] := "OtherClass"
+nonMatchingTarget["url"] := ""
+
+noMatchResult := ConfiguratorAutoPasteTab.EvaluateRuleMatchers(
+    matcherRule,
+    nonMatchingTarget
+)
+
+AssertTrue(
+    !noMatchResult["Matched"],
+    "AutoPaste matcher diagnostics should fail mismatching target"
+)
+AssertTrue(
+    InStr(noMatchResult["Details"], "✗ Class") > 0,
+    "AutoPaste matcher diagnostics should identify class mismatch"
+)
+AssertTrue(
+    InStr(noMatchResult["Details"], "✗ URL") > 0,
+    "AutoPaste matcher diagnostics should identify unavailable URL"
+)
+
+emptyMatcherResult := ConfiguratorAutoPasteTab.EvaluateRuleMatchers(
+    Map(),
+    matchingTarget
+)
+AssertTrue(
+    !emptyMatcherResult["Matched"],
+    "AutoPaste matcher diagnostics should reject rules without matchers"
+)
+
 AssertThrows(
     () => ConfiguratorSettingsTab.ValidateNamedEntries(
         [
