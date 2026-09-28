@@ -337,8 +337,13 @@ class MyWinToolboxConfigurator
         snippetsFilePath,
         hotStringsData,
         hotStringsFilePath,
+        autoPasteData,
+        autoPasteFilePath,
+        sharedConfigPath,
+        profileConfigPath,
         onSnippetsSaved := 0,
-        onHotStringsSaved := 0
+        onHotStringsSaved := 0,
+        onAutoPasteSaved := 0
     )
     {
         if (MyWinToolboxConfigurator.Instance)
@@ -362,8 +367,13 @@ class MyWinToolboxConfigurator
                 snippetsFilePath,
                 hotStringsData,
                 hotStringsFilePath,
+                autoPasteData,
+                autoPasteFilePath,
+                sharedConfigPath,
+                profileConfigPath,
                 onSnippetsSaved,
-                onHotStringsSaved
+                onHotStringsSaved,
+                onAutoPasteSaved
             )
 
             MyWinToolboxConfigurator.Instance.Window.Show("w1180 h750")
@@ -384,8 +394,13 @@ class MyWinToolboxConfigurator
         snippetsFilePath,
         hotStringsData,
         hotStringsFilePath,
+        autoPasteData,
+        autoPasteFilePath,
+        sharedConfigPath,
+        profileConfigPath,
         onSnippetsSaved := 0,
-        onHotStringsSaved := 0
+        onHotStringsSaved := 0,
+        onAutoPasteSaved := 0
     )
     {
         this.SnippetsData := ConfiguratorJsonStore.Clone(snippetsData)
@@ -410,7 +425,13 @@ class MyWinToolboxConfigurator
 
         this.Tabs := this.Window.AddTab3(
             "x10 y10 w1160 h665",
-            ["Text Snippets", "HotStrings", "HotString Scopes"]
+            [
+                "Text Snippets",
+                "HotStrings",
+                "HotString Scopes",
+                "AutoPaste",
+                "Settings"
+            ]
         )
 
         this.Tabs.UseTab(1)
@@ -421,6 +442,23 @@ class MyWinToolboxConfigurator
 
         this.Tabs.UseTab(3)
         this.BuildHotStringScopesTab()
+
+        this.Tabs.UseTab(4)
+        this.AutoPasteTab := ConfiguratorAutoPasteTab(
+            this.Window,
+            autoPasteData,
+            autoPasteFilePath,
+            ObjBindMethod(this, "OnDirtyStateChanged"),
+            onAutoPasteSaved
+        )
+
+        this.Tabs.UseTab(5)
+        this.SettingsTab := ConfiguratorSettingsTab(
+            this.Window,
+            sharedConfigPath,
+            profileConfigPath,
+            ObjBindMethod(this, "OnDirtyStateChanged")
+        )
 
         this.Tabs.UseTab()
 
@@ -2109,9 +2147,10 @@ class MyWinToolboxConfigurator
         {
             snippetsSaved := false
             hotStringsSaved := false
+            autoPasteSaved := false
+            settingsSaved := false
 
-            ; Validate every modified document before writing either one, so a
-            ; validation error cannot leave only half of Save All persisted.
+            ; Validate every modified document before writing any of them.
             if (this.SnippetsDirty)
             {
                 MyWinToolboxConfigurator.ValidateSnippets(this.SnippetsData)
@@ -2120,6 +2159,21 @@ class MyWinToolboxConfigurator
             if (this.HotStringsState.Dirty)
             {
                 this.HotStringsState.Validate()
+            }
+
+            if (this.AutoPasteTab.Dirty)
+            {
+                this.AutoPasteTab.Validate()
+            }
+
+            if (this.SettingsTab.Dirty)
+            {
+                this.SettingsTab.Validate()
+
+                if (!this.SettingsTab.ConfirmDangerousChanges())
+                {
+                    return false
+                }
             }
 
             if (this.SnippetsDirty)
@@ -2152,17 +2206,31 @@ class MyWinToolboxConfigurator
                 }
             }
 
+            if (this.AutoPasteTab.Dirty)
+            {
+                this.AutoPasteTab.Save()
+                autoPasteSaved := true
+            }
+
+            if (this.SettingsTab.Dirty)
+            {
+                this.SettingsTab.Save()
+                settingsSaved := true
+            }
+
             this.UpdateWindowTitle()
 
-            if (hotStringsSaved)
+            if (hotStringsSaved || settingsSaved)
             {
                 this.SetStatus(
-                    "Saved. Text Snippets are live; HotStrings require reload to apply."
+                    "Saved. HotStrings/Settings require reload; use Save + Reload to apply."
                 )
             }
-            else if (snippetsSaved)
+            else if (snippetsSaved || autoPasteSaved)
             {
-                this.SetStatus("Text Snippets saved and menu refreshed.")
+                this.SetStatus(
+                    "Saved. Text Snippets and AutoPaste changes are active."
+                )
             }
             else
             {
@@ -2184,7 +2252,12 @@ class MyWinToolboxConfigurator
 
     OnClose(*)
     {
-        if (this.SnippetsDirty || this.HotStringsState.Dirty)
+        if (
+            this.SnippetsDirty
+            || this.HotStringsState.Dirty
+            || this.AutoPasteTab.Dirty
+            || this.SettingsTab.Dirty
+        )
         {
             answer := MsgBox(
                 "There are unsaved changes. Close without saving?",
@@ -2211,7 +2284,11 @@ class MyWinToolboxConfigurator
 
     UpdateWindowTitle()
     {
-        dirty := this.SnippetsDirty || this.HotStringsState.Dirty
+        dirty := this.SnippetsDirty
+            || this.HotStringsState.Dirty
+            || this.AutoPasteTab.Dirty
+            || this.SettingsTab.Dirty
+
         this.Window.Title := "MyWinToolbox Configurator" (dirty ? " *" : "")
     }
 
@@ -2227,6 +2304,16 @@ class MyWinToolboxConfigurator
         if (this.HotStringsState.Dirty)
         {
             states.Push("HotStrings modified")
+        }
+
+        if (this.AutoPasteTab.Dirty)
+        {
+            states.Push("AutoPaste modified")
+        }
+
+        if (this.SettingsTab.Dirty)
+        {
+            states.Push("Settings modified")
         }
 
         if (states.Length = 0)
