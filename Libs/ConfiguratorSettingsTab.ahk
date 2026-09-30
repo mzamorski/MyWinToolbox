@@ -342,8 +342,40 @@ class ConfiguratorSettingsTab
         this.DebugCheck := this.Window.AddCheckBox("x260 y80 w140 h24", "Debug logging")
         this.DebugCheck.OnEvent("Click", ObjBindMethod(this, "OnFieldChanged"))
 
-        this.Window.AddText("x45 y120 w100", "Dummy text")
-        this.DummyTextEdit := this.Window.AddEdit("x45 y140 w495 h120 WantTab")
+        this.Window.AddGroupBox(
+            "x40 y110 w505 h52",
+            "Startup defaults (active profile)"
+        )
+
+        this.StartupNoSleepCheck := this.Window.AddCheckBox(
+            "x55 y130 w105 h24",
+            "NoSleep"
+        )
+        this.StartupNoSleepCheck.OnEvent(
+            "Click",
+            ObjBindMethod(this, "OnFieldChanged")
+        )
+
+        this.StartupAutoPasteCheck := this.Window.AddCheckBox(
+            "x175 y130 w110 h24",
+            "AutoPaste"
+        )
+        this.StartupAutoPasteCheck.OnEvent(
+            "Click",
+            ObjBindMethod(this, "OnFieldChanged")
+        )
+
+        this.StartupClipboardTrimCheck := this.Window.AddCheckBox(
+            "x300 y130 w140 h24",
+            "Clipboard Trim"
+        )
+        this.StartupClipboardTrimCheck.OnEvent(
+            "Click",
+            ObjBindMethod(this, "OnFieldChanged")
+        )
+
+        this.Window.AddText("x45 y176 w100", "Dummy text")
+        this.DummyTextEdit := this.Window.AddEdit("x45 y196 w495 h70 WantTab")
         this.DummyTextEdit.OnEvent("Change", ObjBindMethod(this, "OnFieldChanged"))
 
         this.Window.AddText("x45 y278 w100", "Email")
@@ -358,19 +390,19 @@ class ConfiguratorSettingsTab
         this.ShowSecretCheck.OnEvent("Click", ObjBindMethod(this, "OnToggleSecret"))
 
         this.Window.AddText("x45 y392 w140", "Shipping address")
-        this.ShippingEdit := this.Window.AddEdit("x45 y412 w495 h80 WantTab")
+        this.ShippingEdit := this.Window.AddEdit("x45 y412 w495 h60 WantTab")
         this.ShippingEdit.OnEvent("Change", ObjBindMethod(this, "OnFieldChanged"))
 
-        this.Window.AddText("x45 y510 w95", "Headphones")
-        this.HeadphonesEdit := this.Window.AddEdit("x140 y507 w400 h25")
+        this.Window.AddText("x45 y490 w95", "Headphones")
+        this.HeadphonesEdit := this.Window.AddEdit("x140 y487 w400 h25")
         this.HeadphonesEdit.OnEvent("Change", ObjBindMethod(this, "OnFieldChanged"))
 
-        this.Window.AddText("x45 y548 w95", "Monitor")
-        this.MonitorEdit := this.Window.AddEdit("x140 y545 w400 h25")
+        this.Window.AddText("x45 y528 w95", "Monitor")
+        this.MonitorEdit := this.Window.AddEdit("x140 y525 w400 h25")
         this.MonitorEdit.OnEvent("Change", ObjBindMethod(this, "OnFieldChanged"))
 
-        this.Window.AddText("x45 y586 w95", "Laptop")
-        this.LaptopEdit := this.Window.AddEdit("x140 y583 w400 h25")
+        this.Window.AddText("x45 y566 w95", "Laptop")
+        this.LaptopEdit := this.Window.AddEdit("x140 y563 w400 h25")
         this.LaptopEdit.OnEvent("Change", ObjBindMethod(this, "OnFieldChanged"))
 
         this.Window.AddGroupBox("x580 y50 w555 h265", "User signatures")
@@ -463,6 +495,18 @@ class ConfiguratorSettingsTab
                 || debugText = "yes"
             ) ? 1 : 0
 
+            this.StartupNoSleepCheck.Value := ConfiguratorSettingsTab.ParseBoolean(
+                this.ProfileDoc.Get("Startup", "NoSleep", "false")
+            ) ? 1 : 0
+
+            this.StartupAutoPasteCheck.Value := ConfiguratorSettingsTab.ParseBoolean(
+                this.ProfileDoc.Get("Startup", "AutoPaste", "false")
+            ) ? 1 : 0
+
+            this.StartupClipboardTrimCheck.Value := ConfiguratorSettingsTab.ParseBoolean(
+                this.ProfileDoc.Get("Startup", "ClipboardTrim", "false")
+            ) ? 1 : 0
+
             this.DummyTextEdit.Value := this.SharedDoc.Get(
                 "Content",
                 "DummyText",
@@ -509,6 +553,38 @@ class ConfiguratorSettingsTab
         {
             this.UpdatingControls := false
         }
+    }
+
+    static ParseBoolean(value, defaultValue := false)
+    {
+        normalized := StrLower(Trim("" value))
+
+        if (normalized = "")
+        {
+            return !!defaultValue
+        }
+
+        if (
+            normalized = "true"
+            || normalized = "1"
+            || normalized = "yes"
+            || normalized = "on"
+        )
+        {
+            return true
+        }
+
+        if (
+            normalized = "false"
+            || normalized = "0"
+            || normalized = "no"
+            || normalized = "off"
+        )
+        {
+            return false
+        }
+
+        throw Error("Invalid boolean value: " value)
     }
 
     OnToggleSecret(*)
@@ -629,6 +705,24 @@ class ConfiguratorSettingsTab
             "Content",
             "DummyText",
             this.DummyTextEdit.Value
+        )
+
+        this.ProfileDoc.Set(
+            "Startup",
+            "NoSleep",
+            this.StartupNoSleepCheck.Value ? "true" : "false"
+        )
+
+        this.ProfileDoc.Set(
+            "Startup",
+            "AutoPaste",
+            this.StartupAutoPasteCheck.Value ? "true" : "false"
+        )
+
+        this.ProfileDoc.Set(
+            "Startup",
+            "ClipboardTrim",
+            this.StartupClipboardTrimCheck.Value ? "true" : "false"
         )
 
         this.ProfileDoc.Set(
