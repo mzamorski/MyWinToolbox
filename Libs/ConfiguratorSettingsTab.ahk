@@ -310,6 +310,10 @@ class ConfiguratorSettingsTab
         this.OnDirtyCallback := onDirtyCallback
         this.SharedDoc := ConfiguratorIniDocument(sharedConfigPath)
         this.ProfileDoc := ConfiguratorIniDocument(profileConfigPath)
+        this.DefaultNoSleepOnStartup := RegExMatch(
+            profileConfigPath,
+            "i)MyWinWork\.ahk\.config$"
+        ) ? true : false
         this.Signatures := this.ProfileDoc.GetSectionEntries("UserSignatures")
         this.Passwords := this.ProfileDoc.GetSectionEntries("Passwords")
         this.SelectedSignatureIndex := 0
@@ -496,7 +500,12 @@ class ConfiguratorSettingsTab
             ) ? 1 : 0
 
             this.StartupNoSleepCheck.Value := ConfiguratorSettingsTab.ParseBoolean(
-                this.ProfileDoc.Get("Startup", "NoSleep", "false")
+                this.ProfileDoc.Get(
+                    "Startup",
+                    "NoSleep",
+                    this.DefaultNoSleepOnStartup ? "true" : "false"
+                ),
+                this.DefaultNoSleepOnStartup
             ) ? 1 : 0
 
             this.StartupAutoPasteCheck.Value := ConfiguratorSettingsTab.ParseBoolean(
