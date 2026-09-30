@@ -295,7 +295,7 @@ class ConfiguratorIniDocument
                 }
 
                 stagePath := A_Temp
-                    . "\\MyWinToolbox-Settings-"
+                    . "\MyWinToolbox-Settings-"
                     . A_TickCount
                     . "-"
                     . index
@@ -380,7 +380,7 @@ class ConfiguratorIniDocument
 
     static SaveStagedElevated(stagedItems)
     {
-        script := "$ErrorActionPreference = 'Stop'``r``n"
+        script := "$ErrorActionPreference = 'Stop'`r`n"
 
         ; One elevated process handles both shared + profile settings, so
         ; saving from Program Files produces a single UAC prompt.
@@ -393,7 +393,7 @@ class ConfiguratorIniDocument
                 . ConfiguratorIniDocument.PsQuote(item["Target"])
                 . " -Destination "
                 . ConfiguratorIniDocument.PsQuote(item["Backup"])
-                . " -Force }``r``n"
+                . " -Force }`r`n"
         }
 
         for item in stagedItems
@@ -403,11 +403,11 @@ class ConfiguratorIniDocument
                 . ConfiguratorIniDocument.PsQuote(item["Source"])
                 . " -Destination "
                 . ConfiguratorIniDocument.PsQuote(item["Target"])
-                . " -Force``r``n"
+                . " -Force`r`n"
         }
 
         scriptPath := A_Temp
-            . "\\MyWinToolbox-ElevatedSettings-"
+            . "\MyWinToolbox-ElevatedSettings-"
             . A_TickCount
             . "-"
             . Random(100000, 999999)
@@ -418,7 +418,7 @@ class ConfiguratorIniDocument
         try
         {
             powerShellPath := A_WinDir
-                . "\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                . "\System32\WindowsPowerShell\v1.0\powershell.exe"
 
             if (!FileExist(powerShellPath))
             {
