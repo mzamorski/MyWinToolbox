@@ -342,6 +342,72 @@ finally
     }
 }
 
+tempIniBatchA := A_Temp "\MyWinToolbox-SettingsBatch-A-" A_TickCount ".ini"
+tempIniBatchB := A_Temp "\MyWinToolbox-SettingsBatch-B-" A_TickCount ".ini"
+
+try
+{
+    FileAppend("[Settings]`r`nValue = old-a`r`n", tempIniBatchA, "UTF-8")
+    FileAppend("[Settings]`r`nValue = old-b`r`n", tempIniBatchB, "UTF-8")
+
+    batchDocA := ConfiguratorIniDocument(tempIniBatchA)
+    batchDocB := ConfiguratorIniDocument(tempIniBatchB)
+    batchDocA.Set("Settings", "Value", "new-a")
+    batchDocB.Set("Settings", "Value", "new-b")
+
+    ConfiguratorIniDocument.SaveDocumentsWithBackup(
+        [batchDocA, batchDocB]
+    )
+
+    reloadedBatchA := ConfiguratorIniDocument(tempIniBatchA)
+    reloadedBatchB := ConfiguratorIniDocument(tempIniBatchB)
+
+    AssertEqual(
+        "new-a",
+        reloadedBatchA.Get("Settings", "Value"),
+        "batch Settings save should persist first document"
+    )
+    AssertEqual(
+        "new-b",
+        reloadedBatchB.Get("Settings", "Value"),
+        "batch Settings save should persist second document"
+    )
+    AssertTrue(
+        FileExist(tempIniBatchA ".bak"),
+        "batch Settings save should create backup for first document"
+    )
+    AssertTrue(
+        FileExist(tempIniBatchB ".bak"),
+        "batch Settings save should create backup for second document"
+    )
+    AssertEqual(
+        "'a''b'",
+        ConfiguratorIniDocument.PsQuote("a'b"),
+        "PowerShell quoting should escape single quotes"
+    )
+}
+catch Error as e
+{
+    TestFailures.Push("batch Settings save unexpected error: " e.Message)
+}
+finally
+{
+    for filePath in [
+        tempIniBatchA,
+        tempIniBatchA ".bak",
+        tempIniBatchA ".tmp",
+        tempIniBatchB,
+        tempIniBatchB ".bak",
+        tempIniBatchB ".tmp"
+    ]
+    {
+        if FileExist(filePath)
+        {
+            FileDelete(filePath)
+        }
+    }
+}
+
 tempSnippetsPath := A_Temp "\MyWinToolbox-Snippets-" A_TickCount ".json"
 
 try
