@@ -31,7 +31,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | `Win + Ctrl + F` | Open **Format** menu. |
 | `Win + Ctrl + I` | Open **String Generator** menu. |
 | `Win + Ctrl + S` | Open **Text Snippets** menu. |
-| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, and Backup / Restore. |
+| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Backup / Restore, and Diagnostics / Health. |
 | `Win + Ctrl + E` | Open **Emoji** menu. |
 | `Win + Ctrl + D` | Paste the current local date/time. |
 | `Ctrl + Tab` | Insert the configured number of spaces (`SpacesPerIndent`). |
@@ -358,6 +358,8 @@ The entire `AutoPastes.json` file is validated at startup. Configuration errors 
 The **Settings** tab in `Win + Ctrl + Shift + S` edits known shared/profile INI fields, per-profile startup defaults (NoSleep / AutoPaste / Clipboard Trim), audio devices, signatures and encrypted passwords. If those INI files are protected (for example under `Program Files`), Save automatically requests UAC only for the write operation after a normal save receives `Access denied`; the main MyWinToolbox process is not relaunched as administrator. New passwords use Windows DPAPI and are marked `[DPAPI]`; legacy entries are marked `[RC4]` and can be converted with **Migrate RC4 -> DPAPI**. JSON/INI saves create `.bak` backups; use **Save + Reload** when changing HotStrings or Settings.
 
 The **Backup / Restore** tab creates versioned ZIP snapshots in `Documents\MyWinToolbox\Backups` containing the active profile config, shared config, Text Snippets, HotStrings, AutoPaste, and a manifest. Pending Configurator edits must be saved before Backup all. Restore validates the active profile and allowed filenames, makes a `pre-restore` safety backup, restores only files present in the ZIP, and reloads MyWinToolbox. DPAPI password blobs can be restored only under the Windows user context that created them.
+
+The **Diagnostics / Health** tab shows the active profile, AHK version, installation path, Scheduled Task state, live AutoPaste/NoSleep/Clipboard Trim/KeepAlive state, config counts, logging state, and recent `[ERROR]` log entries. Its actions are **Refresh**, **Open log**, **Open install folder**, **Run tests**, **Copy report**, and **Reload**. Production deployment includes `Test.ps1` and the `Tests` directory so regression tests can be launched directly from this tab.
 
 These parts of the cheat sheet can change without editing the AHK code:
 
