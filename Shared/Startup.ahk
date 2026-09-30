@@ -45,11 +45,13 @@ try
 	global AudioDeviceLaptop := Ini_ReadOrDefault(ConfigFilePath, "AudioDevices", "Laptop", STRING_EMPTY)
 
 	; Per-profile startup defaults.
+	defaultNoSleepOnStartup := StrLower(MainScriptName) = "mywinwork.ahk"
+
 	global StartupNoSleepEnabled := Ini_ReadBoolOrDefault(
 		ConfigFilePath,
 		"Startup",
 		"NoSleep",
-		false
+		defaultNoSleepOnStartup
 	)
 	global StartupAutoPasteEnabled := Ini_ReadBoolOrDefault(
 		ConfigFilePath,
