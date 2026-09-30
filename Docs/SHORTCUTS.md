@@ -44,11 +44,13 @@ Both profiles include everything from `MyWinShared.ahk`.
 | Menu item | Action |
 | --- | --- |
 | **NoSleep** | Toggle the same NoSleep state as `Ctrl + Win + A`. |
-| **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. AutoPaste starts **disabled** after every script start/reload. |
+| **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. Its startup state is configurable per profile. |
 | **Shutdown → 1h** | Schedule shutdown using the menu's 1-hour preset. |
 | **Shutdown → 2h** | Schedule shutdown using the menu's 2-hour preset. |
 | **Shutdown → Cancel** | Cancel the pending shutdown timer created by Task Runner. |
 | **Clipboard → Trim** | Continuously trim leading/trailing spaces, tabs, CR, and LF from clipboard updates. |
+
+Startup defaults for **NoSleep**, **AutoPaste**, and **Clipboard Trim** are configured per Home/Work profile in `Win + Ctrl + Shift + S` → **Settings**. Work defaults NoSleep to **ON** when no explicit `[Startup]` value exists; Home defaults it to OFF. Use **Save + Reload** after changing startup defaults.
 
 ### Windows and Explorer
 
@@ -301,7 +303,7 @@ These are active only when `ssms.exe` is the foreground application.
 
 ## 🤖 AutoPaste
 
-`AutoPastes.json` defines automatic paste actions triggered when a matching window appears. Rules are loaded and validated at startup, but AutoPaste itself starts **disabled**; enable it from `Ctrl + Win + T` → **AutoPaste**. Matching can use executable, window class, title, and—when a browser is active—the current tab URL. Title and URL criteria use containment by default and support exact matching with `titleMatchMode: "equals"` or `urlMatchMode: "equals"`.
+`AutoPastes.json` defines automatic paste actions triggered when a matching window appears. Rules are loaded and validated at startup; whether AutoPaste starts enabled is controlled by the active profile's **Startup defaults** in Settings. Matching can use executable, window class, title, and—when a browser is active—the current tab URL. Title and URL criteria use containment by default and support exact matching with `titleMatchMode: "equals"` or `urlMatchMode: "equals"`.
 
 Current repository examples:
 
@@ -353,14 +355,14 @@ The entire `AutoPastes.json` file is validated at startup. Configuration errors 
 
 ## Configuration-driven features
 
-The **Settings** tab in `Win + Ctrl + Shift + S` edits known shared/profile INI fields, audio devices, signatures and encrypted passwords. New passwords use Windows DPAPI and are marked `[DPAPI]`; legacy entries are marked `[RC4]` and can be converted with **Migrate RC4 -> DPAPI**. JSON/INI saves create `.bak` backups; use **Save + Reload** when changing HotStrings or Settings.
+The **Settings** tab in `Win + Ctrl + Shift + S` edits known shared/profile INI fields, per-profile startup defaults (NoSleep / AutoPaste / Clipboard Trim), audio devices, signatures and encrypted passwords. New passwords use Windows DPAPI and are marked `[DPAPI]`; legacy entries are marked `[RC4]` and can be converted with **Migrate RC4 -> DPAPI**. JSON/INI saves create `.bak` backups; use **Save + Reload** when changing HotStrings or Settings.
 
 The **Backup / Restore** tab creates versioned ZIP snapshots in `Documents\MyWinToolbox\Backups` containing the active profile config, shared config, Text Snippets, HotStrings, AutoPaste, and a manifest. Pending Configurator edits must be saved before Backup all. Restore validates the active profile and allowed filenames, makes a `pre-restore` safety backup, restores only files present in the ZIP, and reloads MyWinToolbox. DPAPI password blobs can be restored only under the Windows user context that created them.
 
 These parts of the cheat sheet can change without editing the AHK code:
 
 - `MyWinShared.ahk.config` — indent width and dummy text.
-- `MyWinHome.ahk.config` / `MyWinWork.ahk.config` — email, signatures, audio devices, DPAPI-protected passwords, profile-specific values, and an optional legacy RC4 `Secret` while unmigrated values remain.
+- `MyWinHome.ahk.config` / `MyWinWork.ahk.config` — email, per-profile startup defaults, signatures, audio devices, DPAPI-protected passwords, profile-specific values, and an optional legacy RC4 `Secret` while unmigrated values remain.
 - `HotStrings.json` — dynamic hotstrings and scopes.
 - `TextSnippets.json` — snippet categories and content.
 - `AutoPastes.json` — automatic window-matching paste rules.
