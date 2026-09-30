@@ -516,6 +516,7 @@ class MyWinToolboxConfigurator
     {
         if (
             this.Tabs.Value = 7
+            && this.HasOwnProp("DiagnosticsTab")
             && IsObject(this.DiagnosticsTab)
         )
         {
