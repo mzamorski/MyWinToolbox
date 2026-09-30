@@ -10,131 +10,234 @@ global LastClipboard := STRING_EMPTY
 
 OnNoSleep()
 {
-	WinAPI_SetThreadExecutionState_DisplayRequired()
-	WinAPI_SetThreadExecutionState_SystemRequired()
+    WinAPI_SetThreadExecutionState_DisplayRequired()
+    WinAPI_SetThreadExecutionState_SystemRequired()
 
-	if (A_TimeIdle > 10 * MINUTE_IN_MILLISECONDS)
-	{
-		MouseMove(1, 0, , "R")
-		Sleep(1000)
-		MouseMove(-1, 0, , "R")
-	}
+    if (A_TimeIdle > 10 * MINUTE_IN_MILLISECONDS)
+    {
+        MouseMove(1, 0, , "R")
+        Sleep(1000)
+        MouseMove(-1, 0, , "R")
+    }
+}
+
+TaskRunner_SetNoSleepEnabled(enabled, notify := true)
+{
+    global IsNoSleepTimerOn
+
+    enabled := !!enabled
+
+    if (enabled)
+    {
+        ; Apply the execution-state request immediately instead of waiting for
+        ; the first timer tick.
+        OnNoSleep()
+        SetTimer(OnNoSleep, 60 * SECOND_IN_MILLISECONDS)
+        IsNoSleepTimerOn := true
+    }
+    else
+    {
+        SetTimer(OnNoSleep, 0)
+        WinAPI_SetThreadExecutionState_Continuous()
+        IsNoSleepTimerOn := false
+    }
+
+    if (notify)
+    {
+        TrayTip(
+            "NoSleep",
+            IsNoSleepTimerOn ? "Activated" : "Deactivated"
+        )
+    }
+
+    return IsNoSleepTimerOn
+}
+
+TaskRunner_SetClipboardTrimEnabled(enabled, notify := true)
+{
+    global ClipboardTrimEnabled, LastClipboard
+
+    ClipboardTrimEnabled := !!enabled
+
+    if (ClipboardTrimEnabled)
+    {
+        LastClipboard := A_Clipboard
+        SetTimer(OnTaskRunnerClipboardTrim, 500)
+    }
+    else
+    {
+        SetTimer(OnTaskRunnerClipboardTrim, 0)
+    }
+
+    if (notify)
+    {
+        TrayTip(
+            "TaskRunner",
+            "Monitoring clipboard "
+                . (ClipboardTrimEnabled ? "enabled" : "disabled")
+        )
+    }
+
+    return ClipboardTrimEnabled
+}
+
+TaskRunner_SetAutoPasteEnabled(enabled, notify := true)
+{
+    actualState := AutoPaste_SetEnabled(!!enabled)
+
+    if (notify)
+    {
+        TrayTip(
+            "TaskRunner",
+            "AutoPaste " . (actualState ? "enabled" : "disabled")
+        )
+    }
+
+    return actualState
+}
+
+TaskRunner_SyncMenuChecks()
+{
+    global IsNoSleepTimerOn, ClipboardTrimEnabled, taskRunnerMenu, clipboardMenu
+
+    if (IsNoSleepTimerOn)
+    {
+        taskRunnerMenu.Check("NoSleep")
+    }
+    else
+    {
+        taskRunnerMenu.Uncheck("NoSleep")
+    }
+
+    if (AutoPaste_IsEnabled())
+    {
+        taskRunnerMenu.Check("AutoPaste")
+    }
+    else
+    {
+        taskRunnerMenu.Uncheck("AutoPaste")
+    }
+
+    if (ClipboardTrimEnabled)
+    {
+        clipboardMenu.Check("Trim")
+    }
+    else
+    {
+        clipboardMenu.Uncheck("Trim")
+    }
+}
+
+TaskRunner_ApplyStartupDefaults()
+{
+    global StartupNoSleepEnabled
+    global StartupAutoPasteEnabled
+    global StartupClipboardTrimEnabled
+
+    TaskRunner_SetNoSleepEnabled(StartupNoSleepEnabled, false)
+    TaskRunner_SetAutoPasteEnabled(StartupAutoPasteEnabled, false)
+    TaskRunner_SetClipboardTrimEnabled(StartupClipboardTrimEnabled, false)
+    TaskRunner_SyncMenuChecks()
+
+    Logger.Info(
+        "Startup defaults: NoSleep="
+            . (StartupNoSleepEnabled ? "on" : "off")
+            . ", AutoPaste="
+            . (StartupAutoPasteEnabled ? "on" : "off")
+            . ", ClipboardTrim="
+            . (StartupClipboardTrimEnabled ? "on" : "off"),
+        "TaskRunner"
+    )
 }
 
 ^#a::
 {
-	global IsNoSleepTimerOn
+    global IsNoSleepTimerOn
 
-	if (!IsNoSleepTimerOn)
-	{
-		SetTimer(OnNoSleep, 60 * SECOND_IN_MILLISECONDS)
-		IsNoSleepTimerOn := true
-
-		TrayTip("NoSleep", "Activated")
-	}
-	else
-	{
-		WinAPI_SetThreadExecutionState_Continuous()
-
-		SetTimer(OnNoSleep, 0)
-		IsNoSleepTimerOn := false
-
-		TrayTip("NoSleep", "Deactivated")
-	}
+    TaskRunner_SetNoSleepEnabled(!IsNoSleepTimerOn)
+    TaskRunner_SyncMenuChecks()
 }
 
 OnTimerShutdown()
 {
-	TrayTip("Shutdown", "The system is now shutting down.")
-	Sleep(3 * SECOND_IN_MILLISECONDS)
-	Shutdown(0)
+    TrayTip("Shutdown", "The system is now shutting down.")
+    Sleep(3 * SECOND_IN_MILLISECONDS)
+    Shutdown(0)
 }
 
 OnTaskRunnerShutdown(delayInSeconds)
 {
-	SetTimer(OnTimerShutdown, -delayInSeconds * SECOND_IN_MILLISECONDS)
+    SetTimer(
+        OnTimerShutdown,
+        -delayInSeconds * SECOND_IN_MILLISECONDS
+    )
 
-	TrayTip("Shutdown", "The system will shut down in " . delayInSeconds . " seconds.")
+    TrayTip(
+        "Shutdown",
+        "The system will shut down in " . delayInSeconds . " seconds."
+    )
 }
 
-Menu_TaskRunner_NoSleep(itemName, itemPos, menu)
+Menu_TaskRunner_NoSleep(*)
 {
-	Send("^#a")
-	menu.ToggleCheck(itemName)
+    global IsNoSleepTimerOn
+
+    TaskRunner_SetNoSleepEnabled(!IsNoSleepTimerOn)
+    TaskRunner_SyncMenuChecks()
 }
 
 Menu_TaskRunner_Shutdown_1h(*)
 {
-	OnTaskRunnerShutdown(HOUR_IN_SECONDS)
+    OnTaskRunnerShutdown(HOUR_IN_SECONDS)
 }
 
 Menu_TaskRunner_Shutdown_2h(*)
 {
-	OnTaskRunnerShutdown(2 * HOUR_IN_SECONDS)
+    OnTaskRunnerShutdown(2 * HOUR_IN_SECONDS)
 }
 
 Menu_TaskRunner_Shutdown_Cancel(*)
 {
-	SetTimer(OnTimerShutdown, 0)
-	TrayTip("Shutdown", "Canceled.")
+    SetTimer(OnTimerShutdown, 0)
+    TrayTip("Shutdown", "Canceled.")
 }
 
 OnTaskRunnerClipboardTrim()
 {
-	global ClipboardTrimEnabled, LastClipboard
+    global ClipboardTrimEnabled, LastClipboard
 
-	if (!ClipboardTrimEnabled)
-	{
-		return
-	}
+    if (!ClipboardTrimEnabled)
+    {
+        return
+    }
 
-	if (A_Clipboard != LastClipboard)
-	{
-		LastClipboard := A_Clipboard
+    if (A_Clipboard != LastClipboard)
+    {
+        LastClipboard := A_Clipboard
 
-		try
-		{
-			A_Clipboard := Trim(LastClipboard, " `t`r`n")
-		}
-		catch Error as e
-		{
-			TrayTip(e.What . ": " . e.Message, "TaskRunner")
-		}
-	}
+        try
+        {
+            A_Clipboard := Trim(LastClipboard, " `t`r`n")
+        }
+        catch Error as e
+        {
+            TrayTip(e.What . ": " . e.Message, "TaskRunner")
+        }
+    }
 }
 
-Menu_TaskRunner_Clipboard_Trim(itemName, itemPos, menu)
+Menu_TaskRunner_Clipboard_Trim(*)
 {
-	global ClipboardTrimEnabled
+    global ClipboardTrimEnabled
 
-	ClipboardTrimEnabled := !ClipboardTrimEnabled
-
-	if (ClipboardTrimEnabled)
-	{
-		SetTimer(OnTaskRunnerClipboardTrim, 500)
-		menu.Check(itemName)
-	}
-	else
-	{
-		SetTimer(OnTaskRunnerClipboardTrim, 0)
-		menu.Uncheck(itemName)
-	}
-
-	TrayTip("Monitoring clipboard " . (ClipboardTrimEnabled ? "enabled" : "disabled"))
+    TaskRunner_SetClipboardTrimEnabled(!ClipboardTrimEnabled)
+    TaskRunner_SyncMenuChecks()
 }
 
-Menu_TaskRunner_AutoPaste(itemName, itemPos, menu)
+Menu_TaskRunner_AutoPaste(*)
 {
-	if (AutoPaste_Toggle())
-	{
-		menu.Check(itemName)
-	}
-	else
-	{
-		menu.Uncheck(itemName)
-	}
-
-	TrayTip("AutoPaste " . (AutoPaste_IsEnabled() ? "enabled" : "disabled"))
+    TaskRunner_SetAutoPasteEnabled(!AutoPaste_IsEnabled())
+    TaskRunner_SyncMenuChecks()
 }
 
 taskRunnerMenu := Menu()
@@ -153,25 +256,10 @@ clipboardMenu := Menu()
 clipboardMenu.Add("Trim", Menu_TaskRunner_Clipboard_Trim)
 taskRunnerMenu.Add("Clipboard", clipboardMenu)
 
+TaskRunner_ApplyStartupDefaults()
+
 ^#t::
 {
-	if (IsNoSleepTimerOn)
-	{
-		taskRunnerMenu.Check("NoSleep")
-	}
-	else
-	{
-		taskRunnerMenu.Uncheck("NoSleep")
-	}
-
-	if (AutoPaste_IsEnabled())
-	{
-		taskRunnerMenu.Check("AutoPaste")
-	}
-	else
-	{
-		taskRunnerMenu.Uncheck("AutoPaste")
-	}
-
-	taskRunnerMenu.Show()
+    TaskRunner_SyncMenuChecks()
+    taskRunnerMenu.Show()
 }
