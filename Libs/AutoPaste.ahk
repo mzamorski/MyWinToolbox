@@ -30,7 +30,7 @@ AutoPaste_Register(entries)
     {
         AutoPaste_SetEnabled(false)
         Logger.Info(
-            "Registered " AutoPasteEntries.Length " rule(s); AutoPaste is disabled by default.",
+            "Registered " AutoPasteEntries.Length " rule(s); watcher initialized disabled until startup policy is applied.",
             "AutoPaste"
         )
 
