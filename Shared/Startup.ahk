@@ -43,6 +43,26 @@ try
 	global AudioDeviceHeadphones := Ini_ReadOrDefault(ConfigFilePath, "AudioDevices", "Headphones", STRING_EMPTY)
 	global AudioDeviceMonitor := Ini_ReadOrDefault(ConfigFilePath, "AudioDevices", "Monitor", STRING_EMPTY)
 	global AudioDeviceLaptop := Ini_ReadOrDefault(ConfigFilePath, "AudioDevices", "Laptop", STRING_EMPTY)
+
+	; Per-profile startup defaults.
+	global StartupNoSleepEnabled := Ini_ReadBoolOrDefault(
+		ConfigFilePath,
+		"Startup",
+		"NoSleep",
+		false
+	)
+	global StartupAutoPasteEnabled := Ini_ReadBoolOrDefault(
+		ConfigFilePath,
+		"Startup",
+		"AutoPaste",
+		false
+	)
+	global StartupClipboardTrimEnabled := Ini_ReadBoolOrDefault(
+		ConfigFilePath,
+		"Startup",
+		"ClipboardTrim",
+		false
+	)
 }
 catch Error as e
 {
