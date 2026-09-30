@@ -74,3 +74,48 @@ Ini_GetSectionEntries(filePath, section)
 
     return entries
 }
+
+
+Config_ParseBoolean(value, defaultValue := false)
+{
+    normalized := StrLower(Trim("" value))
+
+    if (normalized = "")
+    {
+        return !!defaultValue
+    }
+
+    if (
+        normalized = "true"
+        || normalized = "1"
+        || normalized = "yes"
+        || normalized = "on"
+    )
+    {
+        return true
+    }
+
+    if (
+        normalized = "false"
+        || normalized = "0"
+        || normalized = "no"
+        || normalized = "off"
+    )
+    {
+        return false
+    }
+
+    throw Error("Invalid boolean value: " value)
+}
+
+Ini_ReadBoolOrDefault(filePath, section, key, defaultValue := false)
+{
+    value := Ini_ReadOrDefault(
+        filePath,
+        section,
+        key,
+        defaultValue ? "true" : "false"
+    )
+
+    return Config_ParseBoolean(value, defaultValue)
+}
