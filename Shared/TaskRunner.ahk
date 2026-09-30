@@ -29,9 +29,10 @@ TaskRunner_SetNoSleepEnabled(enabled, notify := true)
 
     if (enabled)
     {
-        ; Apply the execution-state request immediately instead of waiting for
-        ; the first timer tick.
-        OnNoSleep()
+        ; Apply the execution-state request immediately without triggering the
+        ; idle mouse nudge that belongs to the periodic maintenance callback.
+        WinAPI_SetThreadExecutionState_DisplayRequired()
+        WinAPI_SetThreadExecutionState_SystemRequired()
         SetTimer(OnNoSleep, 60 * SECOND_IN_MILLISECONDS)
         IsNoSleepTimerOn := true
     }
