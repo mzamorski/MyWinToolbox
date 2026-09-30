@@ -431,9 +431,11 @@ class MyWinToolboxConfigurator
                 "HotString Scopes",
                 "AutoPaste",
                 "Settings",
-                "Backup / Restore"
+                "Backup / Restore",
+                "Diagnostics / Health"
             ]
         )
+        this.Tabs.OnEvent("Change", ObjBindMethod(this, "OnTabChanged"))
 
         this.Tabs.UseTab(1)
         this.BuildTextSnippetsTab()
@@ -476,6 +478,12 @@ class MyWinToolboxConfigurator
             ObjBindMethod(this, "CanRestoreBackup")
         )
 
+        this.Tabs.UseTab(7)
+        this.DiagnosticsTab := ConfiguratorDiagnosticsTab(
+            this.Window,
+            this
+        )
+
         this.Tabs.UseTab()
 
         this.StatusText := this.Window.AddText("x20 y690 w720 h25", "")
@@ -502,6 +510,17 @@ class MyWinToolboxConfigurator
         this.AutoPasteTab.AddRule(rule)
         this.Window.Show()
         WinActivate("ahk_id " this.Window.Hwnd)
+    }
+
+    OnTabChanged(*)
+    {
+        if (
+            this.Tabs.Value = 7
+            && IsObject(this.DiagnosticsTab)
+        )
+        {
+            this.DiagnosticsTab.Refresh()
+        }
     }
 
     ; ========================================================================
@@ -2243,6 +2262,11 @@ class MyWinToolboxConfigurator
             }
 
             this.UpdateWindowTitle()
+
+            if (IsObject(this.DiagnosticsTab))
+            {
+                this.DiagnosticsTab.Refresh()
+            }
 
             if (hotStringsSaved || settingsSaved)
             {
