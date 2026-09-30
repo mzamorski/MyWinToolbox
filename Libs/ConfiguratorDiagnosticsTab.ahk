@@ -340,22 +340,20 @@ class ConfiguratorDiagnosticsTab
             . Random(100000, 999999)
             . ".ps1"
 
-        wrapper :=
-        (
-        "$ErrorActionPreference = 'Stop'`r`n"
-        "try {`r`n"
-        "    & " ConfiguratorDiagnosticsTab.PsQuote(testPath)
-            " *>&1 | Out-File -LiteralPath "
-            ConfiguratorDiagnosticsTab.PsQuote(outputPath)
-            " -Encoding utf8`r`n"
-        "    exit 0`r`n"
-        "} catch {`r`n"
-        "    ($_ | Out-String) | Add-Content -LiteralPath "
-            ConfiguratorDiagnosticsTab.PsQuote(outputPath)
-            " -Encoding utf8`r`n"
-        "    exit 1`r`n"
-        "}`r`n"
-        )
+        wrapper := "$ErrorActionPreference = 'Stop'`r`n"
+            . "try {`r`n"
+            . "    & "
+            . ConfiguratorDiagnosticsTab.PsQuote(testPath)
+            . " *>&1 | Out-File -LiteralPath "
+            . ConfiguratorDiagnosticsTab.PsQuote(outputPath)
+            . " -Encoding utf8`r`n"
+            . "    exit 0`r`n"
+            . "} catch {`r`n"
+            . "    ($_ | Out-String) | Add-Content -LiteralPath "
+            . ConfiguratorDiagnosticsTab.PsQuote(outputPath)
+            . " -Encoding utf8`r`n"
+            . "    exit 1`r`n"
+            . "}`r`n"
 
         FileAppend(wrapper, wrapperPath, "UTF-8")
 
@@ -492,9 +490,24 @@ class ConfiguratorDiagnosticsTab
 
         for snippets in data
         {
-            if (Type(snippets) = "Array")
+            if (Type(snippets) != "Array")
             {
-                count += snippets.Length
+                continue
+            }
+
+            for snippet in snippets
+            {
+                if (
+                    IsObject(snippet)
+                    && snippet is Map
+                    && snippet.Has("Content")
+                    && snippet["Content"] = "--"
+                )
+                {
+                    continue
+                }
+
+                count += 1
             }
         }
 
