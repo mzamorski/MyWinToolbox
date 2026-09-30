@@ -305,9 +305,19 @@ class ConfiguratorIniDocument
 
                 FileAppend(document.Render(), stagePath, "UTF-8")
 
+                originalPath := stagePath ".original"
+                hasOriginal := !!FileExist(document.FilePath)
+
+                if (hasOriginal)
+                {
+                    FileCopy(document.FilePath, originalPath, true)
+                }
+
                 stagedItems.Push(
                     Map(
                         "Source", stagePath,
+                        "Original", originalPath,
+                        "HasOriginal", hasOriginal,
                         "Target", document.FilePath,
                         "Backup", document.FilePath ".bak",
                         "SiblingTemp", document.FilePath ".tmp"
@@ -336,11 +346,14 @@ class ConfiguratorIniDocument
 
             for item in stagedItems
             {
-                try
+                for tempPath in [item["Source"], item["Original"]]
                 {
-                    if FileExist(item["Source"])
+                    try
                     {
-                        FileDelete(item["Source"])
+                        if FileExist(tempPath)
+                        {
+                            FileDelete(tempPath)
+                        }
                     }
                 }
             }
@@ -366,9 +379,9 @@ class ConfiguratorIniDocument
 
         for item in stagedItems
         {
-            if FileExist(item["Target"])
+            if (item["HasOriginal"])
             {
-                FileCopy(item["Target"], item["Backup"], true)
+                FileCopy(item["Original"], item["Backup"], true)
             }
         }
 
@@ -386,13 +399,21 @@ class ConfiguratorIniDocument
         ; saving from Program Files produces a single UAC prompt.
         for item in stagedItems
         {
+            if (item["HasOriginal"])
+            {
+                script .=
+                    "Copy-Item -LiteralPath "
+                    . ConfiguratorIniDocument.PsQuote(item["Original"])
+                    . " -Destination "
+                    . ConfiguratorIniDocument.PsQuote(item["Backup"])
+                    . " -Force`r`n"
+            }
+
             script .=
                 "if (Test-Path -LiteralPath "
-                . ConfiguratorIniDocument.PsQuote(item["Target"])
-                . ") { Copy-Item -LiteralPath "
-                . ConfiguratorIniDocument.PsQuote(item["Target"])
-                . " -Destination "
-                . ConfiguratorIniDocument.PsQuote(item["Backup"])
+                . ConfiguratorIniDocument.PsQuote(item["SiblingTemp"])
+                . ") { Remove-Item -LiteralPath "
+                . ConfiguratorIniDocument.PsQuote(item["SiblingTemp"])
                 . " -Force }`r`n"
         }
 
