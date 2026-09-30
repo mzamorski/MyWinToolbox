@@ -271,34 +271,220 @@ class ConfiguratorIniDocument
 
     SaveWithBackup()
     {
-        tempPath := this.FilePath ".tmp"
-        backupPath := this.FilePath ".bak"
+        ConfiguratorIniDocument.SaveDocumentsWithBackup([this])
+    }
 
-        if FileExist(tempPath)
+    static SaveDocumentsWithBackup(documents)
+    {
+        if (Type(documents) != "Array" || documents.Length = 0)
         {
-            FileDelete(tempPath)
+            throw Error("No INI documents were provided for saving.")
         }
 
-        FileAppend(this.Render(), tempPath, "UTF-8")
+        stagedItems := []
 
         try
         {
-            if FileExist(this.FilePath)
+            for index, document in documents
             {
-                FileCopy(this.FilePath, backupPath, true)
+                if (!(document is ConfiguratorIniDocument))
+                {
+                    throw Error(
+                        "SaveDocumentsWithBackup expects ConfiguratorIniDocument values."
+                    )
+                }
+
+                stagePath := A_Temp
+                    . "\\MyWinToolbox-Settings-"
+                    . A_TickCount
+                    . "-"
+                    . index
+                    . "-"
+                    . Random(100000, 999999)
+                    . ".tmp"
+
+                FileAppend(document.Render(), stagePath, "UTF-8")
+
+                stagedItems.Push(
+                    Map(
+                        "Source", stagePath,
+                        "Target", document.FilePath,
+                        "Backup", document.FilePath ".bak",
+                        "SiblingTemp", document.FilePath ".tmp"
+                    )
+                )
             }
 
-            FileMove(tempPath, this.FilePath, true)
+            try
+            {
+                ConfiguratorIniDocument.SaveStagedNormally(stagedItems)
+            }
+            catch OSError as e
+            {
+                if (e.Number != 5)
+                {
+                    throw e
+                }
+
+                ConfiguratorIniDocument.CleanupSiblingTemps(stagedItems)
+                ConfiguratorIniDocument.SaveStagedElevated(stagedItems)
+            }
         }
-        catch Error as e
+        finally
         {
-            if FileExist(tempPath)
+            ConfiguratorIniDocument.CleanupSiblingTemps(stagedItems)
+
+            for item in stagedItems
             {
-                FileDelete(tempPath)
+                try
+                {
+                    if FileExist(item["Source"])
+                    {
+                        FileDelete(item["Source"])
+                    }
+                }
+            }
+        }
+    }
+
+    static SaveStagedNormally(stagedItems)
+    {
+        ; Prepare every replacement before touching an existing config.
+        ; Under Program Files this fails with ERROR_ACCESS_DENIED before any
+        ; Settings file is replaced, so the save can retry once via UAC.
+        for item in stagedItems
+        {
+            siblingTemp := item["SiblingTemp"]
+
+            if FileExist(siblingTemp)
+            {
+                FileDelete(siblingTemp)
             }
 
-            throw e
+            FileCopy(item["Source"], siblingTemp, true)
         }
+
+        for item in stagedItems
+        {
+            if FileExist(item["Target"])
+            {
+                FileCopy(item["Target"], item["Backup"], true)
+            }
+        }
+
+        for item in stagedItems
+        {
+            FileMove(item["SiblingTemp"], item["Target"], true)
+        }
+    }
+
+    static SaveStagedElevated(stagedItems)
+    {
+        script := "$ErrorActionPreference = 'Stop'``r``n"
+
+        ; One elevated process handles both shared + profile settings, so
+        ; saving from Program Files produces a single UAC prompt.
+        for item in stagedItems
+        {
+            script .=
+                "if (Test-Path -LiteralPath "
+                . ConfiguratorIniDocument.PsQuote(item["Target"])
+                . ") { Copy-Item -LiteralPath "
+                . ConfiguratorIniDocument.PsQuote(item["Target"])
+                . " -Destination "
+                . ConfiguratorIniDocument.PsQuote(item["Backup"])
+                . " -Force }``r``n"
+        }
+
+        for item in stagedItems
+        {
+            script .=
+                "Copy-Item -LiteralPath "
+                . ConfiguratorIniDocument.PsQuote(item["Source"])
+                . " -Destination "
+                . ConfiguratorIniDocument.PsQuote(item["Target"])
+                . " -Force``r``n"
+        }
+
+        scriptPath := A_Temp
+            . "\\MyWinToolbox-ElevatedSettings-"
+            . A_TickCount
+            . "-"
+            . Random(100000, 999999)
+            . ".ps1"
+
+        FileAppend(script, scriptPath, "UTF-8")
+
+        try
+        {
+            powerShellPath := A_WinDir
+                . "\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+
+            if (!FileExist(powerShellPath))
+            {
+                powerShellPath := "powershell.exe"
+            }
+
+            quote := Chr(34)
+            command := "*RunAs "
+                . quote
+                . powerShellPath
+                . quote
+                . " -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "
+                . quote
+                . scriptPath
+                . quote
+
+            try
+            {
+                exitCode := RunWait(command, , "Hide")
+            }
+            catch Error as e
+            {
+                throw Error(
+                    "Administrator approval was cancelled or the elevated Settings save could not start. "
+                        . e.Message
+                )
+            }
+
+            if (exitCode != 0)
+            {
+                throw Error(
+                    "Elevated Settings save failed with exit code "
+                        . exitCode
+                        . "."
+                )
+            }
+        }
+        finally
+        {
+            try
+            {
+                if FileExist(scriptPath)
+                {
+                    FileDelete(scriptPath)
+                }
+            }
+        }
+    }
+
+    static CleanupSiblingTemps(stagedItems)
+    {
+        for item in stagedItems
+        {
+            try
+            {
+                if FileExist(item["SiblingTemp"])
+                {
+                    FileDelete(item["SiblingTemp"])
+                }
+            }
+        }
+    }
+
+    static PsQuote(value)
+    {
+        return "'" StrReplace("" value, "'", "''") "'"
     }
 }
 
@@ -772,18 +958,12 @@ class ConfiguratorSettingsTab
         this.Validate()
         this.ApplyControlsToDocuments()
 
-        this.SharedDoc.SaveWithBackup()
-
-        try
-        {
-            this.ProfileDoc.SaveWithBackup()
-        }
-        catch Error as e
-        {
-            throw Error(
-                "Shared config was saved, but profile config failed: " e.Message
-            )
-        }
+        ConfiguratorIniDocument.SaveDocumentsWithBackup(
+            [
+                this.SharedDoc,
+                this.ProfileDoc
+            ]
+        )
 
         this.OriginalSecret := this.SecretEdit.Value
         this.Dirty := false
