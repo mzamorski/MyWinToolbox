@@ -380,6 +380,20 @@ try
         FileExist(tempIniBatchB ".bak"),
         "batch Settings save should create backup for second document"
     )
+
+    backupBatchA := ConfiguratorIniDocument(tempIniBatchA ".bak")
+    backupBatchB := ConfiguratorIniDocument(tempIniBatchB ".bak")
+    AssertEqual(
+        "old-a",
+        backupBatchA.Get("Settings", "Value"),
+        "batch Settings backup should preserve first original value"
+    )
+    AssertEqual(
+        "old-b",
+        backupBatchB.Get("Settings", "Value"),
+        "batch Settings backup should preserve second original value"
+    )
+
     AssertEqual(
         "'a''b'",
         ConfiguratorIniDocument.PsQuote("a'b"),
