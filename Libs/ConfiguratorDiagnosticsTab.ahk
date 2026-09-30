@@ -391,14 +391,20 @@ class ConfiguratorDiagnosticsTab
 
             this.Refresh()
 
+            resultMessage := exitCode = 0
+                ? "Regression tests passed."
+                : "Regression tests failed."
+
+            resultOptions := exitCode = 0
+                ? "Iconi"
+                : "Iconx"
+
             MsgBox(
-                (exitCode = 0
-                    ? "Regression tests passed."
-                    : "Regression tests failed.")
+                resultMessage
                     . "`n`n"
                     . ConfiguratorDiagnosticsTab.TailText(output, 3500),
                 "MyWinToolbox Diagnostics",
-                exitCode = 0 ? "Iconi" : "Iconx"
+                resultOptions
             )
         }
         catch Error as e
