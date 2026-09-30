@@ -135,6 +135,7 @@ $entryScript = "MyWin$Profile.ahk"
 $files = @(
     $entryScript
     'MyWinShared.ahk'
+    'Test.ps1'
     'Docs\SHORTCUTS.pdf'
 )
 
@@ -145,6 +146,11 @@ $files += $libFiles | ForEach-Object {
 
 $sharedFiles = Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'Shared') -File -Recurse -Filter '*.ahk'
 $files += $sharedFiles | ForEach-Object {
+    $_.FullName.Substring($sourceRoot.TrimEnd('\').Length + 1)
+}
+
+$testFiles = Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'Tests') -File -Recurse -Filter '*.ahk'
+$files += $testFiles | ForEach-Object {
     $_.FullName.Substring($sourceRoot.TrimEnd('\').Length + 1)
 }
 
