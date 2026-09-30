@@ -46,7 +46,7 @@ Run the lightweight AutoHotkey regression tests with:
 .\Test.ps1
 ```
 
-If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, legacy focus normalization, trigger-mode keys, browser URL normalization, DPAPI/legacy-RC4 password compatibility, Configurator JSON/INI validation, and configuration ZIP backup/manifest round-trips without interacting with browser UI.
+If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, profile startup boolean parsing, legacy focus normalization, trigger-mode keys, browser URL normalization, DPAPI/legacy-RC4 password compatibility, Configurator JSON/INI validation, and configuration ZIP backup/manifest round-trips without interacting with browser UI.
 
 ## Shared functionality
 
@@ -58,7 +58,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
-| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, and shared/profile Settings. |
+| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, and Backup / Restore. |
 | `Ctrl + Win + E` | Opens the emoji menu. |
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
@@ -105,7 +105,7 @@ Additional dynamic hotstrings are configured in `HotStrings.json`. They support 
 
 ### AutoPaste
 
-`AutoPastes.json` defines actions that paste text when the active window matches optional `exe`, `class`, `title`, and `url` criteria. AutoPaste is **disabled by default after startup**; enable it explicitly from `Ctrl + Win + T` → **AutoPaste** when needed. Title and URL matching use containment by default; use `"titleMatchMode": "equals"` or `"urlMatchMode": "equals"` for an exact match. An optional `delay` may be specified in milliseconds.
+`AutoPastes.json` defines actions that paste text when the active window matches optional `exe`, `class`, `title`, and `url` criteria. AutoPaste startup state is profile-configurable from `Ctrl + Win + Shift + S` → **Settings** → **Startup defaults**. It defaults to OFF unless the active profile config explicitly enables it. Title and URL matching use containment by default; use `"titleMatchMode": "equals"` or `"urlMatchMode": "equals"` for an exact match. An optional `delay` may be specified in milliseconds.
 
 For ordinary entries, use `text`:
 
@@ -215,11 +215,26 @@ Create or replace password values from `Ctrl + Win + Shift + S` → **Settings**
 | File | Purpose |
 | --- | --- |
 | `MyWinShared.ahk.config` | Shared settings such as `SpacesPerIndent`, `DummyText`, and runtime logging. |
-| `MyWinHome.ahk.config` | Home email, shipping address, signatures, DPAPI-protected passwords, and an optional legacy RC4 secret for unmigrated values. |
-| `MyWinWork.ahk.config` | Work email, signatures, optional DPAPI-protected passwords used by AutoPaste, and an optional legacy RC4 secret. |
+| `MyWinHome.ahk.config` | Home email, shipping address, signatures, DPAPI-protected passwords, per-profile startup defaults, and an optional legacy RC4 secret for unmigrated values. |
+| `MyWinWork.ahk.config` | Work email, signatures, startup defaults (NoSleep defaults ON when absent), optional DPAPI-protected passwords used by AutoPaste, and an optional legacy RC4 secret. |
 | `HotStrings.json` | Dynamic hotstring definitions and window scopes. |
 | `TextSnippets.json` | Categorized snippet menus. |
 | `AutoPastes.json` | Window-matching automatic paste rules. |
+
+Keep profile configuration private: it can contain personal details and encrypted password values. The repository's sample configuration is intentionally generic.
+
+### Per-profile startup defaults
+
+The active profile config can contain:
+
+```ini
+[Startup]
+NoSleep = true
+AutoPaste = false
+ClipboardTrim = false
+```
+
+These values are editable from `Ctrl + Win + Shift + S` → **Settings** → **Startup defaults** and take effect after **Save + Reload**. They remain independently toggleable at runtime from Task Runner or their normal hotkeys. When `[Startup]` is missing, Home defaults all three features to OFF, while Work defaults **NoSleep to ON** and the other two to OFF. This Work fallback is intentional so existing installed Work configs gain the desired NoSleep behavior without the installer overwriting profile configuration.
 
 Keep profile configuration private: it can contain personal details and encrypted password values. The repository's sample configuration is intentionally generic. The Configurator **Settings** tab edits known fields without exposing a raw INI editor. **Set plaintext...** protects new passwords with Windows DPAPI; the stored value begins with `dpapi:v1:`. The password list marks entries as `[DPAPI]`, `[RC4]`, or `[empty]`. **Migrate RC4 -> DPAPI** converts legacy values in memory using the `Secret` that was loaded with the profile; nothing is written until Save. Once no RC4 password values remain, `Secret` is no longer required for password storage. DPAPI values are intentionally tied to the Windows user context that protected them; when moving MyWinToolbox to another Windows account or machine, recreate those password values through **Set plaintext...** rather than copying the `dpapi:v1:` blobs.
 
