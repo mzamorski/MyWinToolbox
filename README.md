@@ -20,7 +20,7 @@ Run `Install.ps1` from PowerShell to deploy the scripts to `C:\Program Files\MyW
 .\Install.ps1
 ```
 
-The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. Before copying files it stops the Windows Scheduled Task named `MyWinToolbox`; after a successful deployment it starts the task again. It deploys the selected profile entry script, `MyWinShared.ahk`, the required `Libs` and `Shared` trees, and the shortcut-sheet PDF. Files are compared by SHA-256, so unchanged files are skipped.
+The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. Before copying files it stops the Windows Scheduled Task named `MyWinToolbox`; after a successful deployment it starts the task again. It deploys the selected profile entry script, `MyWinShared.ahk`, `Test.ps1`, the required `Libs`, `Shared`, and `Tests` trees, and the shortcut-sheet PDF. Files are compared by SHA-256, so unchanged files are skipped.
 
 Production configuration is preserved: the installer never copies or overwrites `*.config`, `AutoPastes.json`, `HotStrings.json`, or `TextSnippets.json`. Create and maintain these files directly in the installation directory.
 
@@ -46,7 +46,7 @@ Run the lightweight AutoHotkey regression tests with:
 .\Test.ps1
 ```
 
-If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, profile startup boolean parsing, legacy focus normalization, trigger-mode keys, browser URL normalization, DPAPI/legacy-RC4 password compatibility, Configurator JSON/INI validation, batched INI save/backup behavior, and configuration ZIP backup/manifest round-trips without interacting with browser UI.
+If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, profile startup boolean parsing, legacy focus normalization, trigger-mode keys, browser URL normalization, DPAPI/legacy-RC4 password compatibility, Configurator JSON/INI validation, Diagnostics helpers, batched INI save/backup behavior, and configuration ZIP backup/manifest round-trips without interacting with browser UI.
 
 ## Shared functionality
 
@@ -58,7 +58,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
-| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, and Backup / Restore. |
+| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Backup / Restore, and Diagnostics / Health. |
 | `Ctrl + Win + E` | Opens the emoji menu. |
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
@@ -90,7 +90,7 @@ The Format menu transforms clipboard content and pastes the result. It provides:
 
 ### String generator and snippets
 
-The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries; **Backup / Restore** creates and restores versioned ZIP snapshots of the active configuration. New password values are protected with Windows DPAPI under the current Windows user; legacy RC4 values remain readable during migration. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
+The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries; **Backup / Restore** creates and restores versioned ZIP snapshots of the active configuration; **Diagnostics / Health** shows current runtime state, recent log errors, Scheduled Task status, configuration counts, and maintenance actions. New password values are protected with Windows DPAPI under the current Windows user; legacy RC4 values remain readable during migration. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
 
 ### Built-in hotstrings
 
@@ -245,6 +245,21 @@ The Configurator **Backup / Restore** tab creates ZIP snapshots under `Documents
 Restore accepts only backups whose manifest matches the currently active Home/Work profile. It extracts only whitelisted root-level configuration files, creates a separate `pre-restore` safety backup of the current on-disk configuration, then replaces files from the selected archive and reloads MyWinToolbox. Files not present in the archive are left unchanged. Writing into an installation under `Program Files` may trigger a Windows UAC prompt.
 
 DPAPI-protected password blobs are included in backups, but they remain tied to the Windows user context that originally protected them. A ZIP can therefore restore general configuration on another machine, but DPAPI password entries must be recreated there through **Set plaintext...**.
+
+### Diagnostics / Health
+
+The Configurator **Diagnostics / Health** tab provides one runtime overview for troubleshooting:
+
+- active Home/Work profile and profile config path;
+- AutoHotkey version/bitness and whether the current process is standard or elevated;
+- installation path;
+- Windows Scheduled Task `MyWinToolbox` state;
+- live AutoPaste, NoSleep, Clipboard Trim, and KeepAlive state;
+- loaded HotString, Text Snippet, and AutoPaste rule counts;
+- debug logging state, log path/size, and the latest `[ERROR]` entries;
+- regression test status.
+
+The tab includes **Refresh**, **Open log**, **Open install folder**, **Run tests**, **Copy report**, and **Reload**. **Run tests** executes the deployed `Test.ps1` against the deployed `Tests\*.Tests.ahk` suites and reports PASS/FAIL without restarting the toolbox. Reload warns before discarding unsaved Configurator changes.
 
 Runtime diagnostics are written to `%LOCALAPPDATA%\MyWinToolbox\MyWinToolbox.log` (rotated at 2 MB). Set `[Logging] Debug = true` in `MyWinShared.ahk.config` for additional debug-level entries. Logging failures are intentionally non-fatal.
 
