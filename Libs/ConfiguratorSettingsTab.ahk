@@ -1,5 +1,7 @@
 #Requires AutoHotkey v2.0
 
+#Include ConfigUtils.ahk
+
 class ConfiguratorIniDocument
 {
     __New(filePath)
@@ -499,7 +501,7 @@ class ConfiguratorSettingsTab
                 || debugText = "yes"
             ) ? 1 : 0
 
-            this.StartupNoSleepCheck.Value := ConfiguratorSettingsTab.ParseBoolean(
+            this.StartupNoSleepCheck.Value := Config_ParseBoolean(
                 this.ProfileDoc.Get(
                     "Startup",
                     "NoSleep",
@@ -508,11 +510,11 @@ class ConfiguratorSettingsTab
                 this.DefaultNoSleepOnStartup
             ) ? 1 : 0
 
-            this.StartupAutoPasteCheck.Value := ConfiguratorSettingsTab.ParseBoolean(
+            this.StartupAutoPasteCheck.Value := Config_ParseBoolean(
                 this.ProfileDoc.Get("Startup", "AutoPaste", "false")
             ) ? 1 : 0
 
-            this.StartupClipboardTrimCheck.Value := ConfiguratorSettingsTab.ParseBoolean(
+            this.StartupClipboardTrimCheck.Value := Config_ParseBoolean(
                 this.ProfileDoc.Get("Startup", "ClipboardTrim", "false")
             ) ? 1 : 0
 
@@ -562,38 +564,6 @@ class ConfiguratorSettingsTab
         {
             this.UpdatingControls := false
         }
-    }
-
-    static ParseBoolean(value, defaultValue := false)
-    {
-        normalized := StrLower(Trim("" value))
-
-        if (normalized = "")
-        {
-            return !!defaultValue
-        }
-
-        if (
-            normalized = "true"
-            || normalized = "1"
-            || normalized = "yes"
-            || normalized = "on"
-        )
-        {
-            return true
-        }
-
-        if (
-            normalized = "false"
-            || normalized = "0"
-            || normalized = "no"
-            || normalized = "off"
-        )
-        {
-            return false
-        }
-
-        throw Error("Invalid boolean value: " value)
     }
 
     OnToggleSecret(*)
