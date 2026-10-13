@@ -26,7 +26,15 @@ class ConfiguratorTasksTab
             legacyAhk := profileDoc.GetSectionEntries("AhkScripts", false)
             if (legacyScheduled.Length || legacyAhk.Length)
             {
-                root := profileDoc.Get("AhkScriptsSettings", "Root", "")
+                root := ""
+                for rootEntry in profileDoc.GetSectionEntries("AhkScriptsSettings", false)
+                {
+                    if (StrLower(rootEntry["Name"]) = "root")
+                    {
+                        root := rootEntry["Value"]
+                        break
+                    }
+                }
                 this.Entries := TasksRegistry.LegacyEntries(
                     legacyScheduled, legacyAhk, root
                 )
