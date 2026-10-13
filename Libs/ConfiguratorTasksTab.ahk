@@ -87,7 +87,7 @@ class ConfiguratorTasksTab
                 . "For AHK scripts, use the full path. No root folder setting is needed."
                 . Chr(10)
                 . "Starting/stopping uses the task's actual runtime state. "
-                . "A separate Scheduling submenu controls future Windows scheduled runs. "
+                . "Changes to permanent scheduling Enabled/Disabled state are made only in Windows Task Scheduler. "
                 . "Closing an AHK script sends a normal close request (OnExit handlers run)."
         )
     }
