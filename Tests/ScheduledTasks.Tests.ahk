@@ -2,7 +2,9 @@
 
 #Include ..\Libs\ScheduledTasksManager.ahk
 #Include ..\Libs\ConfiguratorSettingsTab.ahk
-#Include ..\Libs\ConfiguratorScheduledTasksTab.ahk
+#Include ..\Libs\AhkScriptManager.ahk
+#Include ..\Libs\TasksRegistry.ahk
+#Include ..\Libs\ConfiguratorTasksTab.ahk
 
 global TestFailures := []
 
@@ -213,14 +215,32 @@ try
     )
 
     doc := ConfiguratorIniDocument(tempPath)
-    doc.ReplaceSectionEntries("ScheduledTasks", validTasks)
+    taskDefinitions := [
+        Map(
+            "Name", "Backup",
+            "Type", TasksRegistry.SCHEDULER,
+            "Value", "\MyJobs\NightlyBackup"
+        ),
+        Map(
+            "Name", "Cleanup",
+            "Type", TasksRegistry.SCHEDULER,
+            "Value", "\Maintenance\Cleanup"
+        )
+    ]
+    doc.ReplaceSectionEntries("Tasks", TasksRegistry.ToIniEntries(taskDefinitions))
     doc.SaveWithBackup()
 
     reloaded := ConfiguratorIniDocument(tempPath)
-    saved := reloaded.GetSectionEntries("ScheduledTasks")
-    AssertEqual(2, saved.Length, "scheduled task entries should survive an INI save")
+    saved := reloaded.GetSectionEntries("Tasks")
+    AssertEqual(2, saved.Length, "scheduled jobs should survive save in one Tasks section")
     AssertEqual("Backup", saved[1]["Name"], "menu labels should round-trip")
-    AssertEqual("\MyJobs\NightlyBackup", saved[1]["Value"], "task paths should round-trip")
+    AssertEqual(
+        "scheduler|\MyJobs\NightlyBackup",
+        saved[1]["Value"],
+        "typed scheduler path should round-trip"
+    )
+    AssertTrue(!reloaded.HasSection("ScheduledTasks"), "no type-specific section should be created")
+
     AssertEqual(
         "user@example.com",
         reloaded.Get("Settings", "Email"),
