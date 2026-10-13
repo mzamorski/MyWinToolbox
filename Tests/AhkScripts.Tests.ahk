@@ -165,6 +165,20 @@ try
         savedEntries[2]["Value"],
         "scheduled task should be stored between AHK entries"
     )
+    runtimeTasks := TasksRegistry.LoadProfile(tempIni)
+    AssertEqual(3, runtimeTasks.Length, "runtime should load all Tasks from one section")
+    AssertEqual("WARDOGS Hammer", runtimeTasks[1]["Name"], "runtime should keep mixed-type order")
+    AssertEqual(
+        "scheduler",
+        TasksRegistry.Parse(
+            runtimeTasks[2]["Name"], runtimeTasks[2]["Definition"]
+        )["Type"],
+        "runtime should dispatch the scheduler entry by its type"
+    )
+    AssertThrows(
+        () => TasksRegistry.Parse("Broken", "C:\Tools\broken.ahk"),
+        "untyped entries should be rejected rather than guessed"
+    )
     AssertTrue(!reloaded.HasSection("ScheduledTasks"), "no old scheduled section")
     AssertTrue(!reloaded.HasSection("AhkScripts"), "no old scripts section")
     AssertTrue(!reloaded.HasSection("AhkScriptsSettings"), "no AHK root settings")
