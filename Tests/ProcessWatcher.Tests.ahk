@@ -39,6 +39,7 @@ class FakeProcessWatcher extends ProcessWatcher
         this.HelperRunning := false
         this.Starts := 0
         this.Stops := 0
+        this.ClearedPids := []
         super.__New(entries)
     }
 
@@ -56,7 +57,16 @@ class FakeProcessWatcher extends ProcessWatcher
     {
         this.Starts++
         this.HelperRunning := true
-        return 1234
+        return 1200 + this.Starts
+    }
+
+    ForgetOwned(rule)
+    {
+        if (rule["OwnedPid"])
+        {
+            this.ClearedPids.Push(rule["OwnedPid"])
+        }
+        super.ForgetOwned(rule)
     }
 
     OpenOwnedHandle(pid)
@@ -77,8 +87,8 @@ iniEntries := [
 ]
 rules := ProcessWatcher.FromIniEntries(iniEntries)
 Assert(rules.Length = 2, "two watchers should load")
-Assert(rules[1]["StopOnExit"], "stop policy should parse")
-Assert(!rules[2]["StopOnExit"], "run policy should parse")
+Assert(rules[1]["Mode"] = ProcessWatcher.STOP, "stop policy should parse")
+Assert(rules[2]["Mode"] = ProcessWatcher.RUN, "run policy should parse")
 saved := ProcessWatcher.ToIniEntries(rules)
 Assert(saved[1]["Value"] = iniEntries[1]["Value"], "AHK rule should round-trip")
 Assert(saved[2]["Value"] = iniEntries[2]["Value"], "short-name EXE run rule should round-trip")
@@ -87,11 +97,28 @@ Assert(saved[2]["Value"] = iniEntries[2]["Value"], "short-name EXE run rule shou
 legacy := ProcessWatcher.FromIniEntries([
     Map("Name", "Legacy.exe", "Value", "exe|notepad.exe|keep")
 ])
-Assert(!legacy[1]["StopOnExit"], "legacy keep means run (leave helper running)")
+Assert(legacy[1]["Mode"] = ProcessWatcher.RUN,
+    "legacy keep means run (leave helper running)")
 Assert(
     ProcessWatcher.ToIniEntries(legacy)[1]["Value"] = "exe|notepad.exe|run",
     "saving an old keep entry should write run"
 )
+
+ensureRule := ProcessWatcher.FromIniEntries([
+    Map("Name", "ScreenCapture.exe", "Value", "exe|notepad.exe|ensure")
+])[1]
+Assert(ensureRule["Mode"] = ProcessWatcher.ENSURE,
+    "ensure mode must parse")
+Assert(ProcessWatcher.ToIniEntries([ensureRule])[1]["Value"] = "exe|notepad.exe|ensure",
+    "ensure mode must round-trip without changing its meaning")
+ahkEnsure := ProcessWatcher.FromIniEntries([
+    Map("Name", "Game2.exe", "Value", "ahk|C:\Tools\Helper.ahk|ensure")
+])
+Assert(ahkEnsure[1]["Mode"] = ProcessWatcher.ENSURE,
+    "ensure should work for AHK helpers too")
+Assert(ProcessWatcher.ToIniEntries(ahkEnsure)[1]["Value"]
+    = "ahk|C:\Tools\Helper.ahk|ensure",
+    "AHK ensure rule must round-trip")
 
 ; Short EXE names must go straight to Windows, not through FileExist or
 ; an incorrectly inferred working directory.
@@ -178,9 +205,55 @@ Assert(watcher.Stops = 2, "watcher shutdown cleans up its owned helper")
 runOnly := FakeProcessWatcher([rules[2]])
 runOnly.TriggerRunning := true
 runOnly.Tick()
+runOnly.HelperRunning := false
+runOnly.Tick()
+runOnly.Tick()
+Assert(runOnly.Starts = 1, "run must not restart a closed helper while trigger runs")
 runOnly.TriggerRunning := false
 runOnly.Tick()
 Assert(runOnly.Starts = 1 && runOnly.Stops = 0, "run policy does not stop helper")
+
+ensured := FakeProcessWatcher([ensureRule])
+ensured.Tick()
+Assert(ensured.Starts = 0, "ensure must not start before trigger")
+ensured.TriggerRunning := true
+ensured.Tick()
+Assert(ensured.Starts = 1, "ensure launches when trigger appears")
+ensured.Tick()
+Assert(ensured.Starts = 1, "ensure must not launch duplicates while helper runs")
+ensured.HelperRunning := false
+ensured.Tick()
+Assert(ensured.Starts = 2, "ensure restarts a manually closed helper on next poll")
+Assert(ensured.ClearedPids.Length = 1 && ensured.ClearedPids[1] = 1201,
+    "ensure must release the former instance's tracked PID before restart")
+ensured.Tick()
+Assert(ensured.Starts = 2, "ensure must not launch duplicates after restart")
+ensured.TriggerRunning := false
+ensured.Tick()
+Assert(ensured.Stops = 0, "ensure must leave helper running when trigger exits")
+ensured.HelperRunning := false
+ensured.Tick()
+Assert(ensured.Starts = 2, "ensure must not relaunch while trigger is absent")
+ensured.TriggerRunning := true
+ensured.Tick()
+Assert(ensured.Starts = 3, "ensure should launch again after trigger returns")
+ensured.Shutdown()
+Assert(ensured.Stops = 0, "ensure never stops owned helpers on shutdown")
+
+existingEnsure := FakeProcessWatcher([ensureRule])
+existingEnsure.TriggerRunning := true
+existingEnsure.HelperRunning := true
+existingEnsure.Tick()
+existingEnsure.Tick()
+Assert(existingEnsure.Starts = 0, "ensure must not adopt or duplicate external helpers")
+existingEnsure.HelperRunning := false
+existingEnsure.Tick()
+Assert(existingEnsure.Starts = 1, "ensure must recover after external helper exits")
+existingEnsure.TriggerRunning := false
+existingEnsure.Tick()
+Assert(existingEnsure.Stops = 0, "ensure must not close the recovered helper")
+
+
 
 external := FakeProcessWatcher([rules[1]])
 external.TriggerRunning := true
@@ -199,17 +272,19 @@ try
         tempIni, "UTF-8")
     doc := ConfiguratorIniDocument(tempIni)
     tab := ConfiguratorProcessWatcherTab(Gui(), doc)
-    tab.Entries := rules
+    tab.Entries := [rules[1], rules[2], ensureRule]
     Assert(tab.Validate(), "valid watcher rules should pass Configurator validation")
     tab.ApplyToDocument()
     doc.SaveWithBackup()
 
     reloaded := ConfiguratorIniDocument(tempIni)
     entries := reloaded.GetSectionEntries("ProcessWatcher", false)
-    Assert(entries.Length = 2, "both watcher rules should persist")
+    Assert(entries.Length = 3, "run, stop and ensure rules should persist")
     Assert(entries[1]["Value"] = iniEntries[1]["Value"], "INI file must preserve backslashes")
     Assert(entries[2]["Value"] = "exe|notepad.exe|run",
         "Configurator INI save must preserve canonical run and the short EXE name")
+    Assert(entries[3]["Value"] = "exe|notepad.exe|ensure",
+        "Configurator INI save must preserve ensure mode")
     Assert(reloaded.Get("Settings", "Email") = "test@example.com",
         "watcher save must preserve unrelated settings")
 }
