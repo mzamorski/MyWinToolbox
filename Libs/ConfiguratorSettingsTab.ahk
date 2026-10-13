@@ -974,20 +974,27 @@ class ConfiguratorSettingsTab
         }
     }
 
-    Save()
+    Save(profileOnly := false)
     {
-        this.Validate()
-        this.ApplyControlsToDocuments()
+        if (!profileOnly)
+        {
+            this.Validate()
+            this.ApplyControlsToDocuments()
+        }
 
-        ConfiguratorIniDocument.SaveDocumentsWithBackup(
-            [
-                this.SharedDoc,
-                this.ProfileDoc
-            ]
-        )
+        ; Scheduled Tasks-only saves should not rewrite unrelated Settings or
+        ; the shared INI. Both documents are saved when Settings fields changed.
+        documents := profileOnly
+            ? [this.ProfileDoc]
+            : [this.SharedDoc, this.ProfileDoc]
 
-        this.OriginalSecret := this.SecretEdit.Value
-        this.Dirty := false
+        ConfiguratorIniDocument.SaveDocumentsWithBackup(documents)
+
+        if (!profileOnly)
+        {
+            this.OriginalSecret := this.SecretEdit.Value
+            this.Dirty := false
+        }
     }
 
     RefreshSignatures(preferredIndex := 0)
