@@ -26,8 +26,7 @@
 #Include Libs\WindowToolbox.ahk
 #Include Libs\ConfiguratorAutoPasteTab.ahk
 #Include Libs\ConfiguratorSettingsTab.ahk
-#Include Libs\ConfiguratorScheduledTasksTab.ahk
-#Include Libs\ConfiguratorAhkScriptsTab.ahk
+#Include Libs\ConfiguratorTasksTab.ahk
 #Include Libs\ConfiguratorBackupTab.ahk
 #Include Libs\ConfiguratorDiagnosticsTab.ahk
 #Include Libs\MyWinToolboxConfigurator.ahk
