@@ -165,6 +165,33 @@ AssertEqual("Running", ScheduledTasksManager.GetStateLabel(4), "running state sh
 fakeTask := FakeRegisteredTask(3, true)
 fakeService := FakeSchedulerService(fakeTask)
 
+unifiedScheduler := Map(
+    "Name", "Test task",
+    "Type", TasksRegistry.SCHEDULER,
+    "Value", "\Unit\Test"
+)
+genericStatus := TasksRegistry.GetStatus(unifiedScheduler, &fakeService)
+AssertTrue(
+    genericStatus["CanToggle"] && !genericStatus["Running"],
+    "generic Tasks handler must mark an enabled Ready scheduler task as runnable"
+)
+AssertTrue(
+    genericStatus["SupportsScheduling"] && genericStatus["SchedulingEnabled"],
+    "generic Tasks handler should expose scheduling controls only when supported"
+)
+
+futureTask := Map(
+    "Name", "Future executable",
+    "Type", "exe",
+    "Value", "C:\Tools\some-app.exe"
+)
+futureStatus := TasksRegistry.GetStatus(futureTask, &fakeService)
+AssertTrue(
+    !futureStatus["Running"] && !futureStatus["CanToggle"]
+        && !futureStatus["SupportsScheduling"],
+    "unknown future types must be shown as unsupported, never run"
+)
+
 status := ScheduledTasksManager.GetTaskStatus(fakeService, "\Unit\Test")
 AssertTrue(
     status["Enabled"] && !status["Running"],
