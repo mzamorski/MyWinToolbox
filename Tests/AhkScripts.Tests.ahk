@@ -127,16 +127,17 @@ try
     doc := ConfiguratorIniDocument(tempIni)
     window := Gui()
     tasksTab := ConfiguratorTasksTab(window, doc)
+    ; Deliberately interleave types: no per-type grouping on save or load.
     tasksTab.Entries := [
-        Map(
-            "Type", ConfiguratorTasksTab.SCHEDULER,
-            "Name", "Backup",
-            "Value", "\MyJobs\Backup"
-        ),
         Map(
             "Type", ConfiguratorTasksTab.AHK,
             "Name", entries[1]["Name"],
             "Value", entries[1]["Value"]
+        ),
+        Map(
+            "Type", ConfiguratorTasksTab.SCHEDULER,
+            "Name", "Backup",
+            "Value", "\MyJobs\Backup"
         ),
         Map(
             "Type", ConfiguratorTasksTab.AHK,
@@ -151,16 +152,18 @@ try
     reloaded := ConfiguratorIniDocument(tempIni)
     savedEntries := reloaded.GetSectionEntries("Tasks")
     AssertEqual(3, savedEntries.Length, "both types should share one Tasks section")
-    AssertEqual("Backup", savedEntries[1]["Name"], "scheduled entry should appear first")
-    AssertEqual(
-        "scheduler|\MyJobs\Backup",
-        savedEntries[1]["Value"],
-        "scheduled task should use a typed definition"
-    )
+    AssertEqual(entries[1]["Name"], savedEntries[1]["Name"], "AHK entry should stay first")
+    AssertEqual("Backup", savedEntries[2]["Name"], "Scheduler entry should stay second")
+    AssertEqual(entries[2]["Name"], savedEntries[3]["Name"], "second AHK entry stays third")
     AssertEqual(
         "ahk|" expected,
+        savedEntries[1]["Value"],
+        "AHK script should use an absolute path in the Tasks section"
+    )
+    AssertEqual(
+        "scheduler|\MyJobs\Backup",
         savedEntries[2]["Value"],
-        "AHK script should use absolute path in the same Tasks section"
+        "scheduled task should be stored between AHK entries"
     )
     AssertTrue(!reloaded.HasSection("ScheduledTasks"), "no old scheduled section")
     AssertTrue(!reloaded.HasSection("AhkScripts"), "no old scripts section")
