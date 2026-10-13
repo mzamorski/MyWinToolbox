@@ -168,6 +168,87 @@ class TasksRegistry
         return output
     }
 
+    static GetStatus(entry, &schedulerService)
+    {
+        type := entry["Type"]
+        path := entry["Value"]
+
+        if (type = TasksRegistry.SCHEDULER)
+        {
+            if (!IsObject(schedulerService))
+            {
+                schedulerService := ScheduledTasksManager.Connect()
+            }
+            path := ScheduledTasksManager.NormalizePath(path)
+            state := ScheduledTasksManager.GetTaskStatus(schedulerService, path)
+            running := state["Running"]
+            enabled := state["Enabled"]
+
+            return Map(
+                "Running", running,
+                "Status", ScheduledTasksManager.GetStateLabel(state["State"]),
+                "CanToggle", running || (enabled && state["State"] = 3),
+                "SupportsScheduling", true,
+                "SchedulingEnabled", enabled
+            )
+        }
+
+        if (type = TasksRegistry.AHK)
+        {
+            path := AhkScriptManager.ResolveScriptPath(path)
+            running := AhkScriptManager.IsRunning(path)
+            available := running || (FileExist(path) && !InStr(FileExist(path), "D"))
+            return Map(
+                "Running", running,
+                "Status", !available ? "Missing" : (running ? "Running" : "Stopped"),
+                "CanToggle", !!available,
+                "SupportsScheduling", false
+            )
+        }
+
+        ; New task types require a handler, not a new Tasks menu/category.
+        return Map(
+            "Running", false,
+            "Status", "Unsupported: " type,
+            "CanToggle", false,
+            "SupportsScheduling", false
+        )
+    }
+
+    static Toggle(entry)
+    {
+        type := entry["Type"]
+        path := entry["Value"]
+
+        if (type = TasksRegistry.SCHEDULER)
+        {
+            wasRunning := ScheduledTasksManager.IsRunning(path)
+            ScheduledTasksManager.SetRunning(path, !wasRunning)
+            return wasRunning ? "stop requested" : "start requested"
+        }
+
+        if (type = TasksRegistry.AHK)
+        {
+            started := AhkScriptManager.Toggle(path)
+            return started ? "start requested" : "close requested"
+        }
+
+        throw Error("Unsupported task type: " type)
+    }
+
+    static ToggleScheduling(entry)
+    {
+        if (entry["Type"] != TasksRegistry.SCHEDULER)
+        {
+            throw Error("Only Task Scheduler tasks support scheduling enable/disable.")
+        }
+
+        path := entry["Value"]
+        return ScheduledTasksManager.SetEnabled(
+            path, !ScheduledTasksManager.IsEnabled(path)
+        )
+    }
+
     static LoadProfile(profilePath)
     {
         configured := Ini_GetSectionEntries(profilePath, "Tasks")
