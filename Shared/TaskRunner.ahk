@@ -242,26 +242,53 @@ Menu_TaskRunner_AutoPaste(*)
 }
 
 ; --------------------------------------------------------------------------------
-; Windows Task Scheduler toggles, configured per profile in [ScheduledTasks].
+; Windows Task Scheduler tasks, configured per profile in [ScheduledTasks].
+; Checkmarks always describe *running instances*, not the Enabled setting.
 
-Menu_TaskRunner_ToggleScheduledTask(taskPath, displayName, *)
+Menu_TaskRunner_ToggleScheduledTaskRunning(taskPath, displayName, *)
 {
     try
     {
-        newState := ScheduledTasksManager.SetEnabled(
+        wasRunning := ScheduledTasksManager.IsRunning(taskPath)
+        ScheduledTasksManager.SetRunning(taskPath, !wasRunning)
+
+        TrayTip(
+            "Scheduled Tasks",
+            displayName ": "
+                . (wasRunning ? "stop requested" : "start requested")
+                . ". Check the menu again for the actual state."
+        )
+    }
+    catch Error as e
+    {
+        MsgBox(
+            "Could not start/stop scheduled task '" displayName "' (" taskPath "):"
+                . Chr(10) e.Message,
+            "MyWinToolbox - Scheduled Tasks",
+            "Iconx"
+        )
+    }
+}
+
+Menu_TaskRunner_ToggleScheduledTaskEnabled(taskPath, displayName, *)
+{
+    try
+    {
+        enabled := ScheduledTasksManager.SetEnabled(
             taskPath,
             !ScheduledTasksManager.IsEnabled(taskPath)
         )
 
         TrayTip(
             "Scheduled Tasks",
-            displayName ": " (newState ? "enabled" : "disabled")
+            displayName ": scheduling " (enabled ? "enabled" : "disabled")
+                . ". This does not start/stop a running instance."
         )
     }
     catch Error as e
     {
         MsgBox(
-            "Could not change scheduled task '" displayName "' (" taskPath "):"
+            "Could not change scheduling for '" displayName "' (" taskPath "):"
                 . Chr(10) e.Message,
             "MyWinToolbox - Scheduled Tasks",
             "Iconx"
@@ -271,9 +298,10 @@ Menu_TaskRunner_ToggleScheduledTask(taskPath, displayName, *)
 
 Menu_TaskRunner_RefreshScheduledTasks()
 {
-    global scheduledTasksMenu, ProfileConfigFilePath
+    global scheduledTasksMenu, scheduledTasksEnabledMenu, ProfileConfigFilePath
 
     scheduledTasksMenu.Delete()
+    scheduledTasksEnabledMenu.Delete()
     try
     {
         entries := Ini_GetSectionEntries(ProfileConfigFilePath, "ScheduledTasks")
@@ -284,23 +312,43 @@ Menu_TaskRunner_RefreshScheduledTasks()
             return
         }
 
-        ; One connection per menu opening. Each task reports its current state.
         service := ScheduledTasksManager.Connect()
         for displayName, taskPath in entries
         {
             try
             {
                 path := ScheduledTasksManager.NormalizePath(taskPath)
-                task := ScheduledTasksManager.GetTask(service, path)
-                enabled := !!task.Enabled
+                status := ScheduledTasksManager.GetTaskStatus(service, path)
+                state := status["State"]
+                isRunning := status["Running"]
+                isEnabled := status["Enabled"]
 
+                ; The main task toggle controls the current process run state.
+                ; Its checkmark means Running, even if scheduling is enabled.
+                taskLabel := displayName " [" ScheduledTasksManager.GetStateLabel(state) "]"
                 scheduledTasksMenu.Add(
-                    displayName,
-                    Menu_TaskRunner_ToggleScheduledTask.Bind(path, displayName)
+                    taskLabel,
+                    Menu_TaskRunner_ToggleScheduledTaskRunning.Bind(path, displayName)
                 )
-                if (enabled)
+                if (isRunning)
                 {
-                    scheduledTasksMenu.Check(displayName)
+                    scheduledTasksMenu.Check(taskLabel)
+                }
+                else if (state = 2 || state = 0 || !isEnabled)
+                {
+                    ; Queued/unknown/disabled tasks cannot be started here.
+                    ; Use the scheduling submenu to enable a disabled task.
+                    scheduledTasksMenu.Disable(taskLabel)
+                }
+
+                ; Separate controls govern whether scheduled triggers can run.
+                scheduledTasksEnabledMenu.Add(
+                    displayName,
+                    Menu_TaskRunner_ToggleScheduledTaskEnabled.Bind(path, displayName)
+                )
+                if (isEnabled)
+                {
+                    scheduledTasksEnabledMenu.Check(displayName)
                 }
             }
             catch Error as e
@@ -309,13 +357,22 @@ Menu_TaskRunner_RefreshScheduledTasks()
                 unavailableLabel := displayName " [unavailable]"
                 scheduledTasksMenu.Add(unavailableLabel, (*) => 0)
                 scheduledTasksMenu.Disable(unavailableLabel)
+                scheduledTasksEnabledMenu.Add(unavailableLabel, (*) => 0)
+                scheduledTasksEnabledMenu.Disable(unavailableLabel)
             }
         }
+
+        scheduledTasksMenu.Add()
+        scheduledTasksMenu.Add(
+            "Scheduling (Enable / Disable)",
+            scheduledTasksEnabledMenu
+        )
     }
     catch Error as e
     {
         Logger.Error(e.Message, "ScheduledTasks")
         scheduledTasksMenu.Delete()
+        scheduledTasksEnabledMenu.Delete()
         scheduledTasksMenu.Add("(Task Scheduler unavailable)", (*) => 0)
         scheduledTasksMenu.Disable("(Task Scheduler unavailable)")
     }
@@ -327,6 +384,7 @@ taskRunnerMenu.Add("NoSleep", Menu_TaskRunner_NoSleep)
 taskRunnerMenu.Add("AutoPaste", Menu_TaskRunner_AutoPaste)
 
 scheduledTasksMenu := Menu()
+scheduledTasksEnabledMenu := Menu()
 scheduledTasksMenu.Add("(open to refresh)", (*) => 0)
 scheduledTasksMenu.Disable("(open to refresh)")
 taskRunnerMenu.Add("Scheduled Tasks", scheduledTasksMenu)
