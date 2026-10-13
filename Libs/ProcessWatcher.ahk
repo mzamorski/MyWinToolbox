@@ -149,7 +149,15 @@ class ProcessWatcher
         this.Stop()
         for rule in this.Rules
         {
+            pid := rule["OwnedPid"]
+            shouldStop := pid && rule["StopOnExit"]
             this.Leave(rule)
+            if (shouldStop)
+            {
+                ; On Reload, finish the old helper's shutdown before the
+                ; replacement toolbox checks whether that helper is running.
+                try ProcessWaitClose(pid, 3)
+            }
         }
     }
 
