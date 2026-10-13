@@ -124,11 +124,34 @@ try
     )
 
     doc := ConfiguratorIniDocument(tempIni)
-    doc.ReplaceSectionEntries("AhkScripts", entries)
+    window := Gui()
+    tasksTab := ConfiguratorTasksTab(window, doc)
+    tasksTab.Entries := [
+        Map(
+            "Type", ConfiguratorTasksTab.SCHEDULER,
+            "Name", "Backup",
+            "Value", "\\MyJobs\\Backup"
+        ),
+        Map(
+            "Type", ConfiguratorTasksTab.AHK,
+            "Name", entries[1]["Name"],
+            "Value", entries[1]["Value"]
+        ),
+        Map(
+            "Type", ConfiguratorTasksTab.AHK,
+            "Name", entries[2]["Name"],
+            "Value", entries[2]["Value"]
+        )
+    ]
+    AssertTrue(tasksTab.Validate(), "unified Tasks tab should validate both task types")
+    tasksTab.ApplyToDocument()
     doc.SaveWithBackup()
 
     reloaded := ConfiguratorIniDocument(tempIni)
     savedEntries := reloaded.GetSectionEntries("AhkScripts")
+    scheduledEntries := reloaded.GetSectionEntries("ScheduledTasks")
+    AssertEqual(1, scheduledEntries.Length, "unified Tasks save should keep Scheduler entries")
+    AssertEqual("Backup", scheduledEntries[1]["Name"], "scheduled task name should round-trip")
     AssertEqual(2, savedEntries.Length, "two AHK scripts should survive INI save")
     AssertTrue(
         !reloaded.HasSection("AhkScriptsSettings"),
