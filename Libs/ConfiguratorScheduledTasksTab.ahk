@@ -23,8 +23,8 @@ class ConfiguratorScheduledTasksTab
     {
         this.Window.AddText(
             "x30 y52 w1070 h40",
-            "Choose tasks from Windows Task Scheduler to toggle in the Ctrl+Win+T menu. "
-                . "Disabling a task prevents future scheduled runs; it does not stop a running instance."
+            "Configure Windows Task Scheduler tasks shown under Ctrl+Win+T > Scheduled Tasks. "
+                . "A checkmark means Running; click to start/stop. Scheduling can be toggled separately."
         )
 
         this.Window.AddGroupBox("x25 y102 w1110 h500", "Scheduled tasks (active Home / Work profile)")
@@ -56,10 +56,10 @@ class ConfiguratorScheduledTasksTab
 
         this.Window.AddText(
             "x475 y410 w600 h110",
-            "The menu reads each task's real Enabled state every time it opens. "
+            "The menu reads each task's actual Running state every time it opens. "
                 . "Missing or inaccessible tasks are shown as unavailable. "
                 . "Changes to this list take effect after Save (no reload required). "
-                . "Windows may require administrator approval to toggle protected tasks."
+                . "Windows may ask for administrator approval. Disabling scheduling does not stop a running task."
         )
     }
 
