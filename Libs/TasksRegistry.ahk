@@ -194,12 +194,33 @@ class TasksRegistry
         if (type = TasksRegistry.AHK)
         {
             path := AhkScriptManager.ResolveScriptPath(path)
-            running := AhkScriptManager.IsRunning(path)
-            available := running || (FileExist(path) && !InStr(FileExist(path), "D"))
+
+            ; Do not treat FileExist() as the authority for showing the
+            ; entry as enabled. Windows may report a false negative for a
+            ; drive/path in this process context (mapped drives, ACLs).
+            ; The real launch validates the path and reports actionable
+            ; errors on click, instead of permanently disabling the menu.
+            try
+            {
+                running := AhkScriptManager.IsRunning(path)
+            }
+            catch Error as e
+            {
+                Logger.Warning(
+                    "AHK status lookup failed: " path ": " e.Message,
+                    "Tasks"
+                )
+                return Map(
+                    "Running", false,
+                    "Status", "Unknown",
+                    "CanToggle", true
+                )
+            }
+
             return Map(
                 "Running", running,
-                "Status", !available ? "Missing" : (running ? "Running" : "Stopped"),
-                "CanToggle", !!available
+                "Status", running ? "Running" : "Stopped",
+                "CanToggle", true
             )
         }
 
