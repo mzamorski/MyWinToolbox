@@ -250,6 +250,19 @@ class ConfiguratorIniDocument
         }
     }
 
+    DeleteSection(sectionName)
+    {
+        if (!this.FindSection(sectionName, &startIndex, &endIndex))
+        {
+            return false
+        }
+
+        ; Remove the entire legacy section, including its header and comments,
+        ; so a migrated profile stores all managed tasks only under [Tasks].
+        this.Lines.RemoveAt(startIndex, endIndex - startIndex)
+        return true
+    }
+
     Render()
     {
         output := ""
