@@ -165,7 +165,7 @@ class ConfiguratorIniDocument
         this.Lines.InsertAt(endIndex, replacement)
     }
 
-    GetSectionEntries(sectionName)
+    GetSectionEntries(sectionName, decodeValues := true)
     {
         entries := []
 
@@ -192,9 +192,10 @@ class ConfiguratorIniDocument
             }
 
             keyName := Trim(SubStr(line, 1, separatorPos - 1))
-            value := ConfiguratorIniDocument.DecodeValue(
-                SubStr(line, separatorPos + 1)
-            )
+            rawValue := SubStr(line, separatorPos + 1)
+            value := decodeValues
+                ? ConfiguratorIniDocument.DecodeValue(rawValue)
+                : Trim(rawValue)
 
             entries.Push(Map("Name", keyName, "Value", value))
         }
@@ -202,7 +203,7 @@ class ConfiguratorIniDocument
         return entries
     }
 
-    ReplaceSectionEntries(sectionName, entries)
+    ReplaceSectionEntries(sectionName, entries, encodeValues := true)
     {
         newLines := []
 
@@ -214,9 +215,10 @@ class ConfiguratorIniDocument
                 continue
             }
 
-            newLines.Push(
-                name " = " ConfiguratorIniDocument.EncodeValue(entry["Value"])
-            )
+            value := encodeValues
+                ? ConfiguratorIniDocument.EncodeValue(entry["Value"])
+                : entry["Value"]
+            newLines.Push(name " = " value)
         }
 
         if (!this.FindSection(sectionName, &startIndex, &endIndex))
