@@ -3,6 +3,7 @@
 #Include ..\Libs\AhkScriptManager.ahk
 #Include ..\Libs\ConfiguratorSettingsTab.ahk
 #Include ..\Libs\ScheduledTasksManager.ahk
+#Include ..\Libs\TasksRegistry.ahk
 #Include ..\Libs\ConfiguratorTasksTab.ahk
 
 global TestFailures := []
@@ -148,25 +149,67 @@ try
     doc.SaveWithBackup()
 
     reloaded := ConfiguratorIniDocument(tempIni)
-    savedEntries := reloaded.GetSectionEntries("AhkScripts")
-    scheduledEntries := reloaded.GetSectionEntries("ScheduledTasks")
-    AssertEqual(1, scheduledEntries.Length, "unified Tasks save should keep Scheduler entries")
-    AssertEqual("Backup", scheduledEntries[1]["Name"], "scheduled task name should round-trip")
-    AssertEqual(2, savedEntries.Length, "two AHK scripts should survive INI save")
-    AssertTrue(
-        !reloaded.HasSection("AhkScriptsSettings"),
-        "AHK path configuration should not require any root/settings section"
+    savedEntries := reloaded.GetSectionEntries("Tasks")
+    AssertEqual(3, savedEntries.Length, "both types should share one Tasks section")
+    AssertEqual("Backup", savedEntries[1]["Name"], "scheduled entry should appear first")
+    AssertEqual(
+        "scheduler|\MyJobs\Backup",
+        savedEntries[1]["Value"],
+        "scheduled task should use a typed definition"
     )
     AssertEqual(
-        entries[1]["Value"],
-        savedEntries[1]["Value"],
-        "absolute script path should round-trip"
+        "ahk|" expected,
+        savedEntries[2]["Value"],
+        "AHK script should use absolute path in the same Tasks section"
+    )
+    AssertTrue(!reloaded.HasSection("ScheduledTasks"), "no old scheduled section")
+    AssertTrue(!reloaded.HasSection("AhkScripts"), "no old scripts section")
+    AssertTrue(!reloaded.HasSection("AhkScriptsSettings"), "no AHK root settings")
+    AssertThrows(
+        () => TasksRegistry.ValidateEntries([
+            Map("Name", "Backup", "Type", "scheduler", "Value", "\Tasks\Backup"),
+            Map("Name", "backup", "Type", "ahk", "Value", expected)
+        ]),
+        "duplicate task labels must be rejected even across different types"
+    )
+    AssertThrows(
+        () => TasksRegistry.ValidateEntries([
+            Map("Name", "Future App", "Type", "exe", "Value", "C:\Tools\app.exe")
+        ]),
+        "unsupported future types must not be accidentally executed"
     )
     AssertEqual(
         "example@example.com",
         reloaded.Get("Settings", "Email"),
         "AHK scripts save should not overwrite profile settings"
     )
+
+    ; A pre-unification profile should import then remove its type-specific
+    ; sections when the Tasks tab is saved.
+    reloaded.DeleteSection("Tasks")
+    reloaded.ReplaceSectionEntries(
+        "ScheduledTasks",
+        [Map("Name", "Nightly", "Value", "\Maintenance\Nightly")]
+    )
+    reloaded.ReplaceSectionEntries(
+        "AhkScripts",
+        [Map("Name", "WARDOGS", "Value", expected)]
+    )
+    reloaded.SaveWithBackup()
+
+    legacyDoc := ConfiguratorIniDocument(tempIni)
+    legacyTab := ConfiguratorTasksTab(Gui(), legacyDoc)
+    AssertTrue(legacyTab.Dirty, "legacy sections should trigger a migration save")
+    AssertEqual(2, legacyTab.Entries.Length, "legacy entries should be imported")
+    AssertTrue(legacyTab.Validate(), "legacy entries should convert to valid Tasks")
+    legacyTab.ApplyToDocument()
+    legacyDoc.SaveWithBackup()
+
+    migrated := ConfiguratorIniDocument(tempIni)
+    AssertTrue(migrated.HasSection("Tasks"), "migration should create one Tasks section")
+    AssertTrue(!migrated.HasSection("ScheduledTasks"), "migration should remove scheduler section")
+    AssertTrue(!migrated.HasSection("AhkScripts"), "migration should remove scripts section")
+    AssertEqual(2, migrated.GetSectionEntries("Tasks").Length, "migration should preserve entries")
 }
 catch Error as e
 {
