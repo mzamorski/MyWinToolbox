@@ -2219,18 +2219,17 @@ class MyWinToolboxConfigurator
                 this.AutoPasteTab.Validate()
             }
 
-            if (this.SettingsTab.Dirty || this.ScheduledTasksTab.Dirty)
+            if (this.SettingsTab.Dirty)
             {
                 this.SettingsTab.Validate()
-                if (this.ScheduledTasksTab.Dirty)
-                {
-                    this.ScheduledTasksTab.Validate()
-                }
-
                 if (!this.SettingsTab.ConfirmDangerousChanges())
                 {
                     return false
                 }
+            }
+            if (this.ScheduledTasksTab.Dirty)
+            {
+                this.ScheduledTasksTab.Validate()
             }
 
             if (this.SnippetsDirty)
@@ -2279,7 +2278,7 @@ class MyWinToolboxConfigurator
                     this.ScheduledTasksTab.ApplyToDocument()
                 }
 
-                this.SettingsTab.Save()
+                this.SettingsTab.Save(!this.SettingsTab.Dirty)
                 if (scheduledTasksSaved)
                 {
                     this.ScheduledTasksTab.MarkSaved()
