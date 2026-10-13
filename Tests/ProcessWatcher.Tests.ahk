@@ -40,12 +40,30 @@ class FakeProcessWatcher extends ProcessWatcher
         this.Starts := 0
         this.Stops := 0
         this.ClearedPids := []
+        this.WindowList := []
+        this.WindowTitles := Map()
+        this.LastWindowsProcess := ""
         super.__New(entries)
     }
 
     FindProcess(name)
     {
         return this.TriggerRunning ? 42 : 0
+    }
+
+    FindProcessWindows(name)
+    {
+        this.LastWindowsProcess := name
+        return this.WindowList
+    }
+
+    ReadWindowTitle(hwnd)
+    {
+        if (!this.WindowTitles.Has(hwnd))
+        {
+            throw Error("Window vanished while getting its title")
+        }
+        return this.WindowTitles[hwnd]
     }
 
     IsActionRunning(rule)
@@ -140,6 +158,49 @@ Assert(ProcessWatcher.ToIniEntries(ahkEnsure)[1]["Value"]
     = "ahk|C:\Tools\Helper.ahk|ensure",
     "AHK ensure rule must round-trip")
 
+; A window-title filter is an optional part of the source trigger, not
+; part of the helper specification. Existing process-only keys stay intact.
+windowEntries := [
+    Map("Name", "GeForceNOW.exe::Watch_Dogs 2",
+        "Value", "exe|notepad.exe|stop"),
+    Map("Name", "GeForceNOW.exe::Cyberpunk",
+        "Value", "exe|notepad.exe|ensure"),
+    Map("Name", "ShareX.exe", "Value", "exe|notepad.exe|run")
+]
+windowRules := ProcessWatcher.FromIniEntries(windowEntries)
+Assert(windowRules.Length = 3,
+    "different title filters must be permitted for the same source process")
+Assert(windowRules[1]["Trigger"] = "GeForceNOW.exe"
+    && windowRules[1]["TitleContains"] = "Watch_Dogs 2",
+    "window-title rule should parse executable and title fragment")
+Assert(windowRules[2]["TitleContains"] = "Cyberpunk",
+    "multiple title fragments for one executable should be independent")
+Assert(windowRules[3]["TitleContains"] = "",
+    "legacy process-only rules must have an empty title filter")
+windowSaved := ProcessWatcher.ToIniEntries(windowRules)
+Assert(windowSaved[1]["Name"] = "GeForceNOW.exe::Watch_Dogs 2"
+    && windowSaved[2]["Name"] = "GeForceNOW.exe::Cyberpunk",
+    "window-filter rule keys should round-trip")
+Assert(windowSaved[3]["Name"] = "ShareX.exe",
+    "process-only rule names must retain their original serialization")
+AssertThrows(
+    () => ProcessWatcher.FromIniEntries([
+        Map("Name", "GeForceNOW.exe::Watch_Dogs", "Value", "exe|notepad.exe|run"),
+        Map("Name", "geforcenow.EXE::watch_dogs", "Value", "exe|notepad.exe|stop")
+    ]),
+    "same EXE and same title filter should be rejected case-insensitively"
+)
+AssertThrows(
+    () => ProcessWatcher.FromIniEntries([
+        Map("Name", "GeForceNOW.exe::", "Value", "exe|notepad.exe|run")
+    ]),
+    "an explicitly configured empty title fragment should fail"
+)
+AssertThrows(
+    () => ProcessWatcher.ToTriggerKey("GeForceNOW.exe", "a=b"),
+    "unrepresentable title filter containing INI separator should fail"
+)
+
 ; Short EXE names must go straight to Windows, not through FileExist or
 ; an incorrectly inferred working directory.
 Assert(
@@ -221,6 +282,51 @@ watcher.Tick()
 Assert(watcher.Starts = 2, "new process appearance starts another helper")
 watcher.Shutdown()
 Assert(watcher.Stops = 2, "watcher shutdown cleans up its owned helper")
+
+; Detect title fragments only in windows belonging to the source EXE.
+; The source may be running without any matching game window, and focus is
+; irrelevant. Changing to another game must be treated like source departure.
+titleWatcher := FakeProcessWatcher([windowRules[1]])
+titleWatcher.TriggerRunning := true
+titleWatcher.WindowList := [11, 12]
+titleWatcher.WindowTitles[11] := "GeForce NOW"
+titleWatcher.WindowTitles[12] := "Watch_Dogs 2 on GeForce NOW"
+titleWatcher.Tick()
+Assert(titleWatcher.Starts = 1, "matching game title should launch its helper")
+Assert(titleWatcher.LastWindowsProcess = "GeForceNOW.exe",
+    "window filter must request only windows belonging to configured EXE")
+titleWatcher.Tick()
+Assert(titleWatcher.Starts = 1, "matched game should not launch a duplicate")
+titleWatcher.WindowTitles[12] := "Cyberpunk on GeForce NOW"
+titleWatcher.Tick()
+Assert(titleWatcher.Stops = 1,
+    "stop should close owned helper when window title stops matching")
+titleWatcher.WindowTitles[12] := "watch_dogs 2 ON GEFORCE NOW"
+titleWatcher.Tick()
+Assert(titleWatcher.Starts = 2, "title matching should ignore letter case")
+titleWatcher.WindowList := []
+titleWatcher.Tick()
+Assert(titleWatcher.Stops = 2, "no matching windows should stop source condition")
+titleWatcher.WindowList := [99]
+titleWatcher.Tick()
+Assert(titleWatcher.Starts = 2,
+    "vanished window during title read should be safely ignored")
+
+titleEnsure := FakeProcessWatcher([windowRules[2]])
+titleEnsure.WindowList := [10]
+titleEnsure.WindowTitles[10] := "Cyberpunk on GeForce NOW"
+titleEnsure.Tick()
+Assert(titleEnsure.Starts = 1, "ensure launches on matching game title")
+titleEnsure.HelperRunning := false
+titleEnsure.Tick()
+Assert(titleEnsure.Starts = 2,
+    "ensure restarts a closed helper while matching game window exists")
+titleEnsure.WindowTitles[10] := "GeForce NOW launcher"
+titleEnsure.Tick()
+titleEnsure.HelperRunning := false
+titleEnsure.Tick()
+Assert(titleEnsure.Starts = 2,
+    "ensure should not restart after game title stops matching")
 
 runOnly := FakeProcessWatcher([rules[2]])
 runOnly.TriggerRunning := true
@@ -310,19 +416,23 @@ try
         tempIni, "UTF-8")
     doc := ConfiguratorIniDocument(tempIni)
     tab := ConfiguratorProcessWatcherTab(Gui(), doc)
-    tab.Entries := [rules[1], rules[2], ensureRule]
+    tab.Entries := [rules[1], rules[2], ensureRule, windowRules[1], windowRules[2]]
     Assert(tab.Validate(), "valid watcher rules should pass Configurator validation")
     tab.ApplyToDocument()
     doc.SaveWithBackup()
 
     reloaded := ConfiguratorIniDocument(tempIni)
     entries := reloaded.GetSectionEntries("ProcessWatcher", false)
-    Assert(entries.Length = 3, "run, stop and ensure rules should persist")
+    Assert(entries.Length = 5,
+        "process-only and title-filtered rules should persist together")
     Assert(entries[1]["Value"] = iniEntries[1]["Value"], "INI file must preserve backslashes")
     Assert(entries[2]["Value"] = "exe|notepad.exe|run",
         "Configurator INI save must preserve canonical run and the short EXE name")
     Assert(entries[3]["Value"] = "exe|notepad.exe|ensure",
         "Configurator INI save must preserve ensure mode")
+    Assert(entries[4]["Name"] = "GeForceNOW.exe::Watch_Dogs 2"
+        && entries[5]["Name"] = "GeForceNOW.exe::Cyberpunk",
+        "Configurator INI save must preserve distinct game title filters")
     Assert(reloaded.Get("Settings", "Email") = "test@example.com",
         "watcher save must preserve unrelated settings")
 }
