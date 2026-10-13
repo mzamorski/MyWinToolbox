@@ -4,6 +4,7 @@
 #Include ..\Libs\ConfiguratorSettingsTab.ahk
 #Include ..\Libs\ScheduledTasksManager.ahk
 #Include ..\Libs\TasksRegistry.ahk
+#Include ..\Libs\Logger.ahk
 #Include ..\Libs\ConfiguratorTasksTab.ahk
 
 global TestFailures := []
@@ -90,6 +91,36 @@ entries := [
     Map("Name", "Minecraft", "Value", "C:\new-tools\Minecraft.ahk")
 ]
 AssertTrue(AhkScriptManager.ValidateEntries(entries), "valid AHK entries should pass")
+
+AssertEqual(
+    "E:\__PROJECTS\MY\MyWinToolbox-Private\Games\WARDOGS-Hammer.ahk",
+    AhkScriptManager.ResolveScriptPath(
+        "E:\__PROJECTS\MY\MyWinToolbox-Private\Games\WARDOGS-Hammer.ahk"
+    ),
+    "an absolute E: script path with underscores must resolve unchanged"
+)
+
+; Menu availability must depend on a valid task definition, not on the
+; FileExist() preflight result. Running the entry will surface any real
+; filesystem failure rather than leaving the item greyed out.
+nonexistentEntry := Map(
+    "Name", "Missing AHK test",
+    "Type", TasksRegistry.AHK,
+    "Value", A_Temp "\MyWinToolbox-test-nonexistent-" A_TickCount ".ahk"
+)
+noSchedulerService := 0
+missingStatus := TasksRegistry.GetStatus(nonexistentEntry, &noSchedulerService)
+AssertTrue(
+    missingStatus["CanToggle"],
+    "a configured AHK script should remain clickable even without a file preflight"
+)
+AssertEqual(
+    "Stopped",
+    missingStatus["Status"],
+    "a nonexistent but well-formed AHK path is stopped until launch is attempted"
+)
+
+
 AssertThrows(
     () => AhkScriptManager.ValidateEntries([
         Map("Name", "WARDOGS", "Value", expected),
