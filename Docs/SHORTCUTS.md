@@ -45,7 +45,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | --- | --- |
 | **NoSleep** | Toggle the same NoSleep state as `Ctrl + Win + A`. |
 | **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. Its startup state is configurable per profile. |
-| **Tasks** | Run/Stop Windows scheduled jobs and external AHK v2 scripts in one list (✓ = running). Scheduler triggers have their own **Scheduling (Enable / Disable)** submenu. Edit both types in Configurator → Tasks; AHK scripts use full paths. |
+| **Tasks** | All jobs and scripts are listed together by name (✓ = running). Configure them in one `[Tasks]` INI section as `name = scheduler\|path` or `name = ahk\|absolute-path`, or through Configurator → Tasks. Scheduled triggers have a separate enable/disable action. |
 | **Shutdown → 1h** | Schedule shutdown using the menu's 1-hour preset. |
 | **Shutdown → 2h** | Schedule shutdown using the menu's 2-hour preset. |
 | **Shutdown → Cancel** | Cancel the pending shutdown timer created by Task Runner. |
