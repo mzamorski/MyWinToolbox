@@ -254,11 +254,11 @@ try
             "Value", "\Maintenance\Cleanup"
         )
     ]
-    doc.ReplaceSectionEntries("Tasks", TasksRegistry.ToIniEntries(taskDefinitions))
+    doc.ReplaceSectionEntries("Tasks", TasksRegistry.ToIniEntries(taskDefinitions), false)
     doc.SaveWithBackup()
 
     reloaded := ConfiguratorIniDocument(tempPath)
-    saved := reloaded.GetSectionEntries("Tasks")
+    saved := reloaded.GetSectionEntries("Tasks", false)
     AssertEqual(2, saved.Length, "scheduled jobs should survive save in one Tasks section")
     AssertEqual("Backup", saved[1]["Name"], "menu labels should round-trip")
     AssertEqual(
