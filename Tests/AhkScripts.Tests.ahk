@@ -2,7 +2,8 @@
 
 #Include ..\Libs\AhkScriptManager.ahk
 #Include ..\Libs\ConfiguratorSettingsTab.ahk
-#Include ..\Libs\ConfiguratorAhkScriptsTab.ahk
+#Include ..\Libs\ScheduledTasksManager.ahk
+#Include ..\Libs\ConfiguratorTasksTab.ahk
 
 global TestFailures := []
 
@@ -39,20 +40,19 @@ expected := root "\Games\WARDOGS-Hammer.ahk"
 
 AssertEqual(
     expected,
-    AhkScriptManager.ResolveScriptPath("Games\WARDOGS-Hammer.ahk", root),
-    "relative game script should resolve against its private repository root"
+    AhkScriptManager.ResolveScriptPath(expected),
+    "an absolute game script path should resolve unchanged"
 )
 
 AssertEqual(
     expected,
-    AhkScriptManager.ResolveScriptPath(expected, "D:\Unrelated"),
-    "absolute script paths must override the configured root"
+    AhkScriptManager.ResolveScriptPath(root "\\Games\\..\\Games\\WARDOGS-Hammer.ahk"),
+    "absolute path components should be canonicalized"
 )
 
-AssertEqual(
-    expected,
-    AhkScriptManager.ResolveScriptPath("Games\..\Games\WARDOGS-Hammer.ahk", root),
-    "relative path components should be canonicalized"
+AssertThrows(
+    () => AhkScriptManager.ResolveScriptPath("Games\\WARDOGS-Hammer.ahk"),
+    "relative script paths must be rejected"
 )
 
 AssertTrue(
@@ -85,26 +85,26 @@ AssertTrue(
 )
 
 entries := [
-    Map("Name", "WARDOGS Hammer", "Value", "Games\WARDOGS-Hammer.ahk"),
-    Map("Name", "Minecraft", "Value", "Games\Minecraft.ahk")
+    Map("Name", "WARDOGS Hammer", "Value", expected),
+    Map("Name", "Minecraft", "Value", root "\\Games\\Minecraft.ahk")
 ]
 AssertTrue(AhkScriptManager.ValidateEntries(entries), "valid AHK entries should pass")
 AssertThrows(
     () => AhkScriptManager.ValidateEntries([
-        Map("Name", "WARDOGS", "Value", "Games\WARDOGS-Hammer.ahk"),
-        Map("Name", "wardogs", "Value", "Games\Minecraft.ahk")
+        Map("Name", "WARDOGS", "Value", expected),
+        Map("Name", "wardogs", "Value", root "\\Games\\Minecraft.ahk")
     ]),
     "duplicate menu labels should fail case-insensitively"
 )
 AssertThrows(
     () => AhkScriptManager.ValidateEntries([
-        Map("Name", "First", "Value", "Games\WARDOGS-Hammer.ahk"),
-        Map("Name", "Second", "Value", "games\wardogs-hammer.ahk")
+        Map("Name", "First", "Value", expected),
+        Map("Name", "Second", "Value", "c:\\repos\\mywintoolbox-private\\games\\wardogs-hammer.ahk")
     ]),
     "duplicate script paths should fail case-insensitively"
 )
 
-for invalidPath in ["", "file.exe", "Games\file.ahk" Chr(34), "Games\broken" Chr(10) "file.ahk"]
+for invalidPath in ["", "file.exe", "Games\\file.ahk", "Games\\file.ahk" Chr(34), "Games\\broken" Chr(10) "file.ahk"]
 {
     AssertThrows(
         () => AhkScriptManager.ValidateScriptPath(invalidPath),
@@ -124,18 +124,20 @@ try
     )
 
     doc := ConfiguratorIniDocument(tempIni)
-    doc.Set("AhkScriptsSettings", "Root", root)
     doc.ReplaceSectionEntries("AhkScripts", entries)
     doc.SaveWithBackup()
 
     reloaded := ConfiguratorIniDocument(tempIni)
     savedEntries := reloaded.GetSectionEntries("AhkScripts")
     AssertEqual(2, savedEntries.Length, "two AHK scripts should survive INI save")
-    AssertEqual(root, reloaded.Get("AhkScriptsSettings", "Root"), "AHK root should round-trip")
+    AssertTrue(
+        !reloaded.HasSection("AhkScriptsSettings"),
+        "AHK path configuration should not require any root/settings section"
+    )
     AssertEqual(
         entries[1]["Value"],
         savedEntries[1]["Value"],
-        "relative script path should round-trip"
+        "absolute script path should round-trip"
     )
     AssertEqual(
         "example@example.com",
