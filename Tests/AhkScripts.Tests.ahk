@@ -100,6 +100,28 @@ AssertEqual(
     "an absolute E: script path with underscores must resolve unchanged"
 )
 
+liveEntry := TasksRegistry.Parse(
+    "WARDOGS Hammer",
+    "ahk|E:\__PROJECTS\MY\MyWinToolbox-Private\Games\WARDOGS-Hammer.ahk"
+)
+AssertEqual(
+    TasksRegistry.AHK, liveEntry["Type"],
+    "the user's config must parse as an AHK task"
+)
+serviceForAhk := 0
+liveStatus := TasksRegistry.GetStatus(liveEntry, &serviceForAhk)
+AssertTrue(
+    liveStatus["CanToggle"],
+    "valid E: script path should always be clickable even when the file is absent"
+)
+AssertTrue(
+    liveStatus["Status"] = "Stopped"
+        || liveStatus["Status"] = "Running"
+        || liveStatus["Status"] = "Unknown",
+    "a valid AHK definition must never be shown as unavailable"
+)
+
+
 ; Menu availability must depend on a valid task definition, not on the
 ; FileExist() preflight result. Running the entry will surface any real
 ; filesystem failure rather than leaving the item greyed out.
