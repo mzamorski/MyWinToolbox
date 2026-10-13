@@ -58,7 +58,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
-| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Tasks, Backup / Restore, and Diagnostics / Health. |
+| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Tasks, Process Watcher, Backup / Restore, and Diagnostics / Health. |
 | `Ctrl + Win + E` | Opens the emoji menu. |
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
@@ -92,6 +92,22 @@ The supported types are currently `scheduler` and `ahk`. The typed entry format 
 - **AHK entries:** detect the exact script's hidden AutoHotkey main window, even when started outside MyWinToolbox. Clicking starts it via the AHK v2 interpreter or requests normal closure (so `OnExit` handlers can execute). A checkmark means the script is loaded, not that any internal macro is active. **AHK entries stay clickable even when Windows cannot verify file existence during the menu refresh**; launching the script performs the actual path check and displays an explicit error if it is missing or inaccessible. If running-state detection fails, the entry shows `[Unknown]` and the failure is logged. WARDOGS-Hammer uses **F6** for its internal macro and **F8** to exit.
 
 **Legacy migration:** earlier experimental builds used `[ScheduledTasks]`, `[AhkScripts]` and optionally `[AhkScriptsSettings]`. MyWinToolbox can still read them until migrated. Opening and saving Configurator → Tasks converts the entries to one `[Tasks]` section and removes the old sections. Normal changes apply on next menu opening without restarting the toolbox.
+
+### Process Watcher
+
+Process Watcher automatically starts a helper when a named Windows executable appears, and optionally stops it when the last matching process exits. Unlike AutoPaste, the watched application does **not** need to have focus or an open window. It checks every 3 seconds and also checks immediately when MyWinToolbox starts.
+
+Use **Ctrl + Win + Shift + S → Process Watcher** in the existing tabbed Configurator. Rules live in the active Home/Work profile's separate `[ProcessWatcher]` INI section:
+
+```ini
+[ProcessWatcher]
+Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
+Editor.exe = exe|C:\Tools\EditorHelper.exe|keep
+```
+
+Each rule is `WatchedProcess.exe = ahk|absolute_path|stop` or `WatchedProcess.exe = exe|absolute_path|keep`. The last field is required: `stop` closes the helper after the watched process disappears; `keep` leaves it running. AHK helpers receive a normal close request so `OnExit` handlers can run. For EXE helpers, `stop` terminates the launched process, so choose `keep` if graceful shutdown is important.
+
+The watcher acts once per appearance/disappearance transition (not every poll), never launches another helper when one with the same executable name is already running, and never stops an already-running helper it did not launch. For AHK it distinguishes exact script paths. For EXE it checks existing processes by executable **filename**. Stopping is restricted to the PID of the process the watcher launched, with a process handle to prevent PID reuse. If an action fails it is logged without being retried every three seconds; the trigger must disappear and reappear before another attempt. Rules are reloaded by **Save + Reload** (ordinary Save just persists them). Exiting or reloading MyWinToolbox stops helpers it launched when their rule uses `stop`.
 
 ### Window Toolbox
 
