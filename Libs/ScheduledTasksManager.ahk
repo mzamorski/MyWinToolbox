@@ -83,12 +83,6 @@ class ScheduledTasksManager
         return service.GetFolder(folderPath).GetTask(taskName)
     }
 
-    static IsEnabled(taskPath)
-    {
-        service := ScheduledTasksManager.Connect()
-        return !!ScheduledTasksManager.GetTask(service, taskPath).Enabled
-    }
-
     ; TASK_STATE values exposed by IRegisteredTask.State.
     static IsRunningState(state)
     {
@@ -216,55 +210,4 @@ class ScheduledTasksManager
             || errorNumber = -2147024891
     }
 
-    static SetEnabled(taskPath, enabled)
-    {
-        path := ScheduledTasksManager.NormalizePath(taskPath)
-        enabled := !!enabled
-        try
-        {
-            service := ScheduledTasksManager.Connect()
-            task := ScheduledTasksManager.GetTask(service, path)
-            task.Enabled := enabled
-        }
-        catch OSError as e
-        {
-            if (!ScheduledTasksManager.IsAccessDenied(e.Number))
-            {
-                throw e
-            }
-
-            ; Only the one schtasks.exe operation is elevated, not the entire AHK script.
-            ScheduledTasksManager.SetEnabledElevated(path, enabled)
-        }
-
-        if (ScheduledTasksManager.IsEnabled(path) != enabled)
-        {
-            throw Error("The Task Scheduler did not apply the requested state: " path)
-        }
-
-        return enabled
-    }
-
-    static SetEnabledElevated(taskPath, enabled)
-    {
-        quote := Chr(34)
-        executable := A_WinDir "\System32\schtasks.exe"
-        command := "*RunAs " quote executable quote
-            . " /Change /TN " quote taskPath quote
-            . (enabled ? " /Enable" : " /Disable")
-
-        try
-        {
-            exitCode := RunWait(command, , "Hide")
-        }
-        catch Error as e
-        {
-            throw Error("Administrator approval was cancelled or the task could not be changed. " e.Message)
-        }
-
-        if (exitCode != 0)
-        {
-            throw Error("Elevated schtasks.exe failed (exit code " exitCode ") for " taskPath)
-        }
-    }
 }
