@@ -320,6 +320,7 @@ Menu_TaskRunner_RefreshTasks()
     tasksMenu.Delete()
     tasksEnabledMenu.Delete()
     count := 0
+    enabledCount := 0
 
     ; Scheduler COM errors should never hide unrelated configured AHK scripts.
     try
@@ -359,6 +360,7 @@ Menu_TaskRunner_RefreshTasks()
                             displayName,
                             Menu_TaskRunner_ToggleScheduledTaskEnabled.Bind(path, displayName)
                         )
+                        enabledCount += 1
                         if (isEnabled)
                         {
                             tasksEnabledMenu.Check(displayName)
@@ -398,6 +400,7 @@ Menu_TaskRunner_RefreshTasks()
 
         for displayName, scriptPath in scripts
         {
+            count += 1
             try
             {
                 fullPath := AhkScriptManager.ResolveScriptPath(scriptPath)
@@ -427,7 +430,6 @@ Menu_TaskRunner_RefreshTasks()
                 tasksMenu.Add(label, (*) => 0)
                 tasksMenu.Disable(label)
             }
-            count += 1
         }
     }
     catch Error as e
@@ -435,7 +437,7 @@ Menu_TaskRunner_RefreshTasks()
         Logger.Error(e.Message, "Tasks")
     }
 
-    if (tasksEnabledMenu.GetCount() > 0)
+    if (enabledCount > 0)
     {
         tasksMenu.Add()
         tasksMenu.Add("Scheduling (Enable / Disable)", tasksEnabledMenu)
