@@ -431,6 +431,7 @@ class MyWinToolboxConfigurator
                 "HotString Scopes",
                 "AutoPaste",
                 "Settings",
+                "Scheduled Tasks",
                 "Backup / Restore",
                 "Diagnostics / Health"
             ]
@@ -464,6 +465,13 @@ class MyWinToolboxConfigurator
         )
 
         this.Tabs.UseTab(6)
+        this.ScheduledTasksTab := ConfiguratorScheduledTasksTab(
+            this.Window,
+            this.SettingsTab.ProfileDoc,
+            ObjBindMethod(this, "OnDirtyStateChanged")
+        )
+
+        this.Tabs.UseTab(7)
         this.BackupTab := ConfiguratorBackupTab(
             this.Window,
             [
@@ -478,7 +486,7 @@ class MyWinToolboxConfigurator
             ObjBindMethod(this, "CanRestoreBackup")
         )
 
-        this.Tabs.UseTab(7)
+        this.Tabs.UseTab(8)
         this.DiagnosticsTab := ConfiguratorDiagnosticsTab(
             this.Window,
             this
@@ -515,7 +523,7 @@ class MyWinToolboxConfigurator
     OnTabChanged(*)
     {
         if (
-            this.Tabs.Value = 7
+            this.Tabs.Value = 8
             && this.HasOwnProp("DiagnosticsTab")
             && IsObject(this.DiagnosticsTab)
         )
@@ -2193,6 +2201,7 @@ class MyWinToolboxConfigurator
             hotStringsSaved := false
             autoPasteSaved := false
             settingsSaved := false
+            scheduledTasksSaved := false
 
             ; Validate every modified document before writing any of them.
             if (this.SnippetsDirty)
@@ -2210,9 +2219,13 @@ class MyWinToolboxConfigurator
                 this.AutoPasteTab.Validate()
             }
 
-            if (this.SettingsTab.Dirty)
+            if (this.SettingsTab.Dirty || this.ScheduledTasksTab.Dirty)
             {
                 this.SettingsTab.Validate()
+                if (this.ScheduledTasksTab.Dirty)
+                {
+                    this.ScheduledTasksTab.Validate()
+                }
 
                 if (!this.SettingsTab.ConfirmDangerousChanges())
                 {
@@ -2256,9 +2269,21 @@ class MyWinToolboxConfigurator
                 autoPasteSaved := true
             }
 
-            if (this.SettingsTab.Dirty)
+            if (this.SettingsTab.Dirty || this.ScheduledTasksTab.Dirty)
             {
+                ; Both tabs edit the same profile INI. Save them atomically
+                ; through the Settings tab's existing UAC/backup mechanism.
+                scheduledTasksSaved := this.ScheduledTasksTab.Dirty
+                if (scheduledTasksSaved)
+                {
+                    this.ScheduledTasksTab.ApplyToDocument()
+                }
+
                 this.SettingsTab.Save()
+                if (scheduledTasksSaved)
+                {
+                    this.ScheduledTasksTab.MarkSaved()
+                }
                 settingsSaved := true
             }
 
@@ -2269,10 +2294,16 @@ class MyWinToolboxConfigurator
                 this.DiagnosticsTab.Refresh()
             }
 
-            if (hotStringsSaved || settingsSaved)
+            if (hotStringsSaved || (settingsSaved && !scheduledTasksSaved))
             {
                 this.SetStatus(
                     "Saved. HotStrings/Settings require reload; use Save + Reload to apply."
+                )
+            }
+            else if (settingsSaved)
+            {
+                this.SetStatus(
+                    "Saved. Scheduled Tasks menu will refresh when you next open it."
                 )
             }
             else if (snippetsSaved || autoPasteSaved)
@@ -2305,6 +2336,7 @@ class MyWinToolboxConfigurator
             || this.HotStringsState.Dirty
             || this.AutoPasteTab.Dirty
             || this.SettingsTab.Dirty
+            || this.ScheduledTasksTab.Dirty
     }
 
     CanCreateBackup()
@@ -2398,6 +2430,11 @@ class MyWinToolboxConfigurator
         if (this.SettingsTab.Dirty)
         {
             states.Push("Settings modified")
+        }
+
+        if (this.ScheduledTasksTab.Dirty)
+        {
+            states.Push("Scheduled Tasks modified")
         }
 
         if (states.Length = 0)
