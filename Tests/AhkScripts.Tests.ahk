@@ -130,7 +130,7 @@ try
         Map(
             "Type", ConfiguratorTasksTab.SCHEDULER,
             "Name", "Backup",
-            "Value", "\\MyJobs\\Backup"
+            "Value", "\MyJobs\Backup"
         ),
         Map(
             "Type", ConfiguratorTasksTab.AHK,
