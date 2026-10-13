@@ -172,7 +172,7 @@ class ScheduledTasksManager
         {
             if (!ScheduledTasksManager.IsAccessDenied(e.Number))
             {
-                throw
+                throw e
             }
 
             ScheduledTasksManager.SetRunningElevated(path, shouldRun)
@@ -227,7 +227,7 @@ class ScheduledTasksManager
         {
             if (!ScheduledTasksManager.IsAccessDenied(e.Number))
             {
-                throw
+                throw e
             }
 
             ; Only the one schtasks.exe operation is elevated, not the entire AHK script.
