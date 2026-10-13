@@ -298,6 +298,7 @@ Menu_TaskRunner_RefreshTasks()
     for configEntry in entries
     {
         name := configEntry["Name"]
+        entry := 0
         try
         {
             entry := TasksRegistry.Parse(name, configEntry["Definition"])
@@ -313,14 +314,28 @@ Menu_TaskRunner_RefreshTasks()
             {
                 tasksMenu.Disable(label)
             }
-
         }
         catch Error as e
         {
-            Logger.Warning(name ": " e.Message, "Tasks")
-            label := name " [unavailable]"
-            tasksMenu.Add(label, (*) => 0)
-            tasksMenu.Disable(label)
+            Logger.Warning(
+                name ": " e.Message " (" e.File ":" e.Line ")"
+                    . " | definition=" configEntry["Definition"],
+                "Tasks"
+            )
+            if (IsObject(entry) && entry["Type"] = TasksRegistry.AHK)
+            {
+                ; Even an unexpected status-rendering error must not disable
+                ; a valid AHK definition. Clicking reports the actual failure.
+                label := name " [Unknown]"
+                tasksMenu.Add(label, Menu_TaskRunner_ToggleTask.Bind(entry))
+            }
+            else
+            {
+                ; Malformed definitions and Scheduler failures remain disabled.
+                label := name " [unavailable]"
+                tasksMenu.Add(label, (*) => 0)
+                tasksMenu.Disable(label)
+            }
         }
     }
 
