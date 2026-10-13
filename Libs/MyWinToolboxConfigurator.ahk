@@ -431,8 +431,7 @@ class MyWinToolboxConfigurator
                 "HotString Scopes",
                 "AutoPaste",
                 "Settings",
-                "Scheduled Tasks",
-                "AHK Scripts",
+                "Tasks",
                 "Backup / Restore",
                 "Diagnostics / Health"
             ]
@@ -466,20 +465,13 @@ class MyWinToolboxConfigurator
         )
 
         this.Tabs.UseTab(6)
-        this.ScheduledTasksTab := ConfiguratorScheduledTasksTab(
+        this.TasksTab := ConfiguratorTasksTab(
             this.Window,
             this.SettingsTab.ProfileDoc,
             ObjBindMethod(this, "OnDirtyStateChanged")
         )
 
         this.Tabs.UseTab(7)
-        this.AhkScriptsTab := ConfiguratorAhkScriptsTab(
-            this.Window,
-            this.SettingsTab.ProfileDoc,
-            ObjBindMethod(this, "OnDirtyStateChanged")
-        )
-
-        this.Tabs.UseTab(8)
         this.BackupTab := ConfiguratorBackupTab(
             this.Window,
             [
@@ -494,7 +486,7 @@ class MyWinToolboxConfigurator
             ObjBindMethod(this, "CanRestoreBackup")
         )
 
-        this.Tabs.UseTab(9)
+        this.Tabs.UseTab(8)
         this.DiagnosticsTab := ConfiguratorDiagnosticsTab(
             this.Window,
             this
@@ -531,7 +523,7 @@ class MyWinToolboxConfigurator
     OnTabChanged(*)
     {
         if (
-            this.Tabs.Value = 9
+            this.Tabs.Value = 8
             && this.HasOwnProp("DiagnosticsTab")
             && IsObject(this.DiagnosticsTab)
         )
@@ -2210,8 +2202,7 @@ class MyWinToolboxConfigurator
             autoPasteSaved := false
             settingsSaved := false
             settingsFieldsSaved := false
-            scheduledTasksSaved := false
-            ahkScriptsSaved := false
+            tasksSaved := false
 
             ; Validate every modified document before writing any of them.
             if (this.SnippetsDirty)
@@ -2237,13 +2228,9 @@ class MyWinToolboxConfigurator
                     return false
                 }
             }
-            if (this.ScheduledTasksTab.Dirty)
+            if (this.TasksTab.Dirty)
             {
-                this.ScheduledTasksTab.Validate()
-            }
-            if (this.AhkScriptsTab.Dirty)
-            {
-                this.AhkScriptsTab.Validate()
+                this.TasksTab.Validate()
             }
 
             if (this.SnippetsDirty)
@@ -2282,30 +2269,20 @@ class MyWinToolboxConfigurator
                 autoPasteSaved := true
             }
 
-            if (this.SettingsTab.Dirty || this.ScheduledTasksTab.Dirty || this.AhkScriptsTab.Dirty)
+            if (this.SettingsTab.Dirty || this.TasksTab.Dirty)
             {
-                ; All three tabs share one INI document and the existing
-                ; backup/UAC save path, avoiding lost updates between tabs.
-                scheduledTasksSaved := this.ScheduledTasksTab.Dirty
-                ahkScriptsSaved := this.AhkScriptsTab.Dirty
+                ; Both tabs share one INI document and its backup/UAC save path.
+                tasksSaved := this.TasksTab.Dirty
                 settingsFieldsSaved := this.SettingsTab.Dirty
-                if (scheduledTasksSaved)
+                if (tasksSaved)
                 {
-                    this.ScheduledTasksTab.ApplyToDocument()
-                }
-                if (ahkScriptsSaved)
-                {
-                    this.AhkScriptsTab.ApplyToDocument()
+                    this.TasksTab.ApplyToDocument()
                 }
 
                 this.SettingsTab.Save(!this.SettingsTab.Dirty)
-                if (scheduledTasksSaved)
+                if (tasksSaved)
                 {
-                    this.ScheduledTasksTab.MarkSaved()
-                }
-                if (ahkScriptsSaved)
-                {
-                    this.AhkScriptsTab.MarkSaved()
+                    this.TasksTab.MarkSaved()
                 }
                 settingsSaved := true
             }
@@ -2326,7 +2303,7 @@ class MyWinToolboxConfigurator
             else if (settingsSaved)
             {
                 this.SetStatus(
-                    "Saved. Scheduled Tasks / AHK Scripts menus refresh when next opened."
+                    "Saved. Tasks menu refreshes when next opened."
                 )
             }
             else if (snippetsSaved || autoPasteSaved)
@@ -2359,8 +2336,7 @@ class MyWinToolboxConfigurator
             || this.HotStringsState.Dirty
             || this.AutoPasteTab.Dirty
             || this.SettingsTab.Dirty
-            || this.ScheduledTasksTab.Dirty
-            || this.AhkScriptsTab.Dirty
+            || this.TasksTab.Dirty
     }
 
     CanCreateBackup()
@@ -2456,14 +2432,9 @@ class MyWinToolboxConfigurator
             states.Push("Settings modified")
         }
 
-        if (this.ScheduledTasksTab.Dirty)
+        if (this.TasksTab.Dirty)
         {
-            states.Push("Scheduled Tasks modified")
-        }
-
-        if (this.AhkScriptsTab.Dirty)
-        {
-            states.Push("AHK Scripts modified")
+            states.Push("Tasks modified")
         }
 
         if (states.Length = 0)
