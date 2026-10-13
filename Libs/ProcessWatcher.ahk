@@ -10,6 +10,7 @@
 class ProcessWatcher
 {
     static IntervalMs := 3000
+    static FailedLaunchSkipTicks := 4 ; next attempt 15 seconds after an error
     static AHK := "ahk"
     static EXE := "exe"
     static RUN := "run"
@@ -28,6 +29,7 @@ class ProcessWatcher
                 "Path", entry["Path"],
                 "Mode", entry["Mode"],
                 "WasPresent", false,
+                "FailedLaunchTicks", 0,
                 "OwnedPid", 0,
                 "OwnedHandle", 0
             )
@@ -201,6 +203,7 @@ class ProcessWatcher
                     if (rule["WasPresent"])
                     {
                         rule["WasPresent"] := false
+                        rule["FailedLaunchTicks"] := 0
                         this.Leave(rule)
                     }
                     continue
@@ -227,21 +230,38 @@ class ProcessWatcher
                     continue
                 }
 
+                ; If a launch failed (e.g. missing EXE), avoid retrying an
+                ; invalid command and filling the log every three seconds.
+                ; Successful launches do NOT delay future ensure restarts.
+                if (
+                    rule["Mode"] = ProcessWatcher.ENSURE
+                    && rule["FailedLaunchTicks"] > 0
+                )
+                {
+                    rule["FailedLaunchTicks"] -= 1
+                    continue
+                }
+
                 ; For ensure, the previous helper may have exited while the
                 ; trigger stayed alive. Release its process handle before
                 ; tracking the newly launched instance.
                 this.ForgetOwned(rule)
 
                 ; A failed launch does not get retried for run/stop until
-                ; a new trigger arrival. ensure retries while it is missing.
+                ; a new trigger arrival. ensure retries after a brief delay.
                 pid := this.StartAction(rule)
                 rule["OwnedPid"] := pid
                 rule["OwnedHandle"] := this.OpenOwnedHandle(pid)
+                rule["FailedLaunchTicks"] := 0
                 Logger.Info("Started " rule["Path"] " for " rule["Trigger"],
                     "ProcessWatcher")
             }
             catch Error as e
             {
+                if (rule["Mode"] = ProcessWatcher.ENSURE && rule["WasPresent"])
+                {
+                    rule["FailedLaunchTicks"] := ProcessWatcher.FailedLaunchSkipTicks
+                }
                 Logger.Error(rule["Trigger"] ": " e.Message " (" e.File ":" e.Line ")",
                     "ProcessWatcher")
             }
