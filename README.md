@@ -58,7 +58,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
-| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Backup / Restore, and Diagnostics / Health. |
+| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Scheduled Tasks, Backup / Restore, and Diagnostics / Health. |
 | `Ctrl + Win + E` | Opens the emoji menu. |
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
@@ -70,8 +70,24 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + M` | Moves selected Explorer files or folders into a newly named subdirectory. |
 | `Win + Ctrl + Volume Mute` | Toggles mute for the active application's process through the native Windows Core Audio API. |
 | `Ctrl + Win + A` | Enables or disables NoSleep. While enabled, it keeps the system and display awake and moves the pointer slightly after 10 minutes of idle time. |
-| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
+| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, per-task enable/disable toggles for configured Windows Scheduled Tasks, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
 | `Ctrl + Win + W` | Opens **Window Toolbox** for the currently active window. |
+
+### Scheduled Tasks (Windows Task Scheduler)
+
+Use **Ctrl + Win + T → Scheduled Tasks** to enable or disable individual tasks from Windows Task Scheduler. A checkmark means the task is currently **enabled**. Each time you open the menu, MyWinToolbox queries the real task state via the Windows Task Scheduler COM API; missing or inaccessible tasks appear as unavailable. Toggle operations are verified after changing state. Protected tasks may require one UAC prompt for the requested operation.
+
+Manage the task list in **Ctrl + Win + Shift + S → Scheduled Tasks** inside the existing Configurator. Define a display label and a full Task Scheduler task path. **Save** updates the menu configuration immediately, without restarting MyWinToolbox. Configurations are independent for Home and Work, stored in the active profile's `[ScheduledTasks]` INI section, and included in normal profile backups.
+
+Example (only configure tasks that actually exist on your PC):
+
+```ini
+[ScheduledTasks]
+Backup = \MyJobs\NightlyBackup
+Disk cleanup = \Maintenance\Cleanup
+```
+
+A task in the root folder can be written as `\MyTask`. The name must match the Task Scheduler entry, not a Windows service or executable. Disabling a task prevents its future scheduled invocations **but does not stop a process that is already running**. Re-enabling it restores its scheduled triggers; it does not necessarily run a missed invocation.
 
 ### Window Toolbox
 
@@ -90,7 +106,7 @@ The Format menu transforms clipboard content and pastes the result. It provides:
 
 ### String generator and snippets
 
-The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries; **Backup / Restore** creates and restores versioned ZIP snapshots of the active configuration; **Diagnostics / Health** shows current runtime state, recent log errors, Scheduled Task status, configuration counts, and maintenance actions. New password values are protected with Windows DPAPI under the current Windows user; legacy RC4 values remain readable during migration. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
+The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries; **Scheduled Tasks** manages Task Scheduler toggle definitions; **Backup / Restore** creates and restores versioned ZIP snapshots of the active configuration; **Diagnostics / Health** shows current runtime state, recent log errors, Scheduled Task status, configuration counts, and maintenance actions. New password values are protected with Windows DPAPI under the current Windows user; legacy RC4 values remain readable during migration. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
 
 ### Built-in hotstrings
 
