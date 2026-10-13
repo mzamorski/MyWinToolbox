@@ -378,7 +378,8 @@ Configure process-triggered helper execution in Configurator (`Ctrl + Win + Shif
 
 ```ini
 Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
-ShareX.exe = exe|notepad.exe|run
+ShareX.exe = exe|notepad.exe|ensure
+Editor.exe = exe|C:\Tools\EditorHelper.exe|run
 ```
 
-The watcher checks running process names every 3 seconds. `run` launches a helper and leaves it running; `stop` launches it and closes it when the watched process exits. Old `keep` rules remain readable and are written as `run` by Configurator. EXE targets accept a short name or full path; AHK scripts require full paths. Changes require **Save + Reload**.
+The watcher checks running process names every 3 seconds. `run` starts a helper once, `stop` starts it and closes it when the source process exits, and `ensure` restarts the helper on the next check whenever it is missing while the source is running. `ensure` leaves the helper running when its source closes. Old `keep` rules remain readable and are written as `run` by Configurator. EXE targets accept a short name or full path; AHK scripts require full paths. Changes require **Save + Reload**.
