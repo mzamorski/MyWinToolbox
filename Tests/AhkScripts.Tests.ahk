@@ -87,7 +87,7 @@ AssertTrue(
 
 entries := [
     Map("Name", "WARDOGS Hammer", "Value", expected),
-    Map("Name", "Minecraft", "Value", root "\Games\Minecraft.ahk")
+    Map("Name", "Minecraft", "Value", "C:\new-tools\Minecraft.ahk")
 ]
 AssertTrue(AhkScriptManager.ValidateEntries(entries), "valid AHK entries should pass")
 AssertThrows(
@@ -150,7 +150,7 @@ try
     doc.SaveWithBackup()
 
     reloaded := ConfiguratorIniDocument(tempIni)
-    savedEntries := reloaded.GetSectionEntries("Tasks")
+    savedEntries := reloaded.GetSectionEntries("Tasks", false)
     AssertEqual(3, savedEntries.Length, "both types should share one Tasks section")
     AssertEqual(entries[1]["Name"], savedEntries[1]["Name"], "AHK entry should stay first")
     AssertEqual("Backup", savedEntries[2]["Name"], "Scheduler entry should stay second")
@@ -178,6 +178,11 @@ try
     AssertThrows(
         () => TasksRegistry.Parse("Broken", "C:\Tools\broken.ahk"),
         "untyped entries should be rejected rather than guessed"
+    )
+    AssertEqual(
+        "ahk|C:\new-tools\Minecraft.ahk",
+        savedEntries[3]["Value"],
+        "literal \n in an absolute Windows path must not become a newline"
     )
     AssertTrue(!reloaded.HasSection("ScheduledTasks"), "no old scheduled section")
     AssertTrue(!reloaded.HasSection("AhkScripts"), "no old scripts section")
