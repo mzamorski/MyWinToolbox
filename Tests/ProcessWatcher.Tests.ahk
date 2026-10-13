@@ -81,6 +81,26 @@ class FakeProcessWatcher extends ProcessWatcher
     }
 }
 
+class FailingProcessWatcher extends FakeProcessWatcher
+{
+    __New(entries)
+    {
+        this.FailNext := true
+        super.__New(entries)
+    }
+
+    StartAction(rule)
+    {
+        if (this.FailNext)
+        {
+            this.FailNext := false
+            this.Starts++
+            throw Error("Expected helper launch failure")
+        }
+        return super.StartAction(rule)
+    }
+}
+
 iniEntries := [
     Map("Name", "Game.exe", "Value", "ahk|C:\Tools\GameHelper.ahk|stop"),
     Map("Name", "ShareX.exe", "Value", "exe|notepad.exe|run")
@@ -239,6 +259,24 @@ ensured.Tick()
 Assert(ensured.Starts = 3, "ensure should launch again after trigger returns")
 ensured.Shutdown()
 Assert(ensured.Stops = 0, "ensure never stops owned helpers on shutdown")
+
+failedEnsure := FailingProcessWatcher([ensureRule])
+failedEnsure.TriggerRunning := true
+failedEnsure.Tick()
+Assert(failedEnsure.Starts = 1, "ensure should attempt initial launch")
+Loop ProcessWatcher.FailedLaunchSkipTicks
+{
+    failedEnsure.Tick()
+}
+Assert(failedEnsure.Starts = 1,
+    "ensure should delay repeated launches after an error")
+failedEnsure.Tick()
+Assert(failedEnsure.Starts = 2,
+    "ensure should retry after a failed-launch cooldown")
+failedEnsure.HelperRunning := false
+failedEnsure.Tick()
+Assert(failedEnsure.Starts = 3,
+    "successful ensure restart must not inherit failure cooldown")
 
 existingEnsure := FakeProcessWatcher([ensureRule])
 existingEnsure.TriggerRunning := true
