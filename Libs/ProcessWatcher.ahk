@@ -3,7 +3,7 @@
 ; Tracks process arrival/departure (not foreground windows). Each rule runs
 ; once on arrival, and optionally stops only the helper it actually launched.
 ; INI: Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
-;      Editor.exe = exe|C:\Tools\Helper.exe|keep
+;      Editor.exe = exe|notepad.exe|run
 class ProcessWatcher
 {
     static IntervalMs := 3000
@@ -43,6 +43,13 @@ class ProcessWatcher
         return name
     }
 
+    static IsExecutableName(path)
+    {
+        ; A basename is resolved by the Windows Run/ShellExecute mechanism.
+        ; Do not confuse it with a relative path such as Tools\Helper.exe.
+        return !!RegExMatch(path, "i)^[^\\/:*?<>|]+\.exe$")
+    }
+
     static ValidatePath(type, value)
     {
         path := Trim("" value)
@@ -56,10 +63,13 @@ class ProcessWatcher
             || InStr(path, Chr(34))
             || RegExMatch(path, "[\x00-\x1F]")
             || !RegExMatch(path, "i)\.exe$")
-            || !RegExMatch(path, "i)^(?:[a-z]:\\|\\\\[^\\]+\\[^\\]+\\)")
+            || (
+                !ProcessWatcher.IsExecutableName(path)
+                && !RegExMatch(path, "i)^(?:[a-z]:\\|\\\\[^\\]+\\[^\\]+\\)")
+            )
         )
         {
-            throw Error("EXE action needs an absolute path to a .exe file: " value)
+            throw Error("EXE action needs a filename (notepad.exe) or an absolute path: " value)
         }
         return path
     }
@@ -94,13 +104,15 @@ class ProcessWatcher
             parts := StrSplit(entry["Value"], "|")
             if (parts.Length != 3)
             {
-                throw Error("ProcessWatcher: " entry["Name"] " must be type|absolute_path|stop_or_keep.")
+                throw Error("ProcessWatcher: " entry["Name"] " must be type|path|run_or_stop.")
             }
             type := StrLower(Trim(parts[1]))
             behavior := StrLower(Trim(parts[3]))
-            if (behavior != "stop" && behavior != "keep")
+            ; Existing configurations using 'keep' remain readable, but
+            ; Configurator always writes the canonical 'run' spelling.
+            if (behavior != "stop" && behavior != "run" && behavior != "keep")
             {
-                throw Error("ProcessWatcher: use 'stop' or 'keep' for " entry["Name"])
+                throw Error("ProcessWatcher: use 'run' or 'stop' for " entry["Name"])
             }
             result.Push(Map(
                 "Trigger", Trim(entry["Name"]),
@@ -122,7 +134,7 @@ class ProcessWatcher
             result.Push(Map(
                 "Name", Trim(entry["Trigger"]),
                 "Value", StrLower(entry["Type"]) "|" Trim(entry["Path"])
-                    "|" (entry["StopOnExit"] ? "stop" : "keep")
+                    "|" (entry["StopOnExit"] ? "stop" : "run")
             ))
         }
         return result
@@ -241,29 +253,59 @@ class ProcessWatcher
         return !!ProcessExist(exeName)
     }
 
-    StartAction(rule)
+    static BuildLaunchSpec(rule)
     {
-        path := rule["Path"]
-        if (!FileExist(path) || InStr(FileExist(path), "D"))
+        type := StrLower(rule["Type"])
+        path := ProcessWatcher.ValidatePath(type, rule["Path"])
+        shortExe := type = ProcessWatcher.EXE && ProcessWatcher.IsExecutableName(path)
+        workingDir := ""
+        if (!shortExe)
         {
-            throw Error("Helper file not found: " path)
+            SplitPath(path, , &workingDir)
         }
-        SplitPath(path, , &workingDir)
-        if (rule["Type"] = ProcessWatcher.AHK)
+
+        if (type = ProcessWatcher.AHK)
         {
-            if (A_IsCompiled)
-            {
-                throw Error("AHK actions require an AHK v2 interpreter.")
-            }
             command := '"' A_AhkPath '" "' path '"'
         }
         else
         {
-            command := '"' path '"'
+            ; No preflight FileExist for a short EXE: let Windows resolve it
+            ; from its normal executable search locations / App Paths.
+            command := shortExe ? path : '"' path '"'
+        }
+        return Map(
+            "Command", command,
+            "WorkingDir", workingDir,
+            "RequiresFile", !shortExe
+        )
+    }
+
+    StartAction(rule)
+    {
+        spec := ProcessWatcher.BuildLaunchSpec(rule)
+        path := rule["Path"]
+        if (rule["Type"] = ProcessWatcher.AHK && A_IsCompiled)
+        {
+            throw Error("AHK actions require an AHK v2 interpreter.")
+        }
+        if (
+            spec["RequiresFile"]
+            && (!FileExist(path) || InStr(FileExist(path), "D"))
+        )
+        {
+            throw Error("Helper file not found: " path)
         }
 
         pid := 0
-        Run(command, workingDir, , &pid)
+        try
+        {
+            Run(spec["Command"], spec["WorkingDir"], , &pid)
+        }
+        catch Error as e
+        {
+            throw Error("Cannot launch helper '" path "': " e.Message)
+        }
         if (!pid)
         {
             throw Error("The helper did not return a process ID: " path)
