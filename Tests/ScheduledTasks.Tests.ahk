@@ -176,8 +176,9 @@ AssertTrue(
     "generic Tasks handler must mark an enabled Ready scheduler task as runnable"
 )
 AssertTrue(
-    genericStatus["SupportsScheduling"] && genericStatus["SchedulingEnabled"],
-    "generic Tasks handler should expose scheduling controls only when supported"
+    !genericStatus.Has("SupportsScheduling")
+        && !genericStatus.Has("SchedulingEnabled"),
+    "Tasks status should not expose permanent scheduling toggles"
 )
 
 futureTask := Map(
@@ -188,7 +189,7 @@ futureTask := Map(
 futureStatus := TasksRegistry.GetStatus(futureTask, &fakeService)
 AssertTrue(
     !futureStatus["Running"] && !futureStatus["CanToggle"]
-        && !futureStatus["SupportsScheduling"],
+        && !futureStatus.Has("SupportsScheduling"),
     "unknown future types must be shown as unsupported, never run"
 )
 
