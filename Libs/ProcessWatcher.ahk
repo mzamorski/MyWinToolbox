@@ -162,7 +162,7 @@ class ProcessWatcher
         for rule in this.Rules
         {
             pid := rule["OwnedPid"]
-            shouldStop := pid && rule["StopOnExit"]
+            shouldStop := pid && rule["StopOnExit"] && rule["OwnedHandle"]
             this.Leave(rule)
             if (shouldStop)
             {
