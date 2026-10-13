@@ -20,7 +20,7 @@ class ConfiguratorTasksTab
         this.Dirty := false
         this.UpdatingControls := false
 
-        if (!this.HadTasks)
+        if (this.Entries.Length = 0)
         {
             legacyScheduled := profileDoc.GetSectionEntries("ScheduledTasks", false)
             legacyAhk := profileDoc.GetSectionEntries("AhkScripts", false)
