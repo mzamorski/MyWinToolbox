@@ -31,7 +31,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | `Win + Ctrl + F` | Open **Format** menu. |
 | `Win + Ctrl + I` | Open **String Generator** menu. |
 | `Win + Ctrl + S` | Open **Text Snippets** menu. |
-| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Scheduled Tasks, AHK Scripts, Backup / Restore, and Diagnostics / Health. |
+| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Tasks, Backup / Restore, and Diagnostics / Health. |
 | `Win + Ctrl + E` | Open **Emoji** menu. |
 | `Win + Ctrl + D` | Paste the current local date/time. |
 | `Ctrl + Tab` | Insert the configured number of spaces (`SpacesPerIndent`). |
@@ -45,8 +45,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | --- | --- |
 | **NoSleep** | Toggle the same NoSleep state as `Ctrl + Win + A`. |
 | **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. Its startup state is configurable per profile. |
-| **Scheduled Tasks** | Click a task to Run/Stop its current execution; ✓ means **Running**. The separate **Scheduling (Enable / Disable)** submenu controls future scheduled triggers (✓ means enabled). Configure entries in Configurator → Scheduled Tasks. |
-| **AHK Scripts** | Start or gracefully close other AHK v2 scripts (✓ = running). Define relative/absolute paths and an optional base folder in Configurator → AHK Scripts. |
+| **Tasks** | Run/Stop Windows scheduled jobs and external AHK v2 scripts in one list (✓ = running). Scheduler triggers have their own **Scheduling (Enable / Disable)** submenu. Edit both types in Configurator → Tasks; AHK scripts use full paths. |
 | **Shutdown → 1h** | Schedule shutdown using the menu's 1-hour preset. |
 | **Shutdown → 2h** | Schedule shutdown using the menu's 2-hour preset. |
 | **Shutdown → Cancel** | Cancel the pending shutdown timer created by Task Runner. |
