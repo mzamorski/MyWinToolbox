@@ -160,3 +160,23 @@ catch Error as e
 }
 
 ;========================================================================================================================
+
+; --------------------------------------------------------------------------------
+; Process Watcher: process-name transitions every three seconds.
+
+try
+{
+    global gProcessWatcher := ProcessWatcher(
+        ProcessWatcher.FromIniEntries(
+            TasksRegistry.ReadRawSection(ProfileConfigFilePath, "ProcessWatcher")
+        )
+    )
+    OnExit(ObjBindMethod(gProcessWatcher, "Shutdown"))
+    gProcessWatcher.Start()
+}
+catch Error as e
+{
+    Logger.Error("Cannot initialize process watcher: " e.Message, "ProcessWatcher")
+    MsgBox("Process Watcher configuration error:" Chr(10) e.Message,
+        "MyWinToolbox - Process Watcher", "Iconx")
+}

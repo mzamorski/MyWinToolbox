@@ -31,7 +31,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | `Win + Ctrl + F` | Open **Format** menu. |
 | `Win + Ctrl + I` | Open **String Generator** menu. |
 | `Win + Ctrl + S` | Open **Text Snippets** menu. |
-| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Tasks, Backup / Restore, and Diagnostics / Health. |
+| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Tasks, Process Watcher, Backup / Restore, and Diagnostics / Health. |
 | `Win + Ctrl + E` | Open **Emoji** menu. |
 | `Win + Ctrl + D` | Paste the current local date/time. |
 | `Ctrl + Tab` | Insert the configured number of spaces (`SpacesPerIndent`). |
@@ -370,3 +370,16 @@ These parts of the cheat sheet can change without editing the AHK code:
 - `TextSnippets.json` — snippet categories and content.
 - `AutoPastes.json` — automatic window-matching paste rules.
 
+
+
+### Process Watcher
+
+Configure process-triggered helper execution in Configurator (`Ctrl + Win + Shift + S`) → **Process Watcher**. Each Home/Work profile uses `[ProcessWatcher]`:
+
+```ini
+Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
+ShareX.exe = exe|notepad.exe|ensure
+Editor.exe = exe|C:\Tools\EditorHelper.exe|run
+```
+
+The watcher checks running process names every 3 seconds. `run` starts a helper once, `stop` starts it and closes it when the source process exits, and `ensure` restarts the helper on the next check whenever it is missing while the source is running. `ensure` leaves the helper running when its source closes. Old `keep` rules remain readable and are written as `run` by Configurator. EXE targets accept a short name or full path; AHK scripts require full paths. Changes require **Save + Reload**.

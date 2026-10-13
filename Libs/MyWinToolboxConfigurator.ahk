@@ -432,6 +432,7 @@ class MyWinToolboxConfigurator
                 "AutoPaste",
                 "Settings",
                 "Tasks",
+                "Process Watcher",
                 "Backup / Restore",
                 "Diagnostics / Health"
             ]
@@ -472,6 +473,13 @@ class MyWinToolboxConfigurator
         )
 
         this.Tabs.UseTab(7)
+        this.ProcessWatcherTab := ConfiguratorProcessWatcherTab(
+            this.Window,
+            this.SettingsTab.ProfileDoc,
+            ObjBindMethod(this, "OnDirtyStateChanged")
+        )
+
+        this.Tabs.UseTab(8)
         this.BackupTab := ConfiguratorBackupTab(
             this.Window,
             [
@@ -486,7 +494,7 @@ class MyWinToolboxConfigurator
             ObjBindMethod(this, "CanRestoreBackup")
         )
 
-        this.Tabs.UseTab(8)
+        this.Tabs.UseTab(9)
         this.DiagnosticsTab := ConfiguratorDiagnosticsTab(
             this.Window,
             this
@@ -523,7 +531,7 @@ class MyWinToolboxConfigurator
     OnTabChanged(*)
     {
         if (
-            this.Tabs.Value = 8
+            this.Tabs.Value = 9
             && this.HasOwnProp("DiagnosticsTab")
             && IsObject(this.DiagnosticsTab)
         )
@@ -2203,6 +2211,7 @@ class MyWinToolboxConfigurator
             settingsSaved := false
             settingsFieldsSaved := false
             tasksSaved := false
+            watcherSaved := false
 
             ; Validate every modified document before writing any of them.
             if (this.SnippetsDirty)
@@ -2231,6 +2240,10 @@ class MyWinToolboxConfigurator
             if (this.TasksTab.Dirty)
             {
                 this.TasksTab.Validate()
+            }
+            if (this.ProcessWatcherTab.Dirty)
+            {
+                this.ProcessWatcherTab.Validate()
             }
 
             if (this.SnippetsDirty)
@@ -2269,20 +2282,29 @@ class MyWinToolboxConfigurator
                 autoPasteSaved := true
             }
 
-            if (this.SettingsTab.Dirty || this.TasksTab.Dirty)
+            if (this.SettingsTab.Dirty || this.TasksTab.Dirty || this.ProcessWatcherTab.Dirty)
             {
                 ; Both tabs share one INI document and its backup/UAC save path.
                 tasksSaved := this.TasksTab.Dirty
                 settingsFieldsSaved := this.SettingsTab.Dirty
+                watcherSaved := this.ProcessWatcherTab.Dirty
                 if (tasksSaved)
                 {
                     this.TasksTab.ApplyToDocument()
+                }
+                if (watcherSaved)
+                {
+                    this.ProcessWatcherTab.ApplyToDocument()
                 }
 
                 this.SettingsTab.Save(!this.SettingsTab.Dirty)
                 if (tasksSaved)
                 {
                     this.TasksTab.MarkSaved()
+                }
+                if (watcherSaved)
+                {
+                    this.ProcessWatcherTab.MarkSaved()
                 }
                 settingsSaved := true
             }
@@ -2298,6 +2320,12 @@ class MyWinToolboxConfigurator
             {
                 this.SetStatus(
                     "Saved. HotStrings/Settings require reload; use Save + Reload to apply."
+                )
+            }
+            else if (watcherSaved)
+            {
+                this.SetStatus(
+                    "Saved. Process Watcher rules require reload; use Save + Reload."
                 )
             }
             else if (settingsSaved)
@@ -2337,6 +2365,7 @@ class MyWinToolboxConfigurator
             || this.AutoPasteTab.Dirty
             || this.SettingsTab.Dirty
             || this.TasksTab.Dirty
+            || this.ProcessWatcherTab.Dirty
     }
 
     CanCreateBackup()
@@ -2435,6 +2464,10 @@ class MyWinToolboxConfigurator
         if (this.TasksTab.Dirty)
         {
             states.Push("Tasks modified")
+        }
+        if (this.ProcessWatcherTab.Dirty)
+        {
+            states.Push("Process Watcher modified")
         }
 
         if (states.Length = 0)
