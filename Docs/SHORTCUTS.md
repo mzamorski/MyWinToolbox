@@ -45,7 +45,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | --- | --- |
 | **NoSleep** | Toggle the same NoSleep state as `Ctrl + Win + A`. |
 | **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. Its startup state is configurable per profile. |
-| **Scheduled Tasks** | Toggle configured Windows Task Scheduler tasks. Checked means enabled; entries are edited in Configurator → Scheduled Tasks. |
+| **Scheduled Tasks** | Click a task to Run/Stop its current execution; ✓ means **Running**. The separate **Scheduling (Enable / Disable)** submenu controls future scheduled triggers (✓ means enabled). Configure entries in Configurator → Scheduled Tasks. |
 | **Shutdown → 1h** | Schedule shutdown using the menu's 1-hour preset. |
 | **Shutdown → 2h** | Schedule shutdown using the menu's 2-hour preset. |
 | **Shutdown → Cancel** | Cancel the pending shutdown timer created by Task Runner. |
