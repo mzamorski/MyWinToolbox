@@ -120,6 +120,18 @@ AssertEqual(
     "a nonexistent but well-formed AHK path is stopped until launch is attempted"
 )
 
+invalidAhkEntry := Map(
+    "Name", "Bad path test",
+    "Type", TasksRegistry.AHK,
+    "Value", "relative\path\script.ahk"
+)
+invalidStatus := TasksRegistry.GetStatus(invalidAhkEntry, &noSchedulerService)
+AssertTrue(
+    invalidStatus["CanToggle"] && invalidStatus["Status"] = "Unknown",
+    "AHK path-resolution errors should not disable the entry in the menu"
+)
+
+
 
 AssertThrows(
     () => AhkScriptManager.ValidateEntries([
