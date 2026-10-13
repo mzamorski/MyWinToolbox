@@ -380,6 +380,9 @@ Configure process-triggered helper execution in Configurator (`Ctrl + Win + Shif
 Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
 ShareX.exe = exe|notepad.exe|ensure
 Editor.exe = exe|C:\Tools\EditorHelper.exe|run
+GeForceNOW.exe::Watch_Dogs = ahk|C:\Scripts\WatchDogsHelper.ahk|stop
 ```
 
-The watcher checks running process names every 3 seconds. `run` starts a helper once, `stop` starts it and closes it when the source process exits, and `ensure` restarts the helper on the next check whenever it is missing while the source is running. `ensure` leaves the helper running when its source closes. Old `keep` rules remain readable and are written as `run` by Configurator. EXE targets accept a short name or full path; AHK scripts require full paths. Changes require **Save + Reload**.
+Optionally add `::title fragment` to a watched process name to require a case-insensitive substring in the title of any window owned by that executable, not necessarily the active window. For cloud gaming, this works only if the local streaming client's window title identifies the game. Inspect the window using `Win + Alt + C`. Process-only rules retain their previous behavior.
+
+The watcher checks triggers every 3 seconds. `run` starts a helper once, `stop` starts it and closes it when the source process exits, and `ensure` restarts the helper on the next check whenever it is missing while the source is running. `ensure` leaves the helper running when its source closes. Old `keep` rules remain readable and are written as `run` by Configurator. EXE targets accept a short name or full path; AHK scripts require full paths. Changes require **Save + Reload**.

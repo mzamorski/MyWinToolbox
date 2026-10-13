@@ -7,6 +7,7 @@
 ;         restarting it if it disappears; leave it running on departure.
 ; INI: Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
 ;      ShareX.exe = exe|notepad.exe|ensure
+;      GeForceNOW.exe::Watch_Dogs 2 = ahk|C:\Scripts\WD2.ahk|stop
 class ProcessWatcher
 {
     static IntervalMs := 3000
@@ -25,6 +26,7 @@ class ProcessWatcher
         {
             state := Map(
                 "Trigger", entry["Trigger"],
+                "TitleContains", entry.Get("TitleContains", ""),
                 "Type", entry["Type"],
                 "Path", entry["Path"],
                 "Mode", entry["Mode"],
@@ -49,6 +51,46 @@ class ProcessWatcher
             throw Error("Trigger must be a process executable name (e.g. Game.exe): " name)
         }
         return name
+    }
+
+    static ValidateTitleContains(value)
+    {
+        title := Trim("" value)
+        if (InStr(title, "=") || RegExMatch(title, "[\x00-\x1F]"))
+        {
+            ; '=' separates INI names and values. Control characters are
+            ; invalid in a single-line config entry.
+            throw Error("Window-title fragment must not contain '=' or control characters.")
+        }
+        return title
+    }
+
+    static ParseTriggerKey(key)
+    {
+        key := Trim("" key)
+        separator := InStr(key, "::")
+        if (!separator)
+        {
+            return Map(
+                "Trigger", ProcessWatcher.ValidateTrigger(key),
+                "TitleContains", ""
+            )
+        }
+
+        trigger := ProcessWatcher.ValidateTrigger(Trim(SubStr(key, 1, separator - 1)))
+        title := ProcessWatcher.ValidateTitleContains(SubStr(key, separator + 2))
+        if (title = "")
+        {
+            throw Error("Window-title fragment must not be empty after '::' for " trigger)
+        }
+        return Map("Trigger", trigger, "TitleContains", title)
+    }
+
+    static ToTriggerKey(trigger, titleContains := "")
+    {
+        trigger := ProcessWatcher.ValidateTrigger(trigger)
+        titleContains := ProcessWatcher.ValidateTitleContains(titleContains)
+        return trigger (titleContains = "" ? "" : "::" titleContains)
     }
 
     static IsExecutableName(path)
@@ -90,10 +132,12 @@ class ProcessWatcher
             trigger := ProcessWatcher.ValidateTrigger(entry["Trigger"])
             type := StrLower(Trim("" entry["Type"]))
             ProcessWatcher.ValidatePath(type, entry["Path"])
-            key := StrLower(trigger)
+            title := ProcessWatcher.ValidateTitleContains(entry.Get("TitleContains", ""))
+            key := StrLower(ProcessWatcher.ToTriggerKey(trigger, title))
             if (seen.Has(key))
             {
-                throw Error("Duplicate ProcessWatcher trigger: " trigger)
+                throw Error("Duplicate ProcessWatcher trigger: "
+                    ProcessWatcher.ToTriggerKey(trigger, title))
             }
             seen[key] := true
             mode := StrLower(Trim("" entry["Mode"]))
@@ -132,8 +176,10 @@ class ProcessWatcher
             {
                 throw Error("ProcessWatcher: use 'run', 'stop' or 'ensure' for " entry["Name"])
             }
+            triggerKey := ProcessWatcher.ParseTriggerKey(entry["Name"])
             result.Push(Map(
-                "Trigger", Trim(entry["Name"]),
+                "Trigger", triggerKey["Trigger"],
+                "TitleContains", triggerKey["TitleContains"],
                 "Type", type,
                 "Path", Trim(parts[2]),
                 "Mode", behavior = "keep" ? ProcessWatcher.RUN : behavior
@@ -150,7 +196,9 @@ class ProcessWatcher
         for entry in entries
         {
             result.Push(Map(
-                "Name", Trim(entry["Trigger"]),
+                "Name", ProcessWatcher.ToTriggerKey(
+                    entry["Trigger"], entry.Get("TitleContains", "")
+                ),
                 "Value", StrLower(entry["Type"]) "|" Trim(entry["Path"])
                     "|" StrLower(entry["Mode"])
             ))
@@ -197,7 +245,7 @@ class ProcessWatcher
         {
             try
             {
-                present := !!this.FindProcess(rule["Trigger"])
+                present := this.IsTriggerPresent(rule)
                 if (!present)
                 {
                     if (rule["WasPresent"])
@@ -299,9 +347,48 @@ class ProcessWatcher
         rule["OwnedPid"] := 0
     }
 
+    IsTriggerPresent(rule)
+    {
+        titleContains := rule["TitleContains"]
+        if (titleContains = "")
+        {
+            ; Existing process-only rules keep their exact old behavior.
+            return !!this.FindProcess(rule["Trigger"])
+        }
+
+        ; Restrict title matching to windows owned by the configured EXE.
+        ; Any matching window is enough; the window need not be foreground.
+        for hwnd in this.FindProcessWindows(rule["Trigger"])
+        {
+            try
+            {
+                if (InStr(this.ReadWindowTitle(hwnd), titleContains, false))
+                {
+                    return true
+                }
+            }
+            catch Error
+            {
+                ; The client window may close or change between enumeration
+                ; and reading its title; do not interrupt other watcher rules.
+            }
+        }
+        return false
+    }
+
     FindProcess(exeName)
     {
         return ProcessExist(exeName)
+    }
+
+    FindProcessWindows(exeName)
+    {
+        return WinGetList("ahk_exe " exeName)
+    }
+
+    ReadWindowTitle(hwnd)
+    {
+        return WinGetTitle("ahk_id " hwnd)
     }
 
     IsActionRunning(rule)
