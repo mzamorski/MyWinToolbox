@@ -58,7 +58,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
-| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Scheduled Tasks, Backup / Restore, and Diagnostics / Health. |
+| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Scheduled Tasks, AHK Scripts, Backup / Restore, and Diagnostics / Health. |
 | `Ctrl + Win + E` | Opens the emoji menu. |
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
@@ -70,7 +70,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + M` | Moves selected Explorer files or folders into a newly named subdirectory. |
 | `Win + Ctrl + Volume Mute` | Toggles mute for the active application's process through the native Windows Core Audio API. |
 | `Ctrl + Win + A` | Enables or disables NoSleep. While enabled, it keeps the system and display awake and moves the pointer slightly after 10 minutes of idle time. |
-| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, live Run/Stop and separate scheduling enable/disable controls for configured Windows Scheduled Tasks, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
+| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, live Run/Stop and separate scheduling enable/disable controls for Windows Scheduled Tasks, external AHK script toggles, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
 | `Ctrl + Win + W` | Opens **Window Toolbox** for the currently active window. |
 
 ### Scheduled Tasks (Windows Task Scheduler)
@@ -90,6 +90,24 @@ Disk cleanup = \Maintenance\Cleanup
 ```
 
 A task in the root folder can be written as `\MyTask`. The name must match the Task Scheduler entry, not a Windows service or executable. A requested Run/Stop transition is reflected when you next open the menu; it can be asynchronous. Re-enabling scheduling does not necessarily run a missed invocation. The Task Scheduler state describes task instances, not independently spawned/detached child processes.
+
+### AHK Scripts (external script toggles)
+
+**Ctrl + Win + T → AHK Scripts** provides checkmarked Start/Stop toggles for independent AutoHotkey v2 scripts. A checkmark means **that specific script is running**, including when it was launched directly or from another tool. State is checked every time the menu opens and after MyWinToolbox restarts. A running script is closed via its AutoHotkey hidden main window, allowing its `OnExit` handlers to execute normally; other running scripts using the same AHK interpreter are left untouched. Missing files are shown as unavailable. Scripts that terminate immediately will naturally return to the stopped state.
+
+Use **Ctrl + Win + Shift + S → AHK Scripts** in the existing Configurator to add a label and a `.ahk` path. Enter an optional **base folder** so scripts from another repository can be expressed as relative paths. For example, for `MyWinToolbox-Private/Games/WARDOGS-Hammer.ahk`:
+
+```ini
+[AhkScriptsSettings]
+Root = C:\Repos\MyWinToolbox-Private
+
+[AhkScripts]
+WARDOGS Hammer = Games\WARDOGS-Hammer.ahk
+```
+
+Replace `C:\Repos\MyWinToolbox-Private` with the actual local checkout folder. Absolute script paths are supported too. If Root is blank, relative paths resolve from the main MyWinToolbox installation folder. The active profile stores these entries in its `.config` file and the normal backup includes them. **Save** makes the menu entries available at the next menu opening without restarting the toolbox.
+
+**Important:** AHK Scripts Start/Stop controls the lifetime of the script, **not the current active/inactive state of any macro inside it**. For example, `WARDOGS-Hammer.ahk` uses **F6** for its internal macro and **F8** to exit; the toolbox's AHK Scripts menu instead launches or gracefully closes that entire script. Using the script's normal close path also lets its `OnExit` routine release any held mouse button.
 
 ### Window Toolbox
 
