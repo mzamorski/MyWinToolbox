@@ -89,6 +89,123 @@ class ScheduledTasksManager
         return !!ScheduledTasksManager.GetTask(service, taskPath).Enabled
     }
 
+    ; TASK_STATE values exposed by IRegisteredTask.State.
+    static IsRunningState(state)
+    {
+        return state = 4
+    }
+
+    static GetStateLabel(state)
+    {
+        switch state
+        {
+            case 1:
+                return "Disabled"
+            case 2:
+                return "Queued"
+            case 3:
+                return "Ready"
+            case 4:
+                return "Running"
+            default:
+                return "Unknown"
+        }
+    }
+
+    static GetTaskStatus(service, taskPath)
+    {
+        task := ScheduledTasksManager.GetTask(service, taskPath)
+        state := task.State
+        return Map(
+            "State", state,
+            "Running", ScheduledTasksManager.IsRunningState(state),
+            "Enabled", !!task.Enabled
+        )
+    }
+
+    static IsRunning(taskPath)
+    {
+        service := ScheduledTasksManager.Connect()
+        return ScheduledTasksManager.IsRunningState(
+            ScheduledTasksManager.GetTask(service, taskPath).State
+        )
+    }
+
+    ; Running state is independent of whether the task is enabled for
+    ; future triggers. Stop ends current instances, Run requests one now.
+    static SetRunning(taskPath, shouldRun)
+    {
+        path := ScheduledTasksManager.NormalizePath(taskPath)
+        shouldRun := !!shouldRun
+
+        try
+        {
+            service := ScheduledTasksManager.Connect()
+            task := ScheduledTasksManager.GetTask(service, path)
+            state := task.State
+            isRunning := ScheduledTasksManager.IsRunningState(state)
+
+            if (shouldRun && !isRunning)
+            {
+                if (!task.Enabled)
+                {
+                    throw Error(
+                        "Task is disabled in Task Scheduler. "
+                            . "Enable it in Scheduling (Enable / Disable) before starting."
+                    )
+                }
+
+                if (state = 2)
+                {
+                    throw Error("Task is queued. Wait for the queued run or change its schedule.")
+                }
+
+                task.Run("")
+            }
+            else if (!shouldRun && isRunning)
+            {
+                ; Stop(0) requests termination of all running instances.
+                task.Stop(0)
+            }
+        }
+        catch OSError as e
+        {
+            if (!ScheduledTasksManager.IsAccessDenied(e.Number))
+            {
+                throw
+            }
+
+            ScheduledTasksManager.SetRunningElevated(path, shouldRun)
+        }
+
+        ; Run/Stop can be asynchronous. Requery when the menu next opens;
+        ; don't claim immediate success based on a possibly transitional state.
+        return shouldRun
+    }
+
+    static SetRunningElevated(taskPath, shouldRun)
+    {
+        quote := Chr(34)
+        executable := A_WinDir "\System32\schtasks.exe"
+        command := "*RunAs " quote executable quote
+            . (shouldRun ? " /Run /TN " : " /End /TN ")
+            . quote taskPath quote
+
+        try
+        {
+            exitCode := RunWait(command, , "Hide")
+        }
+        catch Error as e
+        {
+            throw Error("Administrator approval was cancelled or the task request failed. " e.Message)
+        }
+
+        if (exitCode != 0)
+        {
+            throw Error("Elevated schtasks.exe failed (exit code " exitCode ") for " taskPath)
+        }
+    }
+
     static IsAccessDenied(errorNumber)
     {
         return errorNumber = 5
