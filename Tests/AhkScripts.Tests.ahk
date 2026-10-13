@@ -46,12 +46,12 @@ AssertEqual(
 
 AssertEqual(
     expected,
-    AhkScriptManager.ResolveScriptPath(root "\\Games\\..\\Games\\WARDOGS-Hammer.ahk"),
+    AhkScriptManager.ResolveScriptPath(root "\Games\..\Games\WARDOGS-Hammer.ahk"),
     "absolute path components should be canonicalized"
 )
 
 AssertThrows(
-    () => AhkScriptManager.ResolveScriptPath("Games\\WARDOGS-Hammer.ahk"),
+    () => AhkScriptManager.ResolveScriptPath("Games\WARDOGS-Hammer.ahk"),
     "relative script paths must be rejected"
 )
 
@@ -86,25 +86,25 @@ AssertTrue(
 
 entries := [
     Map("Name", "WARDOGS Hammer", "Value", expected),
-    Map("Name", "Minecraft", "Value", root "\\Games\\Minecraft.ahk")
+    Map("Name", "Minecraft", "Value", root "\Games\Minecraft.ahk")
 ]
 AssertTrue(AhkScriptManager.ValidateEntries(entries), "valid AHK entries should pass")
 AssertThrows(
     () => AhkScriptManager.ValidateEntries([
         Map("Name", "WARDOGS", "Value", expected),
-        Map("Name", "wardogs", "Value", root "\\Games\\Minecraft.ahk")
+        Map("Name", "wardogs", "Value", root "\Games\Minecraft.ahk")
     ]),
     "duplicate menu labels should fail case-insensitively"
 )
 AssertThrows(
     () => AhkScriptManager.ValidateEntries([
         Map("Name", "First", "Value", expected),
-        Map("Name", "Second", "Value", "c:\\repos\\mywintoolbox-private\\games\\wardogs-hammer.ahk")
+        Map("Name", "Second", "Value", "c:\repos\mywintoolbox-private\games\wardogs-hammer.ahk")
     ]),
     "duplicate script paths should fail case-insensitively"
 )
 
-for invalidPath in ["", "file.exe", "Games\\file.ahk", "Games\\file.ahk" Chr(34), "Games\\broken" Chr(10) "file.ahk"]
+for invalidPath in ["", "file.exe", "Games\file.ahk", "Games\file.ahk" Chr(34), "Games\broken" Chr(10) "file.ahk"]
 {
     AssertThrows(
         () => AhkScriptManager.ValidateScriptPath(invalidPath),
