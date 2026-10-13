@@ -1,39 +1,38 @@
 #Requires AutoHotkey v2.0
 
-; Single editor for both Task Scheduler entries and external AHK scripts.
-; Two INI sections preserve compatibility with existing profile configurations.
+; One editor backed by a single [Tasks] INI section with typed entries.
+; Legacy sections are imported and removed on the next Save.
 class ConfiguratorTasksTab
 {
-    static SCHEDULER := "Scheduled Task"
-    static AHK := "AHK Script"
+    static SCHEDULER := TasksRegistry.SCHEDULER
+    static AHK := TasksRegistry.AHK
 
     __New(window, profileDoc, onDirtyCallback := 0)
     {
         this.Window := window
         this.ProfileDoc := profileDoc
         this.OnDirtyCallback := onDirtyCallback
-        this.HadScheduled := profileDoc.HasSection("ScheduledTasks")
-        this.HadAhk := profileDoc.HasSection("AhkScripts")
-        this.Entries := []
+        this.HadTasks := profileDoc.HasSection("Tasks")
+        this.Entries := TasksRegistry.FromIniEntries(
+            profileDoc.GetSectionEntries("Tasks")
+        )
         this.SelectedIndex := 0
         this.Dirty := false
         this.UpdatingControls := false
 
-        for entry in profileDoc.GetSectionEntries("ScheduledTasks")
+        if (!this.HadTasks)
         {
-            this.Entries.Push(Map(
-                "Type", ConfiguratorTasksTab.SCHEDULER,
-                "Name", entry["Name"],
-                "Value", entry["Value"]
-            ))
-        }
-        for entry in profileDoc.GetSectionEntries("AhkScripts")
-        {
-            this.Entries.Push(Map(
-                "Type", ConfiguratorTasksTab.AHK,
-                "Name", entry["Name"],
-                "Value", entry["Value"]
-            ))
+            legacyScheduled := profileDoc.GetSectionEntries("ScheduledTasks")
+            legacyAhk := profileDoc.GetSectionEntries("AhkScripts")
+            if (legacyScheduled.Length || legacyAhk.Length)
+            {
+                root := profileDoc.Get("AhkScriptsSettings", "Root", "")
+                this.Entries := TasksRegistry.LegacyEntries(
+                    legacyScheduled, legacyAhk, root
+                )
+                ; Existing legacy tasks will be migrated on Save.
+                this.Dirty := true
+            }
         }
 
         this.Build()
@@ -44,11 +43,11 @@ class ConfiguratorTasksTab
     {
         this.Window.AddText(
             "x30 y52 w1060 h45",
-            "Manage Windows Task Scheduler entries and external AHK v2 scripts in one Tasks menu. "
-                . "A checkmark means an instance is currently running; statuses refresh on each menu opening."
+            "Manage all runnable Tasks in one list. A checkmark means actually running, "
+                . "not merely enabled for future scheduled executions."
         )
         this.Window.AddGroupBox("x25 y105 w1110 h500", "Tasks (active Home / Work profile)")
-        this.Window.AddText("x45 y135 w385", "Configured tasks and scripts")
+        this.Window.AddText("x45 y135 w385", "Configured tasks")
         this.List := this.Window.AddListBox("x45 y160 w390 h340")
         this.List.OnEvent("Change", ObjBindMethod(this, "OnSelected"))
 
@@ -60,7 +59,7 @@ class ConfiguratorTasksTab
         this.Window.AddText("x475 y135 w350", "Task type")
         this.TypeList := this.Window.AddDropDownList(
             "x475 y159 w340",
-            [ConfiguratorTasksTab.SCHEDULER, ConfiguratorTasksTab.AHK]
+            ["Scheduled Task", "AHK Script"]
         )
         this.TypeList.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
@@ -94,13 +93,8 @@ class ConfiguratorTasksTab
             names := []
             for entry in this.Entries
             {
-                typeLabel := entry["Type"] = ConfiguratorTasksTab.AHK
-                    ? "AHK"
-                    : "Scheduler"
                 displayName := Trim("" entry["Name"])
-                names.Push("[" typeLabel "] " (
-                    displayName = "" ? "(unnamed)" : displayName
-                ))
+                names.Push(displayName = "" ? "(unnamed)" : displayName)
             }
             if (names.Length)
             {
@@ -218,48 +212,29 @@ class ConfiguratorTasksTab
         this.SetDirty()
     }
 
-    GetEntriesByType(typeName)
-    {
-        result := []
-        for entry in this.Entries
-        {
-            if (entry["Type"] = typeName)
-            {
-                result.Push(Map("Name", entry["Name"], "Value", entry["Value"]))
-            }
-        }
-        return result
-    }
 
     Validate()
     {
-        ScheduledTasksManager.ValidateEntries(
-            this.GetEntriesByType(ConfiguratorTasksTab.SCHEDULER)
-        )
-        AhkScriptManager.ValidateEntries(
-            this.GetEntriesByType(ConfiguratorTasksTab.AHK)
-        )
+        TasksRegistry.ValidateEntries(this.Entries)
         return true
     }
 
     ApplyToDocument()
     {
-        scheduled := this.GetEntriesByType(ConfiguratorTasksTab.SCHEDULER)
-        scripts := this.GetEntriesByType(ConfiguratorTasksTab.AHK)
-        if (this.HadScheduled || scheduled.Length)
-        {
-            this.ProfileDoc.ReplaceSectionEntries("ScheduledTasks", scheduled)
-        }
-        if (this.HadAhk || scripts.Length)
-        {
-            this.ProfileDoc.ReplaceSectionEntries("AhkScripts", scripts)
-        }
+        this.ProfileDoc.ReplaceSectionEntries(
+            "Tasks", TasksRegistry.ToIniEntries(this.Entries)
+        )
+
+        ; Migrate users of the previous experimental builds. The new INI has
+        ; exactly one task section and no separate AHK root configuration.
+        this.ProfileDoc.DeleteSection("ScheduledTasks")
+        this.ProfileDoc.DeleteSection("AhkScripts")
+        this.ProfileDoc.DeleteSection("AhkScriptsSettings")
     }
 
     MarkSaved()
     {
-        this.HadScheduled := this.ProfileDoc.HasSection("ScheduledTasks")
-        this.HadAhk := this.ProfileDoc.HasSection("AhkScripts")
+        this.HadTasks := this.ProfileDoc.HasSection("Tasks")
         this.Dirty := false
     }
 
