@@ -241,10 +241,123 @@ Menu_TaskRunner_AutoPaste(*)
     TaskRunner_SyncMenuChecks()
 }
 
+; --------------------------------------------------------------------------------
+; Unified Tasks menu: Task Scheduler instances and external AHK scripts.
+; Checkmarks mean *currently running*, never simply enabled in the scheduler.
+
+Menu_TaskRunner_ToggleTask(entry, *)
+{
+    try
+    {
+        result := TasksRegistry.Toggle(entry)
+        TrayTip(
+            "Tasks",
+            entry["Name"] ": " result
+                . ". Reopen the menu to check the actual state."
+        )
+    }
+    catch Error as e
+    {
+        errorDetails := e.Message
+            . Chr(10) "Source: " e.File ":" e.Line
+        Logger.Error(
+            "Cannot toggle '" entry["Name"] "' ("
+                . entry["Type"] "|" entry["Value"] "): "
+                . e.Message " (" e.File ":" e.Line ")",
+            "Tasks"
+        )
+        MsgBox(
+            "Could not toggle task '" entry["Name"] "':" Chr(10) errorDetails,
+            "MyWinToolbox - Tasks",
+            "Iconx"
+        )
+    }
+}
+
+Menu_TaskRunner_RefreshTasks()
+{
+    global tasksMenu, ProfileConfigFilePath
+
+    tasksMenu.Delete()
+    entries := []
+    schedulerService := 0
+
+    try
+    {
+        entries := TasksRegistry.LoadProfile(ProfileConfigFilePath)
+    }
+    catch Error as e
+    {
+        Logger.Error(e.Message, "Tasks")
+        tasksMenu.Add("(Tasks configuration unavailable)", (*) => 0)
+        tasksMenu.Disable("(Tasks configuration unavailable)")
+        return
+    }
+
+    if (entries.Length = 0)
+    {
+        tasksMenu.Add("(no configured tasks)", (*) => 0)
+        tasksMenu.Disable("(no configured tasks)")
+        return
+    }
+
+    ; Type-independent presentation: the registry resolves execution
+    ; details. Adding future task types does not add new menu categories.
+    for configEntry in entries
+    {
+        name := configEntry["Name"]
+        entry := 0
+        try
+        {
+            entry := TasksRegistry.Parse(name, configEntry["Definition"])
+            status := TasksRegistry.GetStatus(entry, &schedulerService)
+
+            label := name " [" status["Status"] "]"
+            tasksMenu.Add(label, Menu_TaskRunner_ToggleTask.Bind(entry))
+            if (status["Running"])
+            {
+                tasksMenu.Check(label)
+            }
+            if (!status["CanToggle"])
+            {
+                tasksMenu.Disable(label)
+            }
+        }
+        catch Error as e
+        {
+            Logger.Warning(
+                name ": " e.Message " (" e.File ":" e.Line ")"
+                    . " | definition=" configEntry["Definition"],
+                "Tasks"
+            )
+            if (IsObject(entry) && entry["Type"] = TasksRegistry.AHK)
+            {
+                ; Even an unexpected status-rendering error must not disable
+                ; a valid AHK definition. Clicking reports the actual failure.
+                label := name " [Unknown]"
+                tasksMenu.Add(label, Menu_TaskRunner_ToggleTask.Bind(entry))
+            }
+            else
+            {
+                ; Malformed definitions and Scheduler failures remain disabled.
+                label := name " [unavailable]"
+                tasksMenu.Add(label, (*) => 0)
+                tasksMenu.Disable(label)
+            }
+        }
+    }
+
+}
+
 taskRunnerMenu := Menu()
 taskRunnerMenu.SetColor("edf39f")
 taskRunnerMenu.Add("NoSleep", Menu_TaskRunner_NoSleep)
 taskRunnerMenu.Add("AutoPaste", Menu_TaskRunner_AutoPaste)
+
+tasksMenu := Menu()
+tasksMenu.Add("(open to refresh)", (*) => 0)
+tasksMenu.Disable("(open to refresh)")
+taskRunnerMenu.Add("Tasks", tasksMenu)
 
 shutdownMenu := Menu()
 shutdownMenu.Add("1h", Menu_TaskRunner_Shutdown_1h)
@@ -262,5 +375,6 @@ TaskRunner_ApplyStartupDefaults()
 ^#t::
 {
     TaskRunner_SyncMenuChecks()
+    Menu_TaskRunner_RefreshTasks()
     taskRunnerMenu.Show()
 }

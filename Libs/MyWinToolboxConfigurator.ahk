@@ -431,6 +431,7 @@ class MyWinToolboxConfigurator
                 "HotString Scopes",
                 "AutoPaste",
                 "Settings",
+                "Tasks",
                 "Backup / Restore",
                 "Diagnostics / Health"
             ]
@@ -464,6 +465,13 @@ class MyWinToolboxConfigurator
         )
 
         this.Tabs.UseTab(6)
+        this.TasksTab := ConfiguratorTasksTab(
+            this.Window,
+            this.SettingsTab.ProfileDoc,
+            ObjBindMethod(this, "OnDirtyStateChanged")
+        )
+
+        this.Tabs.UseTab(7)
         this.BackupTab := ConfiguratorBackupTab(
             this.Window,
             [
@@ -478,7 +486,7 @@ class MyWinToolboxConfigurator
             ObjBindMethod(this, "CanRestoreBackup")
         )
 
-        this.Tabs.UseTab(7)
+        this.Tabs.UseTab(8)
         this.DiagnosticsTab := ConfiguratorDiagnosticsTab(
             this.Window,
             this
@@ -515,7 +523,7 @@ class MyWinToolboxConfigurator
     OnTabChanged(*)
     {
         if (
-            this.Tabs.Value = 7
+            this.Tabs.Value = 8
             && this.HasOwnProp("DiagnosticsTab")
             && IsObject(this.DiagnosticsTab)
         )
@@ -2193,6 +2201,8 @@ class MyWinToolboxConfigurator
             hotStringsSaved := false
             autoPasteSaved := false
             settingsSaved := false
+            settingsFieldsSaved := false
+            tasksSaved := false
 
             ; Validate every modified document before writing any of them.
             if (this.SnippetsDirty)
@@ -2213,11 +2223,14 @@ class MyWinToolboxConfigurator
             if (this.SettingsTab.Dirty)
             {
                 this.SettingsTab.Validate()
-
                 if (!this.SettingsTab.ConfirmDangerousChanges())
                 {
                     return false
                 }
+            }
+            if (this.TasksTab.Dirty)
+            {
+                this.TasksTab.Validate()
             }
 
             if (this.SnippetsDirty)
@@ -2256,9 +2269,21 @@ class MyWinToolboxConfigurator
                 autoPasteSaved := true
             }
 
-            if (this.SettingsTab.Dirty)
+            if (this.SettingsTab.Dirty || this.TasksTab.Dirty)
             {
-                this.SettingsTab.Save()
+                ; Both tabs share one INI document and its backup/UAC save path.
+                tasksSaved := this.TasksTab.Dirty
+                settingsFieldsSaved := this.SettingsTab.Dirty
+                if (tasksSaved)
+                {
+                    this.TasksTab.ApplyToDocument()
+                }
+
+                this.SettingsTab.Save(!this.SettingsTab.Dirty)
+                if (tasksSaved)
+                {
+                    this.TasksTab.MarkSaved()
+                }
                 settingsSaved := true
             }
 
@@ -2269,10 +2294,16 @@ class MyWinToolboxConfigurator
                 this.DiagnosticsTab.Refresh()
             }
 
-            if (hotStringsSaved || settingsSaved)
+            if (hotStringsSaved || settingsFieldsSaved)
             {
                 this.SetStatus(
                     "Saved. HotStrings/Settings require reload; use Save + Reload to apply."
+                )
+            }
+            else if (settingsSaved)
+            {
+                this.SetStatus(
+                    "Saved. Tasks menu refreshes when next opened."
                 )
             }
             else if (snippetsSaved || autoPasteSaved)
@@ -2305,6 +2336,7 @@ class MyWinToolboxConfigurator
             || this.HotStringsState.Dirty
             || this.AutoPasteTab.Dirty
             || this.SettingsTab.Dirty
+            || this.TasksTab.Dirty
     }
 
     CanCreateBackup()
@@ -2398,6 +2430,11 @@ class MyWinToolboxConfigurator
         if (this.SettingsTab.Dirty)
         {
             states.Push("Settings modified")
+        }
+
+        if (this.TasksTab.Dirty)
+        {
+            states.Push("Tasks modified")
         }
 
         if (states.Length = 0)

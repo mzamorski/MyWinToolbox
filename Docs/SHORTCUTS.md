@@ -31,7 +31,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | `Win + Ctrl + F` | Open **Format** menu. |
 | `Win + Ctrl + I` | Open **String Generator** menu. |
 | `Win + Ctrl + S` | Open **Text Snippets** menu. |
-| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Backup / Restore, and Diagnostics / Health. |
+| `Win + Ctrl + Shift + S` | Open the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Tasks, Backup / Restore, and Diagnostics / Health. |
 | `Win + Ctrl + E` | Open **Emoji** menu. |
 | `Win + Ctrl + D` | Paste the current local date/time. |
 | `Ctrl + Tab` | Insert the configured number of spaces (`SpacesPerIndent`). |
@@ -45,6 +45,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 | --- | --- |
 | **NoSleep** | Toggle the same NoSleep state as `Ctrl + Win + A`. |
 | **AutoPaste** | Enable or disable automatic paste rules loaded from `AutoPastes.json`. Its startup state is configurable per profile. |
+| **Tasks** | All jobs and scripts are listed together by name (✓ = running). Configure them in one `[Tasks]` INI section as `name = scheduler\|path` or `name = ahk\|absolute-path`, or through Configurator → Tasks. Permanent scheduling Enabled/Disabled settings are managed in Windows Task Scheduler, not this menu. |
 | **Shutdown → 1h** | Schedule shutdown using the menu's 1-hour preset. |
 | **Shutdown → 2h** | Schedule shutdown using the menu's 2-hour preset. |
 | **Shutdown → Cancel** | Cancel the pending shutdown timer created by Task Runner. |

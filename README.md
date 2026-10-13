@@ -58,7 +58,7 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
-| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Backup / Restore, and Diagnostics / Health. |
+| `Ctrl + Win + Shift + S` | Opens the tabbed **MyWinToolbox Configurator** for Text Snippets, HotStrings/scopes, AutoPaste, Settings, Tasks, Backup / Restore, and Diagnostics / Health. |
 | `Ctrl + Win + E` | Opens the emoji menu. |
 | `Ctrl + Win + D` | Pastes the current local date and time. |
 | `Ctrl + Tab` | Inserts the configured number of spaces. |
@@ -70,8 +70,28 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + M` | Moves selected Explorer files or folders into a newly named subdirectory. |
 | `Win + Ctrl + Volume Mute` | Toggles mute for the active application's process through the native Windows Core Audio API. |
 | `Ctrl + Win + A` | Enables or disables NoSleep. While enabled, it keeps the system and display awake and moves the pointer slightly after 10 minutes of idle time. |
-| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
+| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, a unified Tasks menu for Windows scheduled jobs and independent AHK v2 scripts, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
 | `Ctrl + Win + W` | Opens **Window Toolbox** for the currently active window. |
+
+### Tasks: one extensible list
+
+**Ctrl + Win + T → Tasks** contains **one ordered list** regardless of whether the entry is a Windows Scheduled Task or an external AutoHotkey script. Entries display only their configured names, without separate Scheduler/AHK categories. A checkmark means **currently running**; each menu opening queries the state again, including after restarting MyWinToolbox.
+
+Use **Ctrl + Win + Shift + S → Tasks** to manage every entry in the existing Configurator. Each item has a display name, type and path. All entries are stored in the active profile's **single `[Tasks]` section**, with a `type|path` value:
+
+```ini
+[Tasks]
+Backup = scheduler|\MyJobs\NightlyBackup
+WARDOGS Hammer = ahk|C:\Repos\MyWinToolbox-Private\Games\WARDOGS-Hammer.ahk
+Minecraft = ahk|C:\Repos\MyWinToolbox-Private\Games\Minecraft.ahk
+```
+
+The supported types are currently `scheduler` and `ahk`. The typed entry format is extensible: a future `exe` handler can be added without changing the INI layout, Configurator or the Tasks menu. Unknown task types are displayed as unavailable, rather than executed. AHK paths must be absolute, so there is no separate root-folder setting. Home and Work profiles have independent `[Tasks]` sections, covered by regular configuration backups.
+
+- **Scheduler entries:** show Running, Ready, Queued or Disabled. Click a running entry to request Stop or a ready entry to request Run. **Tasks does not change the permanent Enabled/Disabled setting** in Windows Task Scheduler; manage that directly in Windows. Stopping a running job does not disable its future scheduled triggers. A permanently disabled job remains visible as Disabled but cannot be started from this menu. Protected Run/Stop requests may require UAC approval.
+- **AHK entries:** detect the exact script's hidden AutoHotkey main window, even when started outside MyWinToolbox. Clicking starts it via the AHK v2 interpreter or requests normal closure (so `OnExit` handlers can execute). A checkmark means the script is loaded, not that any internal macro is active. **AHK entries stay clickable even when Windows cannot verify file existence during the menu refresh**; launching the script performs the actual path check and displays an explicit error if it is missing or inaccessible. If running-state detection fails, the entry shows `[Unknown]` and the failure is logged. WARDOGS-Hammer uses **F6** for its internal macro and **F8** to exit.
+
+**Legacy migration:** earlier experimental builds used `[ScheduledTasks]`, `[AhkScripts]` and optionally `[AhkScriptsSettings]`. MyWinToolbox can still read them until migrated. Opening and saving Configurator → Tasks converts the entries to one `[Tasks]` section and removes the old sections. Normal changes apply on next menu opening without restarting the toolbox.
 
 ### Window Toolbox
 
@@ -90,7 +110,7 @@ The Format menu transforms clipboard content and pastes the result. It provides:
 
 ### String generator and snippets
 
-The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries; **Backup / Restore** creates and restores versioned ZIP snapshots of the active configuration; **Diagnostics / Health** shows current runtime state, recent log errors, Scheduled Task status, configuration counts, and maintenance actions. New password values are protected with Windows DPAPI under the current Windows user; legacy RC4 values remain readable during migration. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
+The String Generator creates GUIDs, random strings (16 or 32 characters), dummy text, current date/time, separators, and configured user signatures. The Text Snippets menu loads categorized snippets from `TextSnippets.json` and sends their AHK key-sequence content. `Ctrl + Win + Shift + S` opens one tabbed **MyWinToolbox Configurator**. **Text Snippets** manages categories and snippets; **HotStrings** and **HotString Scopes** manage dynamic replacements and reusable scopes; **AutoPaste** edits window/URL matchers, trigger mode, notifications, delay and ordered `text` / `passwordKey` / `keys` / `delay` actions; **Settings** edits shared/profile INI fields, audio devices, signatures and encrypted password entries; **Tasks** manages scheduled jobs and AHK scripts; **Backup / Restore** creates and restores versioned ZIP snapshots of the active configuration; **Diagnostics / Health** shows current runtime state, recent log errors, Scheduled Task status, configuration counts, and maintenance actions. New password values are protected with Windows DPAPI under the current Windows user; legacy RC4 values remain readable during migration. JSON and INI saves create `.bak` backups. Text Snippets and AutoPaste refresh live after Save; HotStrings and Settings require reload, so **Save + Reload** applies everything immediately. The emoji menu pastes a small set of frequently used symbols.
 
 ### Built-in hotstrings
 
