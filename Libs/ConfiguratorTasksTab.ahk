@@ -14,7 +14,7 @@ class ConfiguratorTasksTab
         this.OnDirtyCallback := onDirtyCallback
         this.HadTasks := profileDoc.HasSection("Tasks")
         this.Entries := TasksRegistry.FromIniEntries(
-            profileDoc.GetSectionEntries("Tasks")
+            profileDoc.GetSectionEntries("Tasks", false)
         )
         this.SelectedIndex := 0
         this.Dirty := false
@@ -22,8 +22,8 @@ class ConfiguratorTasksTab
 
         if (!this.HadTasks)
         {
-            legacyScheduled := profileDoc.GetSectionEntries("ScheduledTasks")
-            legacyAhk := profileDoc.GetSectionEntries("AhkScripts")
+            legacyScheduled := profileDoc.GetSectionEntries("ScheduledTasks", false)
+            legacyAhk := profileDoc.GetSectionEntries("AhkScripts", false)
             if (legacyScheduled.Length || legacyAhk.Length)
             {
                 root := profileDoc.Get("AhkScriptsSettings", "Root", "")
@@ -222,7 +222,7 @@ class ConfiguratorTasksTab
     ApplyToDocument()
     {
         this.ProfileDoc.ReplaceSectionEntries(
-            "Tasks", TasksRegistry.ToIniEntries(this.Entries)
+            "Tasks", TasksRegistry.ToIniEntries(this.Entries), false
         )
 
         ; Migrate users of the previous experimental builds. The new INI has
