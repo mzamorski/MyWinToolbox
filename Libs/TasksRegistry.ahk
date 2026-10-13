@@ -187,9 +187,7 @@ class TasksRegistry
             return Map(
                 "Running", running,
                 "Status", ScheduledTasksManager.GetStateLabel(state["State"]),
-                "CanToggle", running || (enabled && state["State"] = 3),
-                "SupportsScheduling", true,
-                "SchedulingEnabled", enabled
+                "CanToggle", running || (enabled && state["State"] = 3)
             )
         }
 
@@ -201,8 +199,7 @@ class TasksRegistry
             return Map(
                 "Running", running,
                 "Status", !available ? "Missing" : (running ? "Running" : "Stopped"),
-                "CanToggle", !!available,
-                "SupportsScheduling", false
+                "CanToggle", !!available
             )
         }
 
@@ -210,8 +207,7 @@ class TasksRegistry
         return Map(
             "Running", false,
             "Status", "Unsupported: " type,
-            "CanToggle", false,
-            "SupportsScheduling", false
+            "CanToggle", false
         )
     }
 
@@ -234,19 +230,6 @@ class TasksRegistry
         }
 
         throw Error("Unsupported task type: " type)
-    }
-
-    static ToggleScheduling(entry)
-    {
-        if (entry["Type"] != TasksRegistry.SCHEDULER)
-        {
-            throw Error("Only Task Scheduler tasks support scheduling enable/disable.")
-        }
-
-        path := entry["Value"]
-        return ScheduledTasksManager.SetEnabled(
-            path, !ScheduledTasksManager.IsEnabled(path)
-        )
     }
 
     static ReadRawSection(profilePath, sectionName)
