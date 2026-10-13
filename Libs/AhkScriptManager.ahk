@@ -13,9 +13,10 @@ class AhkScriptManager
             || InStr(path, Chr(34))
             || RegExMatch(path, "[\x00-\x1F]")
             || !RegExMatch(path, "i)\.ahk$")
+            || !RegExMatch(path, "i)^(?:[a-z]:\\|\\\\[^\\]+\\[^\\]+\\)")
         )
         {
-            throw Error("Provide a valid .ahk script path: " value)
+            throw Error("Provide a full absolute path to a .ahk script: " value)
         }
 
         return path
@@ -58,26 +59,10 @@ class AhkScriptManager
         return true
     }
 
-    static FullPath(path, baseDir := "")
+    static ResolveScriptPath(scriptPath)
     {
-        path := Trim("" path)
-        if (path = "" || InStr(path, Chr(34)) || RegExMatch(path, "[\x00-\x1F]"))
-        {
-            throw Error("Invalid filesystem path: " path)
-        }
-
-        path := StrReplace(path, "/", "\")
-        if (!RegExMatch(path, "i)^(?:[a-z]:\\|\\\\)"))
-        {
-            if (baseDir = "")
-            {
-                baseDir := A_ScriptDir
-            }
-            path := RTrim(baseDir, "\") "\" path
-        }
-
-        ; GetFullPathNameW canonicalizes '.' and '..' even for a file which
-        ; does not exist yet. Prevents mismatch against AHK window titles.
+        path := StrReplace(AhkScriptManager.ValidateScriptPath(scriptPath), "/", "\")
+        ; Canonicalize existing or non-existing paths for exact AHK window matching.
         buffer := Buffer(32768 * 2, 0)
         length := DllCall(
             "Kernel32\GetFullPathNameW",
@@ -89,20 +74,10 @@ class AhkScriptManager
         )
         if (length = 0 || length >= 32768)
         {
-            throw Error("Unable to resolve script path: " path)
+            throw Error("Unable to resolve AHK script path: " path)
         }
 
         return StrGet(buffer.Ptr)
-    }
-
-    static ResolveScriptPath(scriptPath, rootPath := "")
-    {
-        scriptPath := AhkScriptManager.ValidateScriptPath(scriptPath)
-        baseDir := rootPath = ""
-            ? A_ScriptDir
-            : AhkScriptManager.FullPath(rootPath, A_ScriptDir)
-
-        return AhkScriptManager.FullPath(scriptPath, baseDir)
     }
 
     static MainWindowMatches(windowTitle, fullPath)
@@ -153,9 +128,9 @@ class AhkScriptManager
         return AhkScriptManager.GetWindows(fullPath).Length > 0
     }
 
-    static Toggle(scriptPath, rootPath := "")
+    static Toggle(scriptPath)
     {
-        fullPath := AhkScriptManager.ResolveScriptPath(scriptPath, rootPath)
+        fullPath := AhkScriptManager.ResolveScriptPath(scriptPath)
         windows := AhkScriptManager.GetWindows(fullPath)
         if (windows.Length > 0)
         {
