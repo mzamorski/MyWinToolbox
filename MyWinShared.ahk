@@ -12,6 +12,7 @@
 #Include Libs\MenuUtils.ahk
 #Include Libs\ScheduledTasksManager.ahk
 #Include Libs\AhkScriptManager.ahk
+#Include Libs\TasksRegistry.ahk
 #include Libs\Externals\_JXON.ahk
 #Include Libs\Externals\XHotstring.ahk
 #Include Libs\IOUtils.ahk
