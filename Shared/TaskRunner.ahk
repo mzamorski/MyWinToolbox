@@ -245,68 +245,42 @@ Menu_TaskRunner_AutoPaste(*)
 ; Unified Tasks menu: Task Scheduler instances and external AHK scripts.
 ; Checkmarks mean *currently running*, never simply enabled in the scheduler.
 
-Menu_TaskRunner_ToggleScheduledTaskRunning(taskPath, displayName, *)
+Menu_TaskRunner_ToggleTask(entry, *)
 {
     try
     {
-        wasRunning := ScheduledTasksManager.IsRunning(taskPath)
-        ScheduledTasksManager.SetRunning(taskPath, !wasRunning)
+        result := TasksRegistry.Toggle(entry)
         TrayTip(
             "Tasks",
-            displayName ": " (wasRunning ? "stop requested" : "start requested")
-                . ". Reopen the menu to check the current state."
+            entry["Name"] ": " result
+                . ". Reopen the menu to check the actual state."
         )
     }
     catch Error as e
     {
         MsgBox(
-            "Could not start/stop scheduled task '" displayName "' (" taskPath "):"
-                . Chr(10) e.Message,
+            "Could not toggle task '" entry["Name"] "':" Chr(10) e.Message,
             "MyWinToolbox - Tasks",
             "Iconx"
         )
     }
 }
 
-Menu_TaskRunner_ToggleScheduledTaskEnabled(taskPath, displayName, *)
+Menu_TaskRunner_ToggleScheduling(entry, *)
 {
     try
     {
-        enabled := ScheduledTasksManager.SetEnabled(
-            taskPath,
-            !ScheduledTasksManager.IsEnabled(taskPath)
-        )
+        enabled := TasksRegistry.ToggleScheduling(entry)
         TrayTip(
             "Tasks",
-            displayName ": scheduling " (enabled ? "enabled" : "disabled")
+            entry["Name"] ": scheduling " (enabled ? "enabled" : "disabled")
                 . ". This does not start/stop running instances."
         )
     }
     catch Error as e
     {
         MsgBox(
-            "Could not change scheduling for '" displayName "' (" taskPath "):"
-                . Chr(10) e.Message,
-            "MyWinToolbox - Tasks",
-            "Iconx"
-        )
-    }
-}
-
-Menu_TaskRunner_ToggleAhkScript(scriptPath, displayName, *)
-{
-    try
-    {
-        started := AhkScriptManager.Toggle(scriptPath)
-        TrayTip(
-            "Tasks",
-            displayName ": " (started ? "start requested" : "close requested")
-        )
-    }
-    catch Error as e
-    {
-        MsgBox(
-            "Could not toggle AHK script '" displayName "':" Chr(10) e.Message,
+            "Could not change scheduling for '" entry["Name"] "':" Chr(10) e.Message,
             "MyWinToolbox - Tasks",
             "Iconx"
         )
@@ -321,7 +295,7 @@ Menu_TaskRunner_RefreshTasks()
     tasksEnabledMenu.Delete()
     entries := []
     enabledCount := 0
-    service := 0
+    schedulerService := 0
 
     try
     {
@@ -342,93 +316,44 @@ Menu_TaskRunner_RefreshTasks()
         return
     }
 
-    ; A single ordered list. The entry type is internal configuration,
-    ; not a menu category, so future EXE handlers can join the same menu.
-    for entry in entries
+    ; Type-independent presentation: the registry resolves execution
+    ; details. Adding future task types does not add new menu categories.
+    for configEntry in entries
     {
-        displayName := entry["Name"]
-
+        name := configEntry["Name"]
         try
         {
-            definition := TasksRegistry.Parse(displayName, entry["Definition"])
-            type := definition["Type"]
-            path := definition["Value"]
+            entry := TasksRegistry.Parse(name, configEntry["Definition"])
+            status := TasksRegistry.GetStatus(entry, &schedulerService)
 
-            if (type = TasksRegistry.SCHEDULER)
+            label := name " [" status["Status"] "]"
+            tasksMenu.Add(label, Menu_TaskRunner_ToggleTask.Bind(entry))
+            if (status["Running"])
             {
-                if (!IsObject(service))
-                {
-                    service := ScheduledTasksManager.Connect()
-                }
+                tasksMenu.Check(label)
+            }
+            if (!status["CanToggle"])
+            {
+                tasksMenu.Disable(label)
+            }
 
-                path := ScheduledTasksManager.NormalizePath(path)
-                status := ScheduledTasksManager.GetTaskStatus(service, path)
-                state := status["State"]
-                running := status["Running"]
-                enabled := status["Enabled"]
-                label := displayName
-                    . " [" ScheduledTasksManager.GetStateLabel(state) "]"
-
-                tasksMenu.Add(
-                    label,
-                    Menu_TaskRunner_ToggleScheduledTaskRunning.Bind(path, displayName)
-                )
-                if (running)
-                {
-                    tasksMenu.Check(label)
-                }
-                else if (state = 0 || state = 2 || !enabled)
-                {
-                    tasksMenu.Disable(label)
-                }
-
-                ; Scheduling is an operation on scheduled tasks, not a
-                ; separate top-level Tasks category.
+            if (status["SupportsScheduling"])
+            {
                 tasksEnabledMenu.Add(
-                    displayName,
-                    Menu_TaskRunner_ToggleScheduledTaskEnabled.Bind(path, displayName)
+                    name,
+                    Menu_TaskRunner_ToggleScheduling.Bind(entry)
                 )
                 enabledCount += 1
-                if (enabled)
+                if (status["SchedulingEnabled"])
                 {
-                    tasksEnabledMenu.Check(displayName)
+                    tasksEnabledMenu.Check(name)
                 }
-            }
-            else if (type = TasksRegistry.AHK)
-            {
-                path := AhkScriptManager.ResolveScriptPath(path)
-                running := AhkScriptManager.IsRunning(path)
-
-                if (!running && !FileExist(path))
-                {
-                    label := displayName " [missing]"
-                    tasksMenu.Add(label, (*) => 0)
-                    tasksMenu.Disable(label)
-                    continue
-                }
-
-                label := displayName (running ? " [Running]" : " [Stopped]")
-                tasksMenu.Add(
-                    label,
-                    Menu_TaskRunner_ToggleAhkScript.Bind(path, displayName)
-                )
-                if (running)
-                {
-                    tasksMenu.Check(label)
-                }
-            }
-            else
-            {
-                ; Unknown type is displayed rather than silently ignored.
-                label := displayName " [unsupported type: " type "]"
-                tasksMenu.Add(label, (*) => 0)
-                tasksMenu.Disable(label)
             }
         }
         catch Error as e
         {
-            Logger.Warning(displayName ": " e.Message, "Tasks")
-            label := displayName " [unavailable]"
+            Logger.Warning(name ": " e.Message, "Tasks")
+            label := name " [unavailable]"
             tasksMenu.Add(label, (*) => 0)
             tasksMenu.Disable(label)
         }
