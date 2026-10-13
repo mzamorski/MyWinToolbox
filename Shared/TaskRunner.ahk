@@ -258,8 +258,16 @@ Menu_TaskRunner_ToggleTask(entry, *)
     }
     catch Error as e
     {
+        errorDetails := e.Message
+            . Chr(10) "Source: " e.File ":" e.Line
+        Logger.Error(
+            "Cannot toggle '" entry["Name"] "' ("
+                . entry["Type"] "|" entry["Value"] "): "
+                . e.Message " (" e.File ":" e.Line ")",
+            "Tasks"
+        )
         MsgBox(
-            "Could not toggle task '" entry["Name"] "':" Chr(10) e.Message,
+            "Could not toggle task '" entry["Name"] "':" Chr(10) errorDetails,
             "MyWinToolbox - Tasks",
             "Iconx"
         )
