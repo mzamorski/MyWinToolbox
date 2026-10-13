@@ -378,6 +378,93 @@ Menu_TaskRunner_RefreshScheduledTasks()
     }
 }
 
+; --------------------------------------------------------------------------------
+; Independent AutoHotkey v2 scripts, configured in [AhkScripts].
+; A checkmark means the exact script has a running AHK main window.
+
+Menu_TaskRunner_ToggleAhkScript(scriptPath, rootPath, displayName, *)
+{
+    try
+    {
+        started := AhkScriptManager.Toggle(scriptPath, rootPath)
+        TrayTip(
+            "AHK Scripts",
+            displayName ": " (started ? "start requested" : "close requested")
+        )
+    }
+    catch Error as e
+    {
+        MsgBox(
+            "Could not toggle AHK script '" displayName "':" Chr(10) e.Message,
+            "MyWinToolbox - AHK Scripts",
+            "Iconx"
+        )
+    }
+}
+
+Menu_TaskRunner_RefreshAhkScripts()
+{
+    global ahkScriptsMenu, ProfileConfigFilePath
+
+    ahkScriptsMenu.Delete()
+
+    try
+    {
+        entries := Ini_GetSectionEntries(ProfileConfigFilePath, "AhkScripts")
+        rootPath := Ini_ReadOrDefault(
+            ProfileConfigFilePath, "AhkScriptsSettings", "Root", ""
+        )
+
+        if (entries.Count = 0)
+        {
+            ahkScriptsMenu.Add("(no configured scripts)", (*) => 0)
+            ahkScriptsMenu.Disable("(no configured scripts)")
+            return
+        }
+
+        for displayName, scriptPath in entries
+        {
+            try
+            {
+                fullPath := AhkScriptManager.ResolveScriptPath(scriptPath, rootPath)
+                isRunning := AhkScriptManager.IsRunning(fullPath)
+
+                if (!isRunning && !FileExist(fullPath))
+                {
+                    label := displayName " [missing]"
+                    ahkScriptsMenu.Add(label, (*) => 0)
+                    ahkScriptsMenu.Disable(label)
+                    continue
+                }
+
+                label := displayName (isRunning ? " [Running]" : " [Stopped]")
+                ahkScriptsMenu.Add(
+                    label,
+                    Menu_TaskRunner_ToggleAhkScript.Bind(scriptPath, rootPath, displayName)
+                )
+                if (isRunning)
+                {
+                    ahkScriptsMenu.Check(label)
+                }
+            }
+            catch Error as e
+            {
+                Logger.Warning(displayName ": " e.Message, "AhkScripts")
+                label := displayName " [unavailable]"
+                ahkScriptsMenu.Add(label, (*) => 0)
+                ahkScriptsMenu.Disable(label)
+            }
+        }
+    }
+    catch Error as e
+    {
+        Logger.Error(e.Message, "AhkScripts")
+        ahkScriptsMenu.Delete()
+        ahkScriptsMenu.Add("(AHK scripts configuration unavailable)", (*) => 0)
+        ahkScriptsMenu.Disable("(AHK scripts configuration unavailable)")
+    }
+}
+
 taskRunnerMenu := Menu()
 taskRunnerMenu.SetColor("edf39f")
 taskRunnerMenu.Add("NoSleep", Menu_TaskRunner_NoSleep)
@@ -388,6 +475,11 @@ scheduledTasksEnabledMenu := Menu()
 scheduledTasksMenu.Add("(open to refresh)", (*) => 0)
 scheduledTasksMenu.Disable("(open to refresh)")
 taskRunnerMenu.Add("Scheduled Tasks", scheduledTasksMenu)
+
+ahkScriptsMenu := Menu()
+ahkScriptsMenu.Add("(open to refresh)", (*) => 0)
+ahkScriptsMenu.Disable("(open to refresh)")
+taskRunnerMenu.Add("AHK Scripts", ahkScriptsMenu)
 
 shutdownMenu := Menu()
 shutdownMenu.Add("1h", Menu_TaskRunner_Shutdown_1h)
@@ -406,5 +498,6 @@ TaskRunner_ApplyStartupDefaults()
 {
     TaskRunner_SyncMenuChecks()
     Menu_TaskRunner_RefreshScheduledTasks()
+    Menu_TaskRunner_RefreshAhkScripts()
     taskRunnerMenu.Show()
 }
