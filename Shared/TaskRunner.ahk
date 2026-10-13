@@ -241,10 +241,95 @@ Menu_TaskRunner_AutoPaste(*)
     TaskRunner_SyncMenuChecks()
 }
 
+; --------------------------------------------------------------------------------
+; Windows Task Scheduler toggles, configured per profile in [ScheduledTasks].
+
+Menu_TaskRunner_ToggleScheduledTask(taskPath, displayName, *)
+{
+    try
+    {
+        newState := ScheduledTasksManager.SetEnabled(
+            taskPath,
+            !ScheduledTasksManager.IsEnabled(taskPath)
+        )
+
+        TrayTip(
+            "Scheduled Tasks",
+            displayName ": " (newState ? "enabled" : "disabled")
+        )
+    }
+    catch Error as e
+    {
+        MsgBox(
+            "Could not change scheduled task '" displayName "' (" taskPath "):"
+                . Chr(10) e.Message,
+            "MyWinToolbox - Scheduled Tasks",
+            "Iconx"
+        )
+    }
+}
+
+Menu_TaskRunner_RefreshScheduledTasks()
+{
+    global scheduledTasksMenu, ProfileConfigFilePath
+
+    scheduledTasksMenu.Delete()
+    try
+    {
+        entries := Ini_GetSectionEntries(ProfileConfigFilePath, "ScheduledTasks")
+        if (entries.Count = 0)
+        {
+            scheduledTasksMenu.Add("(no configured tasks)", (*) => 0)
+            scheduledTasksMenu.Disable("(no configured tasks)")
+            return
+        }
+
+        ; One connection per menu opening. Each task reports its current state.
+        service := ScheduledTasksManager.Connect()
+        for displayName, taskPath in entries
+        {
+            try
+            {
+                path := ScheduledTasksManager.NormalizePath(taskPath)
+                task := ScheduledTasksManager.GetTask(service, path)
+                enabled := !!task.Enabled
+
+                scheduledTasksMenu.Add(
+                    displayName,
+                    Menu_TaskRunner_ToggleScheduledTask.Bind(path, displayName)
+                )
+                if (enabled)
+                {
+                    scheduledTasksMenu.Check(displayName)
+                }
+            }
+            catch Error as e
+            {
+                Logger.Warning(displayName ": " e.Message, "ScheduledTasks")
+                unavailableLabel := displayName " [unavailable]"
+                scheduledTasksMenu.Add(unavailableLabel, (*) => 0)
+                scheduledTasksMenu.Disable(unavailableLabel)
+            }
+        }
+    }
+    catch Error as e
+    {
+        Logger.Error(e.Message, "ScheduledTasks")
+        scheduledTasksMenu.Delete()
+        scheduledTasksMenu.Add("(Task Scheduler unavailable)", (*) => 0)
+        scheduledTasksMenu.Disable("(Task Scheduler unavailable)")
+    }
+}
+
 taskRunnerMenu := Menu()
 taskRunnerMenu.SetColor("edf39f")
 taskRunnerMenu.Add("NoSleep", Menu_TaskRunner_NoSleep)
 taskRunnerMenu.Add("AutoPaste", Menu_TaskRunner_AutoPaste)
+
+scheduledTasksMenu := Menu()
+scheduledTasksMenu.Add("(open to refresh)", (*) => 0)
+scheduledTasksMenu.Disable("(open to refresh)")
+taskRunnerMenu.Add("Scheduled Tasks", scheduledTasksMenu)
 
 shutdownMenu := Menu()
 shutdownMenu.Add("1h", Menu_TaskRunner_Shutdown_1h)
@@ -262,5 +347,6 @@ TaskRunner_ApplyStartupDefaults()
 ^#t::
 {
     TaskRunner_SyncMenuChecks()
+    Menu_TaskRunner_RefreshScheduledTasks()
     taskRunnerMenu.Show()
 }
