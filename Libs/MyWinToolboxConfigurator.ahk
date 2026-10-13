@@ -432,6 +432,7 @@ class MyWinToolboxConfigurator
                 "AutoPaste",
                 "Settings",
                 "Scheduled Tasks",
+                "AHK Scripts",
                 "Backup / Restore",
                 "Diagnostics / Health"
             ]
@@ -472,6 +473,13 @@ class MyWinToolboxConfigurator
         )
 
         this.Tabs.UseTab(7)
+        this.AhkScriptsTab := ConfiguratorAhkScriptsTab(
+            this.Window,
+            this.SettingsTab.ProfileDoc,
+            ObjBindMethod(this, "OnDirtyStateChanged")
+        )
+
+        this.Tabs.UseTab(8)
         this.BackupTab := ConfiguratorBackupTab(
             this.Window,
             [
@@ -486,7 +494,7 @@ class MyWinToolboxConfigurator
             ObjBindMethod(this, "CanRestoreBackup")
         )
 
-        this.Tabs.UseTab(8)
+        this.Tabs.UseTab(9)
         this.DiagnosticsTab := ConfiguratorDiagnosticsTab(
             this.Window,
             this
@@ -523,7 +531,7 @@ class MyWinToolboxConfigurator
     OnTabChanged(*)
     {
         if (
-            this.Tabs.Value = 8
+            this.Tabs.Value = 9
             && this.HasOwnProp("DiagnosticsTab")
             && IsObject(this.DiagnosticsTab)
         )
@@ -2203,6 +2211,7 @@ class MyWinToolboxConfigurator
             settingsSaved := false
             settingsFieldsSaved := false
             scheduledTasksSaved := false
+            ahkScriptsSaved := false
 
             ; Validate every modified document before writing any of them.
             if (this.SnippetsDirty)
@@ -2231,6 +2240,10 @@ class MyWinToolboxConfigurator
             if (this.ScheduledTasksTab.Dirty)
             {
                 this.ScheduledTasksTab.Validate()
+            }
+            if (this.AhkScriptsTab.Dirty)
+            {
+                this.AhkScriptsTab.Validate()
             }
 
             if (this.SnippetsDirty)
@@ -2269,21 +2282,30 @@ class MyWinToolboxConfigurator
                 autoPasteSaved := true
             }
 
-            if (this.SettingsTab.Dirty || this.ScheduledTasksTab.Dirty)
+            if (this.SettingsTab.Dirty || this.ScheduledTasksTab.Dirty || this.AhkScriptsTab.Dirty)
             {
-                ; Both tabs edit the same profile INI. Save them atomically
-                ; through the Settings tab's existing UAC/backup mechanism.
+                ; All three tabs share one INI document and the existing
+                ; backup/UAC save path, avoiding lost updates between tabs.
                 scheduledTasksSaved := this.ScheduledTasksTab.Dirty
+                ahkScriptsSaved := this.AhkScriptsTab.Dirty
                 settingsFieldsSaved := this.SettingsTab.Dirty
                 if (scheduledTasksSaved)
                 {
                     this.ScheduledTasksTab.ApplyToDocument()
+                }
+                if (ahkScriptsSaved)
+                {
+                    this.AhkScriptsTab.ApplyToDocument()
                 }
 
                 this.SettingsTab.Save(!this.SettingsTab.Dirty)
                 if (scheduledTasksSaved)
                 {
                     this.ScheduledTasksTab.MarkSaved()
+                }
+                if (ahkScriptsSaved)
+                {
+                    this.AhkScriptsTab.MarkSaved()
                 }
                 settingsSaved := true
             }
@@ -2304,7 +2326,7 @@ class MyWinToolboxConfigurator
             else if (settingsSaved)
             {
                 this.SetStatus(
-                    "Saved. Scheduled Tasks menu will refresh when you next open it."
+                    "Saved. Scheduled Tasks / AHK Scripts menus refresh when next opened."
                 )
             }
             else if (snippetsSaved || autoPasteSaved)
@@ -2338,6 +2360,7 @@ class MyWinToolboxConfigurator
             || this.AutoPasteTab.Dirty
             || this.SettingsTab.Dirty
             || this.ScheduledTasksTab.Dirty
+            || this.AhkScriptsTab.Dirty
     }
 
     CanCreateBackup()
@@ -2436,6 +2459,11 @@ class MyWinToolboxConfigurator
         if (this.ScheduledTasksTab.Dirty)
         {
             states.Push("Scheduled Tasks modified")
+        }
+
+        if (this.AhkScriptsTab.Dirty)
+        {
+            states.Push("AHK Scripts modified")
         }
 
         if (states.Length = 0)
