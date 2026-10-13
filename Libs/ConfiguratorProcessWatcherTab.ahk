@@ -23,7 +23,7 @@ class ConfiguratorProcessWatcherTab
     {
         this.Window.AddText(
             "x30 y52 w1060 h45",
-            "Watch for process startup/shutdown (not the active window). "
+            "Watch for a process, optionally requiring a window-title fragment. "
                 . "Choose run, stop or ensure for each helper."
         )
         this.Window.AddGroupBox("x25 y105 w1110 h500", "Process Watcher (active Home / Work profile)")
@@ -36,36 +36,41 @@ class ConfiguratorProcessWatcherTab
         this.DeleteButton := this.Window.AddButton("x155 y521 w100 h32", "Delete")
         this.DeleteButton.OnEvent("Click", ObjBindMethod(this, "OnDelete"))
 
-        this.Window.AddText("x475 y135 w500", "Trigger process name (e.g. Game.exe)")
-        this.TriggerEdit := this.Window.AddEdit("x475 y160 w610 h26")
+        this.Window.AddText("x475 y135 w500", "Trigger process name (e.g. GeForceNOW.exe)")
+        this.TriggerEdit := this.Window.AddEdit("x475 y157 w610 h26")
         this.TriggerEdit.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
-        this.Window.AddText("x475 y207 w380", "Helper type")
+        this.Window.AddText("x475 y194 w570", "Window title contains (optional; case-insensitive)")
+        this.TitleEdit := this.Window.AddEdit("x475 y217 w610 h26")
+        this.TitleEdit.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
+
+        this.Window.AddText("x475 y257 w380", "Helper type")
         this.TypeList := this.Window.AddDropDownList(
-            "x475 y231 w340",
+            "x475 y279 w340",
             ["AHK Script", "Executable (.exe)"]
         )
         this.TypeList.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
-        this.Window.AddText("x475 y281 w550", "Helper: EXE name (notepad.exe) or full path; AHK needs full path")
-        this.PathEdit := this.Window.AddEdit("x475 y306 w610 h26")
+        this.Window.AddText("x475 y317 w610", "Helper: EXE name or full path; AHK needs full path")
+        this.PathEdit := this.Window.AddEdit("x475 y339 w610 h26")
         this.PathEdit.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
-        this.Window.AddText("x475 y351 w450", "Action when trigger process runs")
+        this.Window.AddText("x475 y378 w450", "Action when trigger matches")
         this.ModeList := this.Window.AddDropDownList(
-            "x475 y376 w340",
+            "x475 y400 w340",
             ["run - launch once", "stop - close on exit", "ensure - keep running"]
         )
         this.ModeList.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
         this.Window.AddText(
-            "x475 y428 w615 h160",
-            "run: start once; leave running, even if the trigger closes." Chr(10)
-                . "stop: start once; close our helper when the trigger exits." Chr(10)
-                . "ensure: restart a closed helper every 3 seconds while the trigger runs."
+            "x475 y451 w615 h136",
+            "Example: GeForceNOW.exe::Watch_Dogs 2 (process + window title)." Chr(10)
+                . "Window-title filter matches ANY window of the process, not only active."
                 . Chr(10)
-                . "ensure leaves the helper running when the trigger exits." Chr(10)
-                . "Already-running helpers are not adopted or stopped." Chr(10)
+                . "run: start once; stop: close helper when title stops matching."
+                . Chr(10)
+                . "ensure: relaunch a closed helper while title still matches." Chr(10)
+                . "Without a title filter, only the process name is checked." Chr(10)
                 . "Save + Reload applies edited rules."
         )
     }
@@ -79,7 +84,9 @@ class ConfiguratorProcessWatcherTab
             labels := []
             for entry in this.Entries
             {
-                labels.Push(entry["Trigger"] = "" ? "(unnamed)" : entry["Trigger"])
+                title := entry.Get("TitleContains", "")
+                label := entry["Trigger"] (title = "" ? "" : "::" title)
+                labels.Push(label = "" ? "(unnamed)" : label)
             }
             if (labels.Length)
             {
@@ -111,6 +118,7 @@ class ConfiguratorProcessWatcherTab
         try
         {
             this.TriggerEdit.Value := entry ? entry["Trigger"] : ""
+            this.TitleEdit.Value := entry ? entry.Get("TitleContains", "") : ""
             this.TypeList.Choose(entry && entry["Type"] = ProcessWatcher.EXE ? 2 : 1)
             this.PathEdit.Value := entry ? entry["Path"] : ""
             mode := entry ? entry["Mode"] : ProcessWatcher.RUN
@@ -119,6 +127,7 @@ class ConfiguratorProcessWatcherTab
                     : mode = ProcessWatcher.STOP ? 2 : 1
             )
             this.TriggerEdit.Enabled := !!entry
+            this.TitleEdit.Enabled := !!entry
             this.TypeList.Enabled := !!entry
             this.PathEdit.Enabled := !!entry
             this.ModeList.Enabled := !!entry
@@ -147,6 +156,7 @@ class ConfiguratorProcessWatcherTab
         }
         entry := this.Entries[this.SelectedIndex]
         entry["Trigger"] := this.TriggerEdit.Value
+        entry["TitleContains"] := this.TitleEdit.Value
         entry["Type"] := this.TypeList.Value = 2 ? ProcessWatcher.EXE : ProcessWatcher.AHK
         entry["Path"] := this.PathEdit.Value
         entry["Mode"] := this.ModeList.Value = 3 ? ProcessWatcher.ENSURE
@@ -168,6 +178,7 @@ class ConfiguratorProcessWatcherTab
         }
         this.Entries.Push(Map(
             "Trigger", Trim(result.Value),
+            "TitleContains", "",
             "Type", ProcessWatcher.AHK,
             "Path", "",
             "Mode", ProcessWatcher.RUN
@@ -183,7 +194,9 @@ class ConfiguratorProcessWatcherTab
         {
             return
         }
-        trigger := this.Entries[this.SelectedIndex]["Trigger"]
+        selected := this.Entries[this.SelectedIndex]
+        trigger := selected["Trigger"] (selected.Get("TitleContains", "") = ""
+            ? "" : "::" selected["TitleContains"])
         if (MsgBox(
             "Remove watcher for '" trigger "'? This does not stop any process.",
             "Process Watcher",
