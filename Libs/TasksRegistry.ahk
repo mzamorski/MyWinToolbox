@@ -193,21 +193,25 @@ class TasksRegistry
 
         if (type = TasksRegistry.AHK)
         {
-            path := AhkScriptManager.ResolveScriptPath(path)
-
-            ; Do not treat FileExist() as the authority for showing the
-            ; entry as enabled. Windows may report a false negative for a
-            ; drive/path in this process context (mapped drives, ACLs).
-            ; The real launch validates the path and reports actionable
-            ; errors on click, instead of permanently disabling the menu.
+            ; A status lookup is advisory. Neither path normalization nor
+            ; hidden-window enumeration may disable a configured AHK entry.
+            ; The click handler will report an actionable launch error.
             try
             {
-                running := AhkScriptManager.IsRunning(path)
+                fullPath := AhkScriptManager.ResolveScriptPath(path)
+                running := AhkScriptManager.IsRunning(fullPath)
+                return Map(
+                    "Running", running,
+                    "Status", running ? "Running" : "Stopped",
+                    "CanToggle", true
+                )
             }
             catch Error as e
             {
                 Logger.Warning(
-                    "AHK status lookup failed: " path ": " e.Message,
+                    "AHK status lookup failed for '" entry["Name"] "': "
+                        . e.Message " (" e.File ":" e.Line ")"
+                        . " | path=" path,
                     "Tasks"
                 )
                 return Map(
@@ -216,12 +220,6 @@ class TasksRegistry
                     "CanToggle", true
                 )
             }
-
-            return Map(
-                "Running", running,
-                "Status", running ? "Running" : "Stopped",
-                "CanToggle", true
-            )
         }
 
         ; New task types require a handler, not a new Tasks menu/category.
