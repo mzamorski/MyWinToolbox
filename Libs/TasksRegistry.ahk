@@ -251,7 +251,7 @@ class TasksRegistry
 
     static LoadProfile(profilePath)
     {
-        configured := Ini_GetSectionEntries(profilePath, "Tasks")
+        configured := Ini_GetUtf8Section(profilePath, "Tasks")
         if (configured.Count > 0)
         {
             result := []
@@ -263,8 +263,8 @@ class TasksRegistry
         }
 
         ; Compatibility for users who already configured an earlier PR build.
-        legacyScheduled := Ini_GetSectionEntries(profilePath, "ScheduledTasks")
-        legacyScripts := Ini_GetSectionEntries(profilePath, "AhkScripts")
+        legacyScheduled := Ini_GetUtf8Section(profilePath, "ScheduledTasks")
+        legacyScripts := Ini_GetUtf8Section(profilePath, "AhkScripts")
         result := []
         for name, path in legacyScheduled
         {
@@ -274,7 +274,8 @@ class TasksRegistry
             ))
         }
 
-        ahkRoot := Ini_ReadOrDefault(profilePath, "AhkScriptsSettings", "Root", "")
+        rootEntries := Ini_GetUtf8Section(profilePath, "AhkScriptsSettings")
+        ahkRoot := rootEntries.Has("Root") ? rootEntries["Root"] : ""
         for name, path in legacyScripts
         {
             try
