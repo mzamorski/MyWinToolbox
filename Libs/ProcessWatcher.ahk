@@ -1,14 +1,20 @@
 #Requires AutoHotkey v2.0
 
-; Tracks process arrival/departure (not foreground windows). Each rule runs
-; once on arrival, and optionally stops only the helper it actually launched.
+; Tracks process arrival/departure (not foreground windows). Modes:
+; run: once on trigger arrival, leave helper running
+; stop: once on arrival, close only the owned helper on departure
+; ensure: check the helper on every poll while the trigger is present,
+;         restarting it if it disappears; leave it running on departure.
 ; INI: Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
-;      Editor.exe = exe|notepad.exe|run
+;      ShareX.exe = exe|notepad.exe|ensure
 class ProcessWatcher
 {
     static IntervalMs := 3000
     static AHK := "ahk"
     static EXE := "exe"
+    static RUN := "run"
+    static STOP := "stop"
+    static ENSURE := "ensure"
 
     __New(entries := [])
     {
@@ -20,7 +26,7 @@ class ProcessWatcher
                 "Trigger", entry["Trigger"],
                 "Type", entry["Type"],
                 "Path", entry["Path"],
-                "StopOnExit", entry["StopOnExit"],
+                "Mode", entry["Mode"],
                 "WasPresent", false,
                 "OwnedPid", 0,
                 "OwnedHandle", 0
@@ -88,9 +94,14 @@ class ProcessWatcher
                 throw Error("Duplicate ProcessWatcher trigger: " trigger)
             }
             seen[key] := true
-            if (entry["StopOnExit"] != true && entry["StopOnExit"] != false)
+            mode := StrLower(Trim("" entry["Mode"]))
+            if (
+                mode != ProcessWatcher.RUN
+                && mode != ProcessWatcher.STOP
+                && mode != ProcessWatcher.ENSURE
+            )
             {
-                throw Error("Invalid StopOnExit for " trigger)
+                throw Error("Invalid ProcessWatcher mode for " trigger ": " mode)
             }
         }
         return true
@@ -104,21 +115,26 @@ class ProcessWatcher
             parts := StrSplit(entry["Value"], "|")
             if (parts.Length != 3)
             {
-                throw Error("ProcessWatcher: " entry["Name"] " must be type|path|run_or_stop.")
+                throw Error("ProcessWatcher: " entry["Name"] " must be type|path|run_or_stop_or_ensure.")
             }
             type := StrLower(Trim(parts[1]))
             behavior := StrLower(Trim(parts[3]))
             ; Existing configurations using 'keep' remain readable, but
             ; Configurator always writes the canonical 'run' spelling.
-            if (behavior != "stop" && behavior != "run" && behavior != "keep")
+            if (
+                behavior != ProcessWatcher.STOP
+                && behavior != ProcessWatcher.RUN
+                && behavior != ProcessWatcher.ENSURE
+                && behavior != "keep"
+            )
             {
-                throw Error("ProcessWatcher: use 'run' or 'stop' for " entry["Name"])
+                throw Error("ProcessWatcher: use 'run', 'stop' or 'ensure' for " entry["Name"])
             }
             result.Push(Map(
                 "Trigger", Trim(entry["Name"]),
                 "Type", type,
                 "Path", Trim(parts[2]),
-                "StopOnExit", behavior = "stop"
+                "Mode", behavior = "keep" ? ProcessWatcher.RUN : behavior
             ))
         }
         ProcessWatcher.ValidateEntries(result)
@@ -134,7 +150,7 @@ class ProcessWatcher
             result.Push(Map(
                 "Name", Trim(entry["Trigger"]),
                 "Value", StrLower(entry["Type"]) "|" Trim(entry["Path"])
-                    "|" (entry["StopOnExit"] ? "stop" : "run")
+                    "|" StrLower(entry["Mode"])
             ))
         }
         return result
@@ -162,7 +178,7 @@ class ProcessWatcher
         for rule in this.Rules
         {
             pid := rule["OwnedPid"]
-            shouldStop := pid && rule["StopOnExit"] && rule["OwnedHandle"]
+            shouldStop := pid && rule["Mode"] = ProcessWatcher.STOP && rule["OwnedHandle"]
             this.Leave(rule)
             if (shouldStop)
             {
@@ -180,29 +196,49 @@ class ProcessWatcher
             try
             {
                 present := !!this.FindProcess(rule["Trigger"])
-                if (present && !rule["WasPresent"])
+                if (!present)
                 {
-                    ; Mark before launching: failures do not cause a new
-                    ; launch attempt every three seconds.
-                    rule["WasPresent"] := true
-                    if (!this.IsActionRunning(rule))
+                    if (rule["WasPresent"])
                     {
-                        pid := this.StartAction(rule)
-                        rule["OwnedPid"] := pid
-                        rule["OwnedHandle"] := this.OpenOwnedHandle(pid)
-                        Logger.Info("Started " rule["Path"] " for " rule["Trigger"], "ProcessWatcher")
+                        rule["WasPresent"] := false
+                        this.Leave(rule)
                     }
-                    else
+                    continue
+                }
+
+                firstSeen := !rule["WasPresent"]
+                if (firstSeen)
+                {
+                    rule["WasPresent"] := true
+                }
+                if (!firstSeen && rule["Mode"] != ProcessWatcher.ENSURE)
+                {
+                    ; run/stop only react to the trigger's rising edge.
+                    continue
+                }
+
+                if (this.IsActionRunning(rule))
+                {
+                    if (firstSeen)
                     {
                         Logger.Info("Helper already running; not taking ownership: "
                             rule["Path"], "ProcessWatcher")
                     }
+                    continue
                 }
-                else if (!present && rule["WasPresent"])
-                {
-                    rule["WasPresent"] := false
-                    this.Leave(rule)
-                }
+
+                ; For ensure, the previous helper may have exited while the
+                ; trigger stayed alive. Release its process handle before
+                ; tracking the newly launched instance.
+                this.ForgetOwned(rule)
+
+                ; A failed launch does not get retried for run/stop until
+                ; a new trigger arrival. ensure retries while it is missing.
+                pid := this.StartAction(rule)
+                rule["OwnedPid"] := pid
+                rule["OwnedHandle"] := this.OpenOwnedHandle(pid)
+                Logger.Info("Started " rule["Path"] " for " rule["Trigger"],
+                    "ProcessWatcher")
             }
             catch Error as e
             {
@@ -216,7 +252,7 @@ class ProcessWatcher
     {
         try
         {
-            if (rule["OwnedPid"] && rule["StopOnExit"])
+            if (rule["OwnedPid"] && rule["Mode"] = ProcessWatcher.STOP)
             {
                 this.StopAction(rule)
                 Logger.Info("Stopped helper for " rule["Trigger"], "ProcessWatcher")
@@ -229,13 +265,18 @@ class ProcessWatcher
         }
         finally
         {
-            if (rule["OwnedHandle"])
-            {
-                DllCall("Kernel32\CloseHandle", "Ptr", rule["OwnedHandle"])
-            }
-            rule["OwnedHandle"] := 0
-            rule["OwnedPid"] := 0
+            this.ForgetOwned(rule)
         }
+    }
+
+    ForgetOwned(rule)
+    {
+        if (rule["OwnedHandle"])
+        {
+            DllCall("Kernel32\\CloseHandle", "Ptr", rule["OwnedHandle"])
+        }
+        rule["OwnedHandle"] := 0
+        rule["OwnedPid"] := 0
     }
 
     FindProcess(exeName)
