@@ -133,14 +133,17 @@ class ScheduledTasksManager
 
     ; Running state is independent of whether the task is enabled for
     ; future triggers. Stop ends current instances, Run requests one now.
-    static SetRunning(taskPath, shouldRun)
+    static SetRunning(taskPath, shouldRun, service := unset)
     {
         path := ScheduledTasksManager.NormalizePath(taskPath)
         shouldRun := !!shouldRun
 
         try
         {
-            service := ScheduledTasksManager.Connect()
+            if (!IsSet(service))
+            {
+                service := ScheduledTasksManager.Connect()
+            }
             task := ScheduledTasksManager.GetTask(service, path)
             state := task.State
             isRunning := ScheduledTasksManager.IsRunningState(state)
