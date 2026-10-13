@@ -147,8 +147,8 @@ class ScheduledTasksManager
                 if (!task.Enabled)
                 {
                     throw Error(
-                        "Task is disabled in Task Scheduler. "
-                            . "Enable it in Scheduling (Enable / Disable) before starting."
+                        "Task is disabled in Windows Task Scheduler. "
+                            . "Enable it directly in Task Scheduler before starting."
                     )
                 }
 
