@@ -70,12 +70,14 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + M` | Moves selected Explorer files or folders into a newly named subdirectory. |
 | `Win + Ctrl + Volume Mute` | Toggles mute for the active application's process through the native Windows Core Audio API. |
 | `Ctrl + Win + A` | Enables or disables NoSleep. While enabled, it keeps the system and display awake and moves the pointer slightly after 10 minutes of idle time. |
-| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, per-task enable/disable toggles for configured Windows Scheduled Tasks, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
+| `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, live Run/Stop and separate scheduling enable/disable controls for configured Windows Scheduled Tasks, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
 | `Ctrl + Win + W` | Opens **Window Toolbox** for the currently active window. |
 
 ### Scheduled Tasks (Windows Task Scheduler)
 
-Use **Ctrl + Win + T → Scheduled Tasks** to enable or disable individual tasks from Windows Task Scheduler. A checkmark means the task is currently **enabled**. Each time you open the menu, MyWinToolbox queries the real task state via the Windows Task Scheduler COM API; missing or inaccessible tasks appear as unavailable. Toggle operations are verified after changing state. Protected tasks may require one UAC prompt for the requested operation.
+Use **Ctrl + Win + T → Scheduled Tasks** to inspect and control **actual running instances** of tasks from Windows Task Scheduler. Every menu opening queries `IRegisteredTask.State` through the COM API, including after a MyWinToolbox restart. A **checkmark means Running**, not merely enabled. Each entry includes its current state: **Running**, **Ready**, **Queued**, or **Disabled**. Click a Running task to request **Stop** (all current instances), or a Ready task to request **Run** immediately. Queued/Disabled/Unknown tasks cannot be started via the main toggle; enable the task first if it is disabled. The task may complete before the next refresh, and some task definitions disallow manual starts. Missing or inaccessible tasks appear as unavailable.
+
+The separate **Scheduling (Enable / Disable)** submenu controls the task's `Enabled` flag (whether future triggers may start it). Its checkmarks mean *enabled*. This is intentionally independent of the main running-state checkmarks: **disabling scheduling does not stop an existing instance**, and **stopping an instance does not prevent a future scheduled start**. For example, if you want a background task not to consume resources while gaming, stop its running instance **and** disable scheduling. Protected tasks may require administrator approval; only the specific operation is elevated.
 
 Manage the task list in **Ctrl + Win + Shift + S → Scheduled Tasks** inside the existing Configurator. Define a display label and a full Task Scheduler task path. **Save** updates the menu configuration immediately, without restarting MyWinToolbox. Configurations are independent for Home and Work, stored in the active profile's `[ScheduledTasks]` INI section, and included in normal profile backups.
 
@@ -87,7 +89,7 @@ Backup = \MyJobs\NightlyBackup
 Disk cleanup = \Maintenance\Cleanup
 ```
 
-A task in the root folder can be written as `\MyTask`. The name must match the Task Scheduler entry, not a Windows service or executable. Disabling a task prevents its future scheduled invocations **but does not stop a process that is already running**. Re-enabling it restores its scheduled triggers; it does not necessarily run a missed invocation.
+A task in the root folder can be written as `\MyTask`. The name must match the Task Scheduler entry, not a Windows service or executable. A requested Run/Stop transition is reflected when you next open the menu; it can be asynchronous. Re-enabling scheduling does not necessarily run a missed invocation. The Task Scheduler state describes task instances, not independently spawned/detached child processes.
 
 ### Window Toolbox
 
