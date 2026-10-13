@@ -249,54 +249,110 @@ class TasksRegistry
         )
     }
 
+    static ReadRawSection(profilePath, sectionName)
+    {
+        if (!FileExist(profilePath))
+        {
+            throw IOError(profilePath)
+        }
+
+        entries := []
+        activeSection := false
+
+        ; Preserve file order and literal Windows backslashes.
+        for line in StrSplit(FileRead(profilePath, "UTF-8"), "`n", "`r")
+        {
+            trimmed := Trim(line)
+            if (RegExMatch(trimmed, "^\[(.*)\]$", &match))
+            {
+                activeSection := StrLower(Trim(match[1])) = StrLower(sectionName)
+                continue
+            }
+            if (
+                !activeSection || trimmed = ""
+                || SubStr(trimmed, 1, 1) = ";"
+            )
+            {
+                continue
+            }
+
+            separator := InStr(line, "=")
+            if (!separator)
+            {
+                continue
+            }
+
+            name := Trim(SubStr(line, 1, separator - 1))
+            value := Trim(SubStr(line, separator + 1))
+            entries.Push(Map("Name", name, "Value", value))
+        }
+
+        return entries
+    }
+
     static LoadProfile(profilePath)
     {
-        configured := Ini_GetUtf8Section(profilePath, "Tasks")
-        if (configured.Count > 0)
+        configured := TasksRegistry.ReadRawSection(profilePath, "Tasks")
+        if (configured.Length > 0)
         {
             result := []
-            for name, definition in configured
+            for entry in configured
             {
-                result.Push(Map("Name", name, "Definition", definition))
+                result.Push(Map(
+                    "Name", entry["Name"],
+                    "Definition", entry["Value"]
+                ))
             }
             return result
         }
 
-        ; Compatibility for users who already configured an earlier PR build.
-        legacyScheduled := Ini_GetUtf8Section(profilePath, "ScheduledTasks")
-        legacyScripts := Ini_GetUtf8Section(profilePath, "AhkScripts")
+        ; Compatibility for users who configured the earlier PR builds.
+        legacyScheduled := TasksRegistry.ReadRawSection(profilePath, "ScheduledTasks")
+        legacyScripts := TasksRegistry.ReadRawSection(profilePath, "AhkScripts")
         result := []
-        for name, path in legacyScheduled
+        for entry in legacyScheduled
         {
             result.Push(Map(
-                "Name", name,
-                "Definition", TasksRegistry.Encode(TasksRegistry.SCHEDULER, path)
+                "Name", entry["Name"],
+                "Definition", TasksRegistry.Encode(
+                    TasksRegistry.SCHEDULER, entry["Value"]
+                )
             ))
         }
 
-        rootEntries := Ini_GetUtf8Section(profilePath, "AhkScriptsSettings")
-        ahkRoot := rootEntries.Has("Root") ? rootEntries["Root"] : ""
-        for name, path in legacyScripts
+        rootEntries := TasksRegistry.ReadRawSection(
+            profilePath, "AhkScriptsSettings"
+        )
+        ahkRoot := ""
+        for entry in rootEntries
         {
+            if (StrLower(entry["Name"]) = "root")
+            {
+                ahkRoot := entry["Value"]
+                break
+            }
+        }
+
+        for entry in legacyScripts
+        {
+            name := entry["Name"]
+            path := entry["Value"]
             try
             {
                 mapped := TasksRegistry.LegacyEntries(
                     [], [Map("Name", name, "Value", path)], ahkRoot
                 )
-                result.Push(Map(
-                    "Name", name,
-                    "Definition", TasksRegistry.Encode(
-                        TasksRegistry.AHK, mapped[1]["Value"]
-                    )
-                ))
+                path := mapped[1]["Value"]
             }
             catch Error
             {
-                result.Push(Map(
-                    "Name", name,
-                    "Definition", TasksRegistry.Encode(TasksRegistry.AHK, path)
-                ))
+                ; Leave invalid old paths visible as unavailable.
             }
+
+            result.Push(Map(
+                "Name", name,
+                "Definition", TasksRegistry.Encode(TasksRegistry.AHK, path)
+            ))
         }
         return result
     }
