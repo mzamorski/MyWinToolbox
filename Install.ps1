@@ -121,6 +121,8 @@ Stop-MyWinToolboxScheduledTask -TaskExists $scheduledTaskExists
 
 $obsoleteDeploymentFiles = @(
     'Libs\TextSnippetsEditor.ahk'
+    'Libs\ConfiguratorScheduledTasksTab.ahk'
+    'Libs\ConfiguratorAhkScriptsTab.ahk'
 )
 
 foreach ($relativePath in $obsoleteDeploymentFiles) {
