@@ -273,7 +273,7 @@ class ProcessWatcher
     {
         if (rule["OwnedHandle"])
         {
-            DllCall("Kernel32\\CloseHandle", "Ptr", rule["OwnedHandle"])
+            DllCall("Kernel32\CloseHandle", "Ptr", rule["OwnedHandle"])
         }
         rule["OwnedHandle"] := 0
         rule["OwnedPid"] := 0
