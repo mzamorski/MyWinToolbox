@@ -10,6 +10,7 @@
 #Include Libs\Logger.ahk
 #Include Libs\WinAPI.ahk
 #Include Libs\MenuUtils.ahk
+#Include Libs\ScheduledTasksManager.ahk
 #include Libs\Externals\_JXON.ahk
 #Include Libs\Externals\XHotstring.ahk
 #Include Libs\IOUtils.ahk
@@ -24,6 +25,7 @@
 #Include Libs\WindowToolbox.ahk
 #Include Libs\ConfiguratorAutoPasteTab.ahk
 #Include Libs\ConfiguratorSettingsTab.ahk
+#Include Libs\ConfiguratorScheduledTasksTab.ahk
 #Include Libs\ConfiguratorBackupTab.ahk
 #Include Libs\ConfiguratorDiagnosticsTab.ahk
 #Include Libs\MyWinToolboxConfigurator.ahk
