@@ -83,6 +83,125 @@ AssertThrows(
     "INI-breaking menu labels should be rejected"
 )
 
+; A COM-compatible fake lets the Run/Stop contract be tested without
+; changing any real Windows Scheduled Tasks.
+class FakeRegisteredTask
+{
+    __New(state := 3, enabled := true)
+    {
+        this.State := state
+        this.Enabled := enabled
+        this.StartCalls := 0
+        this.StopCalls := 0
+    }
+
+    Run(parameters)
+    {
+        this.StartCalls += 1
+        this.State := 4
+    }
+
+    Stop(flags)
+    {
+        if (flags != 0)
+        {
+            throw Error("Stop should use flags = 0")
+        }
+        this.StopCalls += 1
+        this.State := 3
+    }
+}
+
+class FakeTaskFolder
+{
+    __New(task)
+    {
+        this.Task := task
+    }
+
+    GetTask(name)
+    {
+        if (name != "Test")
+        {
+            throw Error("Unexpected task name: " name)
+        }
+        return this.Task
+    }
+}
+
+class FakeSchedulerService
+{
+    __New(task)
+    {
+        this.Task := task
+    }
+
+    GetFolder(path)
+    {
+        if (path != "\Unit")
+        {
+            throw Error("Unexpected folder path: " path)
+        }
+        return FakeTaskFolder(this.Task)
+    }
+}
+
+AssertTrue(
+    ScheduledTasksManager.IsRunningState(4),
+    "TASK_STATE_RUNNING should set the checkmark"
+)
+for inactiveState in [0, 1, 2, 3]
+{
+    AssertTrue(
+        !ScheduledTasksManager.IsRunningState(inactiveState),
+        "unknown/disabled/queued/ready task must not get a Running checkmark"
+    )
+}
+AssertEqual("Ready", ScheduledTasksManager.GetStateLabel(3), "ready state should be labeled")
+AssertEqual("Running", ScheduledTasksManager.GetStateLabel(4), "running state should be labeled")
+
+fakeTask := FakeRegisteredTask(3, true)
+fakeService := FakeSchedulerService(fakeTask)
+
+status := ScheduledTasksManager.GetTaskStatus(fakeService, "\Unit\Test")
+AssertTrue(
+    status["Enabled"] && !status["Running"],
+    "an enabled but stopped task must have no running checkmark"
+)
+ScheduledTasksManager.SetRunning("\Unit\Test", true, fakeService)
+AssertEqual(1, fakeTask.StartCalls, "Run should be called for a stopped enabled task")
+AssertTrue(fakeTask.State = 4, "fake task should enter running state")
+
+ScheduledTasksManager.SetRunning("\Unit\Test", false, fakeService)
+AssertEqual(1, fakeTask.StopCalls, "Stop should be called for a running task")
+AssertTrue(fakeTask.State = 3, "fake task should return to ready state")
+
+fakeTask.Enabled := false
+status := ScheduledTasksManager.GetTaskStatus(fakeService, "\Unit\Test")
+AssertTrue(!status["Enabled"] && !status["Running"], "disabled task is not running")
+AssertThrows(
+    () => ScheduledTasksManager.SetRunning("\Unit\Test", true, fakeService),
+    "start should reject disabled tasks"
+)
+AssertEqual(1, fakeTask.StartCalls, "disabled task should not be started")
+
+; Disabling scheduling does not forcibly stop an already running task.
+fakeTask.State := 4
+status := ScheduledTasksManager.GetTaskStatus(fakeService, "\Unit\Test")
+AssertTrue(
+    !status["Enabled"] && status["Running"],
+    "running state must remain independent from Enabled"
+)
+ScheduledTasksManager.SetRunning("\Unit\Test", false, fakeService)
+AssertEqual(2, fakeTask.StopCalls, "running task can be stopped despite disabled scheduling")
+
+fakeTask.Enabled := true
+fakeTask.State := 2
+AssertThrows(
+    () => ScheduledTasksManager.SetRunning("\Unit\Test", true, fakeService),
+    "queued task should not be run a second time"
+)
+
 tempPath := A_Temp "\MyWinToolbox-ScheduledTasks-" A_TickCount ".ini"
 try
 {
