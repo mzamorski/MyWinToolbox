@@ -73,26 +73,25 @@ If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`
 | `Ctrl + Win + T` | Opens the Task Runner menu, with options for NoSleep, AutoPaste, a unified Tasks menu for Windows scheduled jobs and independent AHK v2 scripts, shutdown after 1 or 2 hours, cancellation of a pending shutdown, and continuous trimming of whitespace from clipboard updates. |
 | `Ctrl + Win + W` | Opens **Window Toolbox** for the currently active window. |
 
-### Tasks: scheduled jobs and external AHK scripts
+### Tasks: one extensible list
 
-**Ctrl + Win + T → Tasks** displays Windows Task Scheduler jobs and independent AutoHotkey v2 scripts together. Entries are prefixed **Scheduler:** or **AHK:** to distinguish the type; a checkmark means that the particular task or script is **currently running**, not merely registered/enabled. Statuses are re-read every time the menu opens, including after a MyWinToolbox restart.
+**Ctrl + Win + T → Tasks** contains **one ordered list** regardless of whether the entry is a Windows Scheduled Task or an external AutoHotkey script. Entries display only their configured names, without separate Scheduler/AHK categories. A checkmark means **currently running**; each menu opening queries the state again, including after restarting MyWinToolbox.
 
-- **Scheduler:** uses the Task Scheduler COM API to display its state (Running, Ready, Queued, Disabled). Click a running task to request Stop or a ready task to request Run. The separate **Scheduling (Enable / Disable)** submenu controls future scheduled triggers; its checkmarks mean **enabled**. Disabling scheduling does not stop an already-running task, and stopping a task does not prevent its next automatic run. Some tasks disallow manual starts, and protected tasks may require administrator approval.
-- **AHK:** identifies the exact script via its own hidden AutoHotkey main-window title, rather than by shared interpreter process name. It detects scripts launched independently. Click to start an absent script with the AHK v2 interpreter, or to request a normal close for a running script (allowing OnExit handlers to release held keys/buttons). The checkmark reflects whether the script is running, not whether an internal game macro is active. Missing files are displayed as unavailable.
-
-**Ctrl + Win + Shift + S → Tasks** opens a **single Configurator tab** for both task types. Use **+ Add**, select *Scheduled Task* or *AHK Script*, and supply a display name and full path. The entries are saved in the active profile's INI file, using two compatible sections:
+Use **Ctrl + Win + Shift + S → Tasks** to manage every entry in the existing Configurator. Each item has a display name, type and path. All entries are stored in the active profile's **single `[Tasks]` section**, with a `type|path` value:
 
 ```ini
-[ScheduledTasks]
-Backup = \MyJobs\NightlyBackup
-
-[AhkScripts]
-WARDOGS Hammer = C:\Repos\MyWinToolbox-Private\Games\WARDOGS-Hammer.ahk
+[Tasks]
+Backup = scheduler|\MyJobs\NightlyBackup
+WARDOGS Hammer = ahk|C:\Repos\MyWinToolbox-Private\Games\WARDOGS-Hammer.ahk
+Minecraft = ahk|C:\Repos\MyWinToolbox-Private\Games\Minecraft.ahk
 ```
 
-Use the real full location of your private repository in place of `C:\Repos\MyWinToolbox-Private`. **AHK script paths must be absolute; no `[AhkScriptsSettings]` section or root-folder configuration is necessary.** Scheduler paths are the full names inside Windows Task Scheduler, beginning with a backslash. Saving updates the Tasks menu on its next opening without restarting MyWinToolbox. The settings remain independent for Home and Work and are included in normal configuration backups.
+The supported types are currently `scheduler` and `ahk`. The typed entry format is extensible: a future `exe` handler can be added without changing the INI layout, Configurator or the Tasks menu. Unknown task types are displayed as unavailable, rather than executed. AHK paths must be absolute, so there is no separate root-folder setting. Home and Work profiles have independent `[Tasks]` sections, covered by regular configuration backups.
 
-For the WARDOGS Hammer script, the menu toggles the **script process**. Its own **F6** hotkey still controls the hammer macro and **F8** exits the script. The script's OnExit cleanup remains available when closed normally via the Tasks menu.
+- **Scheduler entries:** show Running, Ready, Queued or Disabled. Click a running entry to request Stop or a ready entry to request Run. The separate **Scheduling (Enable / Disable)** action controls future scheduled triggers (checkmark = enabled). Stopping a task does not disable its future schedule; disabling its schedule does not stop a running instance. Protected tasks may require UAC approval.
+- **AHK entries:** detect the exact script's hidden AutoHotkey main window, even when started outside MyWinToolbox. Clicking starts it via the AHK v2 interpreter or requests normal closure (so `OnExit` handlers can execute). A checkmark means the script is loaded, not that any internal macro is active. WARDOGS-Hammer uses **F6** for its internal macro and **F8** to exit.
+
+**Legacy migration:** earlier experimental builds used `[ScheduledTasks]`, `[AhkScripts]` and optionally `[AhkScriptsSettings]`. MyWinToolbox can still read them until migrated. Opening and saving Configurator → Tasks converts the entries to one `[Tasks]` section and removes the old sections. Normal changes apply on next menu opening without restarting the toolbox.
 
 ### Window Toolbox
 
