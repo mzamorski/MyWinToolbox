@@ -24,7 +24,7 @@ class ConfiguratorProcessWatcherTab
         this.Window.AddText(
             "x30 y52 w1060 h45",
             "Watch for process startup/shutdown (not the active window). "
-                . "Start a helper once when the trigger appears."
+                . "Choose run, stop or ensure for each helper."
         )
         this.Window.AddGroupBox("x25 y105 w1110 h500", "Process Watcher (active Home / Work profile)")
         this.Window.AddText("x45 y135 w390", "Watched executables")
@@ -51,22 +51,21 @@ class ConfiguratorProcessWatcherTab
         this.PathEdit := this.Window.AddEdit("x475 y306 w610 h26")
         this.PathEdit.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
-        this.StopCheck := this.Window.AddCheckBox(
-            "x475 y351 w610 h24",
-            "Stop helper when watched process exits (unchecked = run)"
+        this.Window.AddText("x475 y351 w450", "Action when trigger process runs")
+        this.ModeList := this.Window.AddDropDownList(
+            "x475 y376 w340",
+            ["run - launch once", "stop - close on exit", "ensure - keep running"]
         )
-        this.StopCheck.OnEvent("Click", ObjBindMethod(this, "OnChanged"))
+        this.ModeList.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
         this.Window.AddText(
-            "x475 y401 w615 h145",
-            "Example: ShareX.exe -> notepad.exe (EXE, run)" Chr(10)
-                . "Checks run every 3 seconds, starting with MyWinToolbox startup." Chr(10)
-                . "One action is triggered per process appearance, not on every poll."
+            "x475 y428 w615 h160",
+            "run: start once; leave running, even if the trigger closes." Chr(10)
+                . "stop: start once; close our helper when the trigger exits." Chr(10)
+                . "ensure: restart a closed helper every 3 seconds while the trigger runs."
                 . Chr(10)
-                . "An already-running helper is never adopted or stopped."
-                . Chr(10)
-                . "run leaves it running; stop closes it (EXE: forced termination)."
-                . Chr(10)
+                . "ensure leaves the helper running when the trigger exits." Chr(10)
+                . "Already-running helpers are not adopted or stopped." Chr(10)
                 . "Save + Reload applies edited rules."
         )
     }
@@ -114,11 +113,15 @@ class ConfiguratorProcessWatcherTab
             this.TriggerEdit.Value := entry ? entry["Trigger"] : ""
             this.TypeList.Choose(entry && entry["Type"] = ProcessWatcher.EXE ? 2 : 1)
             this.PathEdit.Value := entry ? entry["Path"] : ""
-            this.StopCheck.Value := entry && entry["StopOnExit"] ? 1 : 0
+            mode := entry ? entry["Mode"] : ProcessWatcher.RUN
+            this.ModeList.Choose(
+                mode = ProcessWatcher.ENSURE ? 3
+                    : mode = ProcessWatcher.STOP ? 2 : 1
+            )
             this.TriggerEdit.Enabled := !!entry
             this.TypeList.Enabled := !!entry
             this.PathEdit.Enabled := !!entry
-            this.StopCheck.Enabled := !!entry
+            this.ModeList.Enabled := !!entry
         }
         finally
         {
@@ -146,7 +149,8 @@ class ConfiguratorProcessWatcherTab
         entry["Trigger"] := this.TriggerEdit.Value
         entry["Type"] := this.TypeList.Value = 2 ? ProcessWatcher.EXE : ProcessWatcher.AHK
         entry["Path"] := this.PathEdit.Value
-        entry["StopOnExit"] := !!this.StopCheck.Value
+        entry["Mode"] := this.ModeList.Value = 3 ? ProcessWatcher.ENSURE
+            : this.ModeList.Value = 2 ? ProcessWatcher.STOP : ProcessWatcher.RUN
         this.SetDirty()
         this.RefreshEntries(this.SelectedIndex, false)
     }
@@ -166,7 +170,7 @@ class ConfiguratorProcessWatcherTab
             "Trigger", Trim(result.Value),
             "Type", ProcessWatcher.AHK,
             "Path", "",
-            "StopOnExit", true
+            "Mode", ProcessWatcher.RUN
         ))
         this.RefreshEntries(this.Entries.Length)
         this.SetDirty()
