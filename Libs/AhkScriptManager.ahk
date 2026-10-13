@@ -62,7 +62,15 @@ class AhkScriptManager
     static ResolveScriptPath(scriptPath)
     {
         path := StrReplace(AhkScriptManager.ValidateScriptPath(scriptPath), "/", "\")
-        ; Canonicalize existing or non-existing paths for exact AHK window matching.
+        ; A fully qualified path without dot components is already canonical.
+        ; Avoid Win32 path-resolution calls during each menu refresh when no
+        ; normalization is needed (including non-system drives such as E:).
+        if (!RegExMatch(path, "(^|\\)\.{1,2}(\\|$)"))
+        {
+            return path
+        }
+
+        ; Resolve paths containing . or .. for exact AHK window matching.
         buffer := Buffer(32768 * 2, 0)
         length := DllCall(
             "Kernel32\GetFullPathNameW",
