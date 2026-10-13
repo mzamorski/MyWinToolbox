@@ -266,35 +266,12 @@ Menu_TaskRunner_ToggleTask(entry, *)
     }
 }
 
-Menu_TaskRunner_ToggleScheduling(entry, *)
-{
-    try
-    {
-        enabled := TasksRegistry.ToggleScheduling(entry)
-        TrayTip(
-            "Tasks",
-            entry["Name"] ": scheduling " (enabled ? "enabled" : "disabled")
-                . ". This does not start/stop running instances."
-        )
-    }
-    catch Error as e
-    {
-        MsgBox(
-            "Could not change scheduling for '" entry["Name"] "':" Chr(10) e.Message,
-            "MyWinToolbox - Tasks",
-            "Iconx"
-        )
-    }
-}
-
 Menu_TaskRunner_RefreshTasks()
 {
-    global tasksMenu, tasksEnabledMenu, ProfileConfigFilePath
+    global tasksMenu, ProfileConfigFilePath
 
     tasksMenu.Delete()
-    tasksEnabledMenu.Delete()
     entries := []
-    enabledCount := 0
     schedulerService := 0
 
     try
@@ -337,18 +314,6 @@ Menu_TaskRunner_RefreshTasks()
                 tasksMenu.Disable(label)
             }
 
-            if (status["SupportsScheduling"])
-            {
-                tasksEnabledMenu.Add(
-                    name,
-                    Menu_TaskRunner_ToggleScheduling.Bind(entry)
-                )
-                enabledCount += 1
-                if (status["SchedulingEnabled"])
-                {
-                    tasksEnabledMenu.Check(name)
-                }
-            }
         }
         catch Error as e
         {
@@ -359,11 +324,6 @@ Menu_TaskRunner_RefreshTasks()
         }
     }
 
-    if (enabledCount > 0)
-    {
-        tasksMenu.Add()
-        tasksMenu.Add("Scheduling (Enable / Disable)", tasksEnabledMenu)
-    }
 }
 
 taskRunnerMenu := Menu()
@@ -372,7 +332,6 @@ taskRunnerMenu.Add("NoSleep", Menu_TaskRunner_NoSleep)
 taskRunnerMenu.Add("AutoPaste", Menu_TaskRunner_AutoPaste)
 
 tasksMenu := Menu()
-tasksEnabledMenu := Menu()
 tasksMenu.Add("(open to refresh)", (*) => 0)
 tasksMenu.Disable("(open to refresh)")
 taskRunnerMenu.Add("Tasks", tasksMenu)
