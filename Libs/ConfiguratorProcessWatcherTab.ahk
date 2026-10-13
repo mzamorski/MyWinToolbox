@@ -47,25 +47,25 @@ class ConfiguratorProcessWatcherTab
         )
         this.TypeList.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
-        this.Window.AddText("x475 y281 w550", "Absolute path to helper")
+        this.Window.AddText("x475 y281 w550", "Helper: EXE name (notepad.exe) or full path; AHK needs full path")
         this.PathEdit := this.Window.AddEdit("x475 y306 w610 h26")
         this.PathEdit.OnEvent("Change", ObjBindMethod(this, "OnChanged"))
 
         this.StopCheck := this.Window.AddCheckBox(
             "x475 y351 w610 h24",
-            "Stop helper when watched process exits"
+            "Stop helper when watched process exits (unchecked = run)"
         )
         this.StopCheck.OnEvent("Click", ObjBindMethod(this, "OnChanged"))
 
         this.Window.AddText(
             "x475 y401 w615 h145",
-            "Example: Game.exe -> C:\Scripts\GameHelper.ahk" Chr(10)
+            "Example: ShareX.exe -> notepad.exe (EXE, run)" Chr(10)
                 . "Checks run every 3 seconds, starting with MyWinToolbox startup." Chr(10)
                 . "One action is triggered per process appearance, not on every poll."
                 . Chr(10)
                 . "An already-running helper is never adopted or stopped."
                 . Chr(10)
-                . "AHK scripts close normally; EXE stop forcibly terminates the helper."
+                . "run leaves it running; stop closes it (EXE: forced termination)."
                 . Chr(10)
                 . "Save + Reload applies edited rules."
         )
