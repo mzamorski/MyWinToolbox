@@ -2201,6 +2201,7 @@ class MyWinToolboxConfigurator
             hotStringsSaved := false
             autoPasteSaved := false
             settingsSaved := false
+            settingsFieldsSaved := false
             scheduledTasksSaved := false
 
             ; Validate every modified document before writing any of them.
@@ -2273,6 +2274,7 @@ class MyWinToolboxConfigurator
                 ; Both tabs edit the same profile INI. Save them atomically
                 ; through the Settings tab's existing UAC/backup mechanism.
                 scheduledTasksSaved := this.ScheduledTasksTab.Dirty
+                settingsFieldsSaved := this.SettingsTab.Dirty
                 if (scheduledTasksSaved)
                 {
                     this.ScheduledTasksTab.ApplyToDocument()
@@ -2293,7 +2295,7 @@ class MyWinToolboxConfigurator
                 this.DiagnosticsTab.Refresh()
             }
 
-            if (hotStringsSaved || (settingsSaved && !scheduledTasksSaved))
+            if (hotStringsSaved || settingsFieldsSaved)
             {
                 this.SetStatus(
                     "Saved. HotStrings/Settings require reload; use Save + Reload to apply."
