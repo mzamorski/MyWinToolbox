@@ -110,6 +110,61 @@ class FakeProcessWatcher extends ProcessWatcher
     }
 }
 
+; Counts actual OS query boundaries without requiring running applications.
+class CountingProcessWatcher extends FakeProcessWatcher
+{
+    __New(entries)
+    {
+        this.ProcessLookups := Map()
+        this.WindowLookups := Map()
+        this.TitleLookups := Map()
+        super.__New(entries)
+    }
+
+    Count(lookups, key)
+    {
+        lookups[key] := lookups.Get(key, 0) + 1
+    }
+
+    FindProcess(name)
+    {
+        this.Count(this.ProcessLookups, StrLower(name))
+        return super.FindProcess(name)
+    }
+
+    FindProcessWindows(name)
+    {
+        this.Count(this.WindowLookups, StrLower(name))
+        return super.FindProcessWindows(name)
+    }
+
+    ReadWindowTitle(hwnd)
+    {
+        this.Count(this.TitleLookups, hwnd)
+        return super.ReadWindowTitle(hwnd)
+    }
+}
+
+class FlakyWindowEnumerationWatcher extends CountingProcessWatcher
+{
+    __New(entries)
+    {
+        this.FailNextEnumeration := true
+        super.__New(entries)
+    }
+
+    FindProcessWindows(name)
+    {
+        if (this.FailNextEnumeration)
+        {
+            this.FailNextEnumeration := false
+            this.Count(this.WindowLookups, StrLower(name))
+            throw Error("Test window enumeration failure")
+        }
+        return super.FindProcessWindows(name)
+    }
+}
+
 class NotificationFailureWatcher extends FakeProcessWatcher
 {
     NotifyStarted(rule, pid)
@@ -463,6 +518,84 @@ external.TriggerRunning := false
 external.Tick()
 Assert(external.Starts = 0 && external.Stops = 0,
     "an already-running helper is never adopted or stopped")
+
+; Multiple independent title filters on the same executable must share
+; Windows lookups within ONE tick but not between subsequent 3-second polls.
+cacheRules := ProcessWatcher.FromIniEntries([
+    Map("Name", "GeForceNOW.exe::Watch_Dogs",
+        "Value", "exe|notepad.exe|run"),
+    Map("Name", "geforcenow.EXE::Cyberpunk",
+        "Value", "exe|notepad.exe|ensure"),
+    Map("Name", "GEFORCENOW.exe::Missing",
+        "Value", "exe|notepad.exe|stop"),
+    Map("Name", "GeForceNOW.exe",
+        "Value", "exe|notepad.exe|run")
+])
+cachedWatcher := CountingProcessWatcher(cacheRules)
+cachedWatcher.TriggerRunning := true
+cachedWatcher.HelperRunning := true ; do not launch helpers in this test
+cachedWatcher.WindowList := [11, 12]
+cachedWatcher.WindowTitles[11] := "GeForce NOW launcher"
+cachedWatcher.WindowTitles[12] := "Cyberpunk - GeForce NOW"
+cachedWatcher.Tick()
+Assert(cachedWatcher.WindowLookups["geforcenow.exe"] = 1,
+    "title-filtered rules should enumerate one EXE's windows only once per tick")
+Assert(cachedWatcher.TitleLookups[11] = 1 && cachedWatcher.TitleLookups[12] = 1,
+    "different title fragments should reuse the same successful title reads")
+Assert(cachedWatcher.ProcessLookups["geforcenow.exe"] = 1,
+    "process-only rule should use one ProcessExist call per tick")
+Assert(!cachedWatcher.Rules[1]["WasPresent"]
+    && cachedWatcher.Rules[2]["WasPresent"]
+    && !cachedWatcher.Rules[3]["WasPresent"]
+    && cachedWatcher.Rules[4]["WasPresent"],
+    "each rule should evaluate its own title filter despite sharing a snapshot")
+
+cachedWatcher.WindowTitles[12] := "Watch_Dogs - GeForce NOW"
+cachedWatcher.Tick()
+Assert(cachedWatcher.WindowLookups["geforcenow.exe"] = 2
+    && cachedWatcher.TitleLookups[11] = 2
+    && cachedWatcher.TitleLookups[12] = 2
+    && cachedWatcher.ProcessLookups["geforcenow.exe"] = 2,
+    "all discovery caches must expire between successive ticks")
+Assert(cachedWatcher.Rules[1]["WasPresent"]
+    && !cachedWatcher.Rules[2]["WasPresent"]
+    && cachedWatcher.Rules[4]["WasPresent"],
+    "changing a window title must switch matching rules on the very next tick")
+
+cachedWatcher.TriggerRunning := false
+cachedWatcher.WindowList := []
+cachedWatcher.Tick()
+Assert(cachedWatcher.WindowLookups["geforcenow.exe"] = 3
+    && cachedWatcher.ProcessLookups["geforcenow.exe"] = 3,
+    "window and process absence must be refreshed on the next tick")
+Assert(!cachedWatcher.Rules[1]["WasPresent"]
+    && !cachedWatcher.Rules[2]["WasPresent"]
+    && !cachedWatcher.Rules[4]["WasPresent"],
+    "previous matching states must be cleared when triggers disappear")
+
+; A window that vanishes during title lookup must not poison cache results.
+vanishingWatcher := CountingProcessWatcher(cacheRules)
+vanishingWatcher.WindowList := [77]
+vanishingWatcher.Tick()
+Assert(vanishingWatcher.WindowLookups["geforcenow.exe"] = 1,
+    "even when titles cannot be read, window enumeration is shared")
+Assert(vanishingWatcher.TitleLookups[77] = 3,
+    "failed title reads should not be cached across independent rules")
+vanishingWatcher.WindowTitles[77] := "Watch_Dogs"
+vanishingWatcher.Tick()
+Assert(vanishingWatcher.Rules[1]["WasPresent"],
+    "a previously unreadable window must be considered on the next poll")
+
+; A failed WinGetList must not be cached: later rules may succeed.
+flakyWatcher := FlakyWindowEnumerationWatcher(cacheRules)
+flakyWatcher.WindowList := [88]
+flakyWatcher.WindowTitles[88] := "Cyberpunk"
+flakyWatcher.HelperRunning := true
+flakyWatcher.Tick()
+Assert(flakyWatcher.WindowLookups["geforcenow.exe"] = 2,
+    "after enumeration fails, a later rule should retry instead of reusing failure")
+Assert(flakyWatcher.Rules[2]["WasPresent"],
+    "a later title rule should still recognize its trigger after a transient error")
 
 ; Integrate the GUI editor with the shared profile INI document.
 tempIni := A_Temp "\MyWinToolbox-ProcessWatcher-" A_TickCount ".ini"
