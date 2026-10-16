@@ -5,40 +5,69 @@
 #Include ..\Libs\AutoPaste.ahk
 
 global IsNoSleepTimerOn := false
+global NoSleepNextMouseNudgeTick := 0
 global ClipboardTrimEnabled := false
 global LastClipboard := STRING_EMPTY
 
+NoSleep_GetRandomMouseIntervalMs()
+{
+    return Random(60, 300) * SECOND_IN_MILLISECONDS
+}
+
+NoSleep_ShouldNudgeMouse(nowTick, idlePhysicalMs, nextNudgeTick)
+{
+    return (nextNudgeTick > 0
+        && nowTick >= nextNudgeTick
+        && idlePhysicalMs >= MINUTE_IN_MILLISECONDS)
+}
+
 OnNoSleep()
 {
+    ; Keeping Windows awake is independent of the idle mouse nudge.
     WinAPI_SetThreadExecutionState_DisplayRequired()
     WinAPI_SetThreadExecutionState_SystemRequired()
+}
 
-    if (A_TimeIdle > 10 * MINUTE_IN_MILLISECONDS)
+OnNoSleepMouseNudge()
+{
+    global NoSleepNextMouseNudgeTick
+
+    ; Never move the cursor during normal physical keyboard/mouse activity.
+    if (!NoSleep_ShouldNudgeMouse(A_TickCount, A_TimeIdlePhysical, NoSleepNextMouseNudgeTick))
     {
-        MouseMove(1, 0, , "R")
-        Sleep(1000)
-        MouseMove(-1, 0, , "R")
+        return
     }
+
+    MouseMove(1, 0, , "R")
+    Sleep(1000)
+    MouseMove(-1, 0, , "R")
+
+    ; Choose a fresh random delay after every nudge, not only at startup.
+    NoSleepNextMouseNudgeTick := A_TickCount + NoSleep_GetRandomMouseIntervalMs()
 }
 
 TaskRunner_SetNoSleepEnabled(enabled, notify := true)
 {
-    global IsNoSleepTimerOn
+    global IsNoSleepTimerOn, NoSleepNextMouseNudgeTick
 
     enabled := !!enabled
 
     if (enabled)
     {
-        ; Apply the execution-state request immediately without triggering the
-        ; idle mouse nudge that belongs to the periodic maintenance callback.
+        ; Apply the execution-state request immediately; schedule mouse activity
+        ; separately, at random 1–5 minute intervals while physically idle.
         WinAPI_SetThreadExecutionState_DisplayRequired()
         WinAPI_SetThreadExecutionState_SystemRequired()
+        NoSleepNextMouseNudgeTick := A_TickCount + NoSleep_GetRandomMouseIntervalMs()
         SetTimer(OnNoSleep, 60 * SECOND_IN_MILLISECONDS)
+        SetTimer(OnNoSleepMouseNudge, 5 * SECOND_IN_MILLISECONDS)
         IsNoSleepTimerOn := true
     }
     else
     {
         SetTimer(OnNoSleep, 0)
+        SetTimer(OnNoSleepMouseNudge, 0)
+        NoSleepNextMouseNudgeTick := 0
         WinAPI_SetThreadExecutionState_Continuous()
         IsNoSleepTimerOn := false
     }
