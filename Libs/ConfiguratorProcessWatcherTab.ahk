@@ -35,6 +35,8 @@ class ConfiguratorProcessWatcherTab
         this.AddButton.OnEvent("Click", ObjBindMethod(this, "OnAdd"))
         this.DeleteButton := this.Window.AddButton("x155 y521 w100 h32", "Delete")
         this.DeleteButton.OnEvent("Click", ObjBindMethod(this, "OnDelete"))
+        this.TestButton := this.Window.AddButton("x265 y521 w165 h32", "Test notification")
+        this.TestButton.OnEvent("Click", ObjBindMethod(this, "OnTestNotification"))
 
         this.Window.AddText("x475 y135 w500", "Trigger process name (e.g. GeForceNOW.exe)")
         this.TriggerEdit := this.Window.AddEdit("x475 y157 w610 h26")
@@ -186,6 +188,22 @@ class ConfiguratorProcessWatcherTab
         this.RefreshEntries(this.Entries.Length)
         this.SetDirty()
         this.PathEdit.Focus()
+    }
+
+    OnTestNotification(*)
+    {
+        try
+        {
+            message := this.SelectedIndex
+                ? ProcessWatcher.LaunchNotificationMessage(this.Entries[this.SelectedIndex])
+                : "Started: example-helper.ahk" Chr(10) "Trigger: ExampleGame.exe"
+            ProcessWatcherToast.Show(message)
+        }
+        catch Error as e
+        {
+            MsgBox("Unable to show test notification: " e.Message,
+                "Process Watcher", "Iconx")
+        }
     }
 
     OnDelete(*)
