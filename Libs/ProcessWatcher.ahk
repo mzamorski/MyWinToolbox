@@ -303,6 +303,18 @@ class ProcessWatcher
                 rule["FailedLaunchTicks"] := 0
                 Logger.Info("Started " rule["Path"] " for " rule["Trigger"],
                     "ProcessWatcher")
+                ; A notification is only shown after Run returned a PID.
+                ; Notification failures cannot change the watcher's state
+                ; or accidentally trigger an ensure retry.
+                try
+                {
+                    this.NotifyStarted(rule, pid)
+                }
+                catch Error as e
+                {
+                    Logger.Warning("Cannot show launch notification: " e.Message,
+                        "ProcessWatcher")
+                }
             }
             catch Error as e
             {
@@ -314,6 +326,21 @@ class ProcessWatcher
                     "ProcessWatcher")
             }
         }
+    }
+
+    static LaunchNotificationMessage(rule)
+    {
+        SplitPath(rule["Path"], &helperName)
+        trigger := ProcessWatcher.ToTriggerKey(
+            rule["Trigger"], rule.Get("TitleContains", "")
+        )
+        return "Started: " helperName Chr(10) "Trigger: " trigger
+    }
+
+    NotifyStarted(rule, pid)
+    {
+        TrayTip(ProcessWatcher.LaunchNotificationMessage(rule),
+            "MyWinToolbox - Process Watcher")
     }
 
     Leave(rule)
