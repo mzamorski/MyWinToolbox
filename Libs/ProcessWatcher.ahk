@@ -241,11 +241,20 @@ class ProcessWatcher
 
     Tick(*)
     {
+        ; Keep discovery results only for this one poll. Duplicate trigger
+        ; rules can share Windows queries, but the next poll sees new state.
+        ; Never cache IsActionRunning: launching one helper can affect another
+        ; rule within this same Tick.
+        pollCache := Map(
+            "Processes", Map(),
+            "Windows", Map(),
+            "Titles", Map()
+        )
         for rule in this.Rules
         {
             try
             {
-                present := this.IsTriggerPresent(rule)
+                present := this.IsTriggerPresent(rule, pollCache)
                 if (!present)
                 {
                     if (rule["WasPresent"])
@@ -374,22 +383,63 @@ class ProcessWatcher
         rule["OwnedPid"] := 0
     }
 
-    IsTriggerPresent(rule)
+    IsTriggerPresent(rule, pollCache := 0)
     {
+        trigger := rule["Trigger"]
+        processKey := StrLower(trigger)
         titleContains := rule["TitleContains"]
+
         if (titleContains = "")
         {
-            ; Existing process-only rules keep their exact old behavior.
-            return !!this.FindProcess(rule["Trigger"])
+            ; Process-only rules still use ProcessExist. Cache its result by
+            ; case-insensitive EXE name for the duration of a single Tick.
+            if (pollCache && pollCache["Processes"].Has(processKey))
+            {
+                return pollCache["Processes"][processKey]
+            }
+            present := !!this.FindProcess(trigger)
+            if (pollCache)
+            {
+                pollCache["Processes"][processKey] := present
+            }
+            return present
         }
 
-        ; Restrict title matching to windows owned by the configured EXE.
-        ; Any matching window is enough; the window need not be foreground.
-        for hwnd in this.FindProcessWindows(rule["Trigger"])
+        ; Different title filters on the same EXE share one window list.
+        ; A failed enumeration is NOT cached so later rules can retry.
+        if (pollCache && pollCache["Windows"].Has(processKey))
+        {
+            windows := pollCache["Windows"][processKey]
+        }
+        else
+        {
+            windows := this.FindProcessWindows(trigger)
+            if (pollCache)
+            {
+                pollCache["Windows"][processKey] := windows
+            }
+        }
+
+        ; Cache successful title reads by HWND within this poll, too. A
+        ; vanished window is ignored, and a failed read is not cached.
+        ; Filters still match any window, whether it is focused or not.
+        for hwnd in windows
         {
             try
             {
-                if (InStr(this.ReadWindowTitle(hwnd), titleContains, false))
+                if (pollCache && pollCache["Titles"].Has(hwnd))
+                {
+                    title := pollCache["Titles"][hwnd]
+                }
+                else
+                {
+                    title := this.ReadWindowTitle(hwnd)
+                    if (pollCache)
+                    {
+                        pollCache["Titles"][hwnd] := title
+                    }
+                }
+                if (InStr(title, titleContains, false))
                 {
                     return true
                 }
