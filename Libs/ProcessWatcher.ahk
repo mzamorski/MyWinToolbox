@@ -339,8 +339,9 @@ class ProcessWatcher
 
     NotifyStarted(rule, pid)
     {
-        TrayTip(ProcessWatcher.LaunchNotificationMessage(rule),
-            "MyWinToolbox - Process Watcher")
+        ; TrayTip banners can be hidden by Windows during fullscreen gaming.
+        ; Use an independent, non-activating on-screen confirmation instead.
+        ProcessWatcherToast.Show(ProcessWatcher.LaunchNotificationMessage(rule))
     }
 
     Leave(rule)
@@ -538,6 +539,78 @@ class ProcessWatcher
         {
             ; EXE stop policy is explicit and requests process termination.
             ProcessClose(pid)
+        }
+    }
+}
+
+; A small, non-activating overlay independent of Windows notifications.
+; Reuse a single GUI so several simultaneous launches do not stack windows.
+class ProcessWatcherToast
+{
+    static DurationMs := 4500
+    static Window := 0
+    static Content := 0
+    static HideCallback := 0
+
+    static Show(message)
+    {
+        if (!ProcessWatcherToast.Window)
+        {
+            ; NOACTIVATE and NoActivate preserve focus; TRANSPARENT allows
+            ; clicks to pass through when the game is in borderless mode.
+            toast := Gui(
+                "+AlwaysOnTop -Caption +ToolWindow -DPIScale +E0x08000000 +E0x20",
+                "MyWinToolbox - Process Watcher"
+            )
+            toast.BackColor := "242B35"
+            toast.MarginX := 16
+            toast.MarginY := 12
+            toast.SetFont("s10 Bold cFFFFFF", "Segoe UI")
+            toast.AddText("w390", "MyWinToolbox - Process Watcher")
+            toast.SetFont("s9 cFFFFFF", "Segoe UI")
+            ProcessWatcherToast.Content := toast.AddText("xm w390 r3", "")
+            ProcessWatcherToast.Window := toast
+            ProcessWatcherToast.HideCallback := ObjBindMethod(ProcessWatcherToast, "Hide")
+        }
+
+        toast := ProcessWatcherToast.Window
+        ProcessWatcherToast.Content.Value := message
+        ; Measure while hidden: never flash in the center or take focus.
+        toast.Show("Hide AutoSize")
+        toast.GetPos(, , &width, &height)
+        point := ProcessWatcherToast.GetPosition(width, height)
+        toast.Show("NoActivate x" point["X"] " y" point["Y"])
+        SetTimer(ProcessWatcherToast.HideCallback, -ProcessWatcherToast.DurationMs)
+    }
+
+    static GetPosition(width, height)
+    {
+        ; Use the monitor with the current foreground window, e.g. GFN.
+        hwnd := DllCall("user32\GetForegroundWindow", "Ptr")
+        monitor := DllCall("user32\MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
+        info := Buffer(40, 0) ; MONITORINFO, rcWork at offset 20
+        NumPut("UInt", 40, info)
+        if (
+            monitor
+            && DllCall("user32\GetMonitorInfoW", "Ptr", monitor, "Ptr", info, "Int")
+        )
+        {
+            right := NumGet(info, 28, "Int")
+            top := NumGet(info, 24, "Int")
+        }
+        else
+        {
+            right := A_ScreenWidth
+            top := 0
+        }
+        return Map("X", right - width - 24, "Y", top + 24)
+    }
+
+    static Hide()
+    {
+        if (ProcessWatcherToast.Window)
+        {
+            ProcessWatcherToast.Window.Hide()
         }
     }
 }
