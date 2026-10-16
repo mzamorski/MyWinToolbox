@@ -9,7 +9,10 @@ param(
 
     [switch]$Verify,
 
-    [switch]$Restart
+    [switch]$Restart,
+
+    # Internal re-entry flag: avoid checking a different HKCU after UAC.
+    [switch]$SkipNotificationCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -121,7 +124,9 @@ if (-not $Profile) {
 
 # Check the invoking Windows user's HKCU before a possible UAC elevation:
 # an alternate administrator account could have a different HKCU hive.
-Test-CurrentUserTrayNotifications
+if (-not $SkipNotificationCheck) {
+    Test-CurrentUserTrayNotifications
+}
 
 $sourceRoot = $PSScriptRoot
 $destinationPath = [IO.Path]::GetFullPath($Destination)
@@ -146,6 +151,9 @@ if ($destinationIsInProgramFiles -and -not $NoElevation -and -not (Test-IsAdmini
     if ($Restart) {
         $arguments += '-Restart'
     }
+
+    # We already checked the calling user's HKCU before elevation.
+    $arguments += '-SkipNotificationCheck'
 
     Write-Host 'Administrator permission is required to deploy to Program Files.'
     $process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $arguments -Wait -PassThru
