@@ -9,7 +9,10 @@ param(
 
     [switch]$Verify,
 
-    [switch]$Restart
+    [switch]$Restart,
+
+    # Internal re-entry flag: avoid checking a different HKCU after UAC.
+    [switch]$SkipNotificationCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -66,6 +69,38 @@ function Test-IsAdministrator {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+function Test-CurrentUserTrayNotifications {
+    # Keep this diagnostic read-only. Windows stores Explorer notification
+    # senders under per-user GUID keys, which cannot be assumed to be stable
+    # across user profiles or machines.
+    $balloonTipsPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    $balloonTips = Get-ItemProperty -Path $balloonTipsPath -Name 'EnableBalloonTips' -ErrorAction SilentlyContinue
+    if ($null -ne $balloonTips -and $balloonTips.EnableBalloonTips -eq 0) {
+        Write-Warning 'Windows has EnableBalloonTips=0. AutoHotkey TrayTip notifications may be suppressed.'
+        Write-Host "  Check: $balloonTipsPath -> EnableBalloonTips" -ForegroundColor Yellow
+    }
+
+    $senderSettingsPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings'
+    $disabledSenders = @(
+        Get-ChildItem -Path $senderSettingsPath -ErrorAction SilentlyContinue |
+            Where-Object { $_.PSChildName -like 'Microsoft.Explorer.Notification.*' } |
+            ForEach-Object {
+                $settings = Get-ItemProperty -LiteralPath $_.PSPath -Name 'Enabled' -ErrorAction SilentlyContinue
+                if ($null -ne $settings -and $settings.Enabled -eq 0) {
+                    $_.PSChildName
+                }
+            }
+    )
+
+    if ($disabledSenders.Count -gt 0) {
+        Write-Warning "$($disabledSenders.Count) Windows Explorer notification sender(s) have Enabled=0. TrayTip notifications might be blocked."
+        foreach ($sender in $disabledSenders) {
+            Write-Host "  Disabled: $sender" -ForegroundColor Yellow
+        }
+        Write-Host '  These GUIDs do not uniquely identify AutoHotkey. Review the sender before changing its settings.' -ForegroundColor Yellow
+    }
+}
+
 function Select-Profile {
     Write-Host 'Select the MyWinToolbox profile to deploy:'
     Write-Host '  [H] Home'
@@ -85,6 +120,12 @@ function Select-Profile {
 
 if (-not $Profile) {
     $Profile = Select-Profile
+}
+
+# Check the invoking Windows user's HKCU before a possible UAC elevation:
+# an alternate administrator account could have a different HKCU hive.
+if (-not $SkipNotificationCheck) {
+    Test-CurrentUserTrayNotifications
 }
 
 $sourceRoot = $PSScriptRoot
@@ -110,6 +151,9 @@ if ($destinationIsInProgramFiles -and -not $NoElevation -and -not (Test-IsAdmini
     if ($Restart) {
         $arguments += '-Restart'
     }
+
+    # We already checked the calling user's HKCU before elevation.
+    $arguments += '-SkipNotificationCheck'
 
     Write-Host 'Administrator permission is required to deploy to Program Files.'
     $process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $arguments -Wait -PassThru
