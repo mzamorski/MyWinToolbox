@@ -39,6 +39,7 @@ class FakeProcessWatcher extends ProcessWatcher
         this.HelperRunning := false
         this.Starts := 0
         this.Stops := 0
+        this.Notifications := []
         this.ClearedPids := []
         this.WindowList := []
         this.WindowTitles := Map()
@@ -78,6 +79,16 @@ class FakeProcessWatcher extends ProcessWatcher
         return 1200 + this.Starts
     }
 
+    NotifyStarted(rule, pid)
+    {
+        this.Notifications.Push(Map(
+            "Trigger", ProcessWatcher.ToTriggerKey(
+                rule["Trigger"], rule.Get("TitleContains", "")
+            ),
+            "Pid", pid
+        ))
+    }
+
     ForgetOwned(rule)
     {
         if (rule["OwnedPid"])
@@ -96,6 +107,14 @@ class FakeProcessWatcher extends ProcessWatcher
     {
         this.Stops++
         this.HelperRunning := false
+    }
+}
+
+class NotificationFailureWatcher extends FakeProcessWatcher
+{
+    NotifyStarted(rule, pid)
+    {
+        throw Error("Notification provider unavailable")
     }
 }
 
@@ -183,6 +202,16 @@ Assert(windowSaved[1]["Name"] = "GeForceNOW.exe::Watch_Dogs 2"
     "window-filter rule keys should round-trip")
 Assert(windowSaved[3]["Name"] = "ShareX.exe",
     "process-only rule names must retain their original serialization")
+Assert(
+    ProcessWatcher.LaunchNotificationMessage(windowRules[1])
+        = "Started: notepad.exe" Chr(10) "Trigger: GeForceNOW.exe::Watch_Dogs 2",
+    "launch notification should include helper name and window-title trigger"
+)
+Assert(
+    ProcessWatcher.LaunchNotificationMessage(rules[1])
+        = "Started: GameHelper.ahk" Chr(10) "Trigger: Game.exe",
+    "AHK notification should show script name and a process-only trigger"
+)
 AssertThrows(
     () => ProcessWatcher.FromIniEntries([
         Map("Name", "GeForceNOW.exe::Watch_Dogs", "Value", "exe|notepad.exe|run"),
@@ -269,10 +298,14 @@ AssertThrows(
 watcher := FakeProcessWatcher([rules[1]])
 watcher.Tick()
 Assert(watcher.Starts = 0, "nothing starts before trigger")
+Assert(watcher.Notifications.Length = 0, "no notification before helper launch")
 watcher.TriggerRunning := true
 watcher.Tick()
 watcher.Tick()
 Assert(watcher.Starts = 1, "helper starts only once while trigger is present")
+Assert(watcher.Notifications.Length = 1
+    && watcher.Notifications[1]["Pid"] = 1201,
+    "stop mode should notify exactly once after a successful launch")
 watcher.TriggerRunning := false
 watcher.Tick()
 watcher.Tick()
@@ -293,6 +326,10 @@ titleWatcher.WindowTitles[11] := "GeForce NOW"
 titleWatcher.WindowTitles[12] := "Watch_Dogs 2 on GeForce NOW"
 titleWatcher.Tick()
 Assert(titleWatcher.Starts = 1, "matching game title should launch its helper")
+Assert(titleWatcher.Notifications.Length = 1
+    && titleWatcher.Notifications[1]["Trigger"]
+        = "GeForceNOW.exe::Watch_Dogs 2",
+    "window-title trigger should be included in launch notification")
 Assert(titleWatcher.LastWindowsProcess = "GeForceNOW.exe",
     "window filter must request only windows belonging to configured EXE")
 titleWatcher.Tick()
@@ -335,6 +372,8 @@ runOnly.HelperRunning := false
 runOnly.Tick()
 runOnly.Tick()
 Assert(runOnly.Starts = 1, "run must not restart a closed helper while trigger runs")
+Assert(runOnly.Notifications.Length = 1,
+    "run mode should notify once and not on each poll")
 runOnly.TriggerRunning := false
 runOnly.Tick()
 Assert(runOnly.Starts = 1 && runOnly.Stops = 0, "run policy does not stop helper")
@@ -350,6 +389,8 @@ Assert(ensured.Starts = 1, "ensure must not launch duplicates while helper runs"
 ensured.HelperRunning := false
 ensured.Tick()
 Assert(ensured.Starts = 2, "ensure restarts a manually closed helper on next poll")
+Assert(ensured.Notifications.Length = 2,
+    "ensure mode should notify again after a real helper restart")
 Assert(ensured.ClearedPids.Length = 1 && ensured.ClearedPids[1] = 1201,
     "ensure must release the former instance's tracked PID before restart")
 ensured.Tick()
@@ -370,6 +411,8 @@ failedEnsure := FailingProcessWatcher([ensureRule])
 failedEnsure.TriggerRunning := true
 failedEnsure.Tick()
 Assert(failedEnsure.Starts = 1, "ensure should attempt initial launch")
+Assert(failedEnsure.Notifications.Length = 0,
+    "failed launches must not cause misleading start notifications")
 Loop ProcessWatcher.FailedLaunchSkipTicks
 {
     failedEnsure.Tick()
@@ -390,6 +433,8 @@ existingEnsure.HelperRunning := true
 existingEnsure.Tick()
 existingEnsure.Tick()
 Assert(existingEnsure.Starts = 0, "ensure must not adopt or duplicate external helpers")
+Assert(existingEnsure.Notifications.Length = 0,
+    "already-running external helpers should not produce a notification")
 existingEnsure.HelperRunning := false
 existingEnsure.Tick()
 Assert(existingEnsure.Starts = 1, "ensure must recover after external helper exits")
@@ -398,6 +443,17 @@ existingEnsure.Tick()
 Assert(existingEnsure.Stops = 0, "ensure must not close the recovered helper")
 
 
+
+notificationFailure := NotificationFailureWatcher([rules[2]])
+notificationFailure.TriggerRunning := true
+notificationFailure.Tick()
+Assert(notificationFailure.Starts = 1,
+    "failed notification should not interrupt the running helper")
+Assert(notificationFailure.Rules[1]["OwnedPid"] = 1201,
+    "failed notification should preserve ownership tracking")
+notificationFailure.Tick()
+Assert(notificationFailure.Starts = 1,
+    "failed notification should not trigger a duplicate run")
 
 external := FakeProcessWatcher([rules[1]])
 external.TriggerRunning := true
