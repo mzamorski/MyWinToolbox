@@ -99,6 +99,8 @@ The supported types are currently `scheduler` and `ahk`. The typed entry format 
 
 Process Watcher automatically starts a helper when a named Windows executable appears, and optionally stops it when the last matching process exits. Unlike AutoPaste, the watched application does **not** need to have focus or an open window. It checks every 3 seconds and also checks immediately when MyWinToolbox starts.
 
+For efficiency, each 3-second polling cycle **reuses process-presence results, window lists, and successfully read window titles** across rules targeting the same executable (case-insensitively). The cache is discarded after every cycle so title changes and process exits are seen at the next poll. Helper-running checks are intentionally not cached because another rule could have just started a helper. No configuration changes are required.
+
 Use **Ctrl + Win + Shift + S → Process Watcher** in the existing tabbed Configurator. Rules live in the active Home/Work profile's separate `[ProcessWatcher]` INI section:
 
 ```ini
