@@ -131,15 +131,21 @@ class ProcessWatcher
         {
             trigger := ProcessWatcher.ValidateTrigger(entry["Trigger"])
             type := StrLower(Trim("" entry["Type"]))
-            ProcessWatcher.ValidatePath(type, entry["Path"])
+            path := ProcessWatcher.ValidatePath(type, entry["Path"])
             title := ProcessWatcher.ValidateTitleContains(entry.Get("TitleContains", ""))
-            key := StrLower(ProcessWatcher.ToTriggerKey(trigger, title))
-            if (seen.Has(key))
+            triggerKey := ProcessWatcher.ToTriggerKey(trigger, title)
+
+            ; Several different helpers may use the same process/title.
+            ; Reject only identical actions: otherwise a second rule could
+            ; compete for ownership or try to stop the same helper.
+            actionKey := StrLower(triggerKey) "|" type "|"
+                . StrLower(StrReplace(path, "/", "\"))
+            if (seen.Has(actionKey))
             {
-                throw Error("Duplicate ProcessWatcher trigger: "
-                    ProcessWatcher.ToTriggerKey(trigger, title))
+                throw Error("Duplicate ProcessWatcher helper for "
+                    triggerKey ": " path)
             }
-            seen[key] := true
+            seen[actionKey] := true
             mode := StrLower(Trim("" entry["Mode"]))
             if (
                 mode != ProcessWatcher.RUN
