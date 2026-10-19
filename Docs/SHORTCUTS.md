@@ -381,9 +381,10 @@ Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
 ShareX.exe = exe|notepad.exe|ensure
 Editor.exe = exe|C:\Tools\EditorHelper.exe|run
 GeForceNOW.exe::Watch_Dogs = ahk|C:\Scripts\WatchDogsHelper.ahk|stop
+GeForceNOW.exe::Watch_Dogs = ahk|C:\Scripts\WatchDogsDodge.ahk|stop
 ```
 
-Optionally add `::title fragment` to a watched process name to require a case-insensitive substring in the title of any window owned by that executable, not necessarily the active window. For cloud gaming, this works only if the local streaming client's window title identifies the game. Inspect the window using `Win + Alt + C`. Process-only rules retain their previous behavior.
+Optionally add `::title fragment` to a watched process name to require a case-insensitive substring in the title of any window owned by that executable, not necessarily the active window. For cloud gaming, this works only if the local streaming client's window title identifies the game. Inspect the window using `Win + Alt + C`. Process-only rules retain their previous behavior. Multiple lines may share the same process/title trigger when they launch **different helpers**; their modes are independent. The Configurator displays helper filenames to tell these rules apart. The custom `[ProcessWatcher]` INI reader preserves repeated keys.
 
 A Windows notification confirms each helper that ProcessWatcher actually starts, displaying the helper filename and trigger. `ensure` restart events notify again; polling, failed launches, and already-running helpers do not produce notifications.
 

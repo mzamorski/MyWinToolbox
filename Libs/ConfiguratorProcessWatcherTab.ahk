@@ -70,9 +70,21 @@ class ConfiguratorProcessWatcherTab
                 . "run: start once; stop: close helper when title stops matching."
                 . Chr(10)
                 . "ensure: relaunch a closed helper while title still matches." Chr(10)
-                . "Without a title filter, only the process name is checked." Chr(10)
+                . "Different helpers may share the same process / title trigger." Chr(10)
                 . "Save + Reload applies edited rules."
         )
+    }
+
+    static EntryLabel(entry)
+    {
+        title := entry.Get("TitleContains", "")
+        trigger := entry["Trigger"] (title = "" ? "" : "::" title)
+        SplitPath(entry["Path"], &helperName)
+        if (helperName = "")
+        {
+            helperName := "(no helper)"
+        }
+        return trigger "  |  " helperName " (" entry["Mode"] ")"
     }
 
     RefreshEntries(preferredIndex := 0, reloadEditor := true)
@@ -84,9 +96,7 @@ class ConfiguratorProcessWatcherTab
             labels := []
             for entry in this.Entries
             {
-                title := entry.Get("TitleContains", "")
-                label := entry["Trigger"] (title = "" ? "" : "::" title)
-                labels.Push(label = "" ? "(unnamed)" : label)
+                labels.Push(ConfiguratorProcessWatcherTab.EntryLabel(entry))
             }
             if (labels.Length)
             {
@@ -197,8 +207,11 @@ class ConfiguratorProcessWatcherTab
         selected := this.Entries[this.SelectedIndex]
         trigger := selected["Trigger"] (selected.Get("TitleContains", "") = ""
             ? "" : "::" selected["TitleContains"])
+        SplitPath(selected["Path"], &helperName)
         if (MsgBox(
-            "Remove watcher for '" trigger "'? This does not stop any process.",
+            "Remove watcher for '" trigger "'?" Chr(10)
+                . "Helper: " helperName Chr(10)
+                . "This does not stop any process.",
             "Process Watcher",
             "YesNo Icon!"
         ) != "Yes")

@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 
 #Include ..\Libs\AhkScriptManager.ahk
+#Include ..\Libs\TasksRegistry.ahk
 #Include ..\Libs\Logger.ahk
 #Include ..\Libs\ProcessWatcher.ahk
 #Include ..\Libs\ConfiguratorSettingsTab.ahk
@@ -165,6 +166,37 @@ class FlakyWindowEnumerationWatcher extends CountingProcessWatcher
     }
 }
 
+class IndependentProcessWatcher extends FakeProcessWatcher
+{
+    __New(entries)
+    {
+        this.ActivePaths := Map()
+        this.StartedPaths := []
+        this.StoppedPaths := []
+        super.__New(entries)
+    }
+
+    IsActionRunning(rule)
+    {
+        return this.ActivePaths.Get(StrLower(rule["Path"]), false)
+    }
+
+    StartAction(rule)
+    {
+        path := StrLower(rule["Path"])
+        this.StartedPaths.Push(path)
+        this.ActivePaths[path] := true
+        return 2000 + this.StartedPaths.Length
+    }
+
+    StopAction(rule)
+    {
+        path := StrLower(rule["Path"])
+        this.StoppedPaths.Push(path)
+        this.ActivePaths[path] := false
+    }
+}
+
 class NotificationFailureWatcher extends FakeProcessWatcher
 {
     NotifyStarted(rule, pid)
@@ -270,9 +302,9 @@ Assert(
 AssertThrows(
     () => ProcessWatcher.FromIniEntries([
         Map("Name", "GeForceNOW.exe::Watch_Dogs", "Value", "exe|notepad.exe|run"),
-        Map("Name", "geforcenow.EXE::watch_dogs", "Value", "exe|notepad.exe|stop")
+        Map("Name", "geforcenow.EXE::watch_dogs", "Value", "exe|NOTEPAD.exe|stop")
     ]),
-    "same EXE and same title filter should be rejected case-insensitively"
+    "the same helper on the same title must not be registered twice"
 )
 AssertThrows(
     () => ProcessWatcher.FromIniEntries([
@@ -284,6 +316,65 @@ AssertThrows(
     () => ProcessWatcher.ToTriggerKey("GeForceNOW.exe", "a=b"),
     "unrepresentable title filter containing INI separator should fail"
 )
+
+; Multiple helpers with the EXACT same trigger are independent rules.
+; The INI reader and Configurator intentionally preserve repeated key lines.
+multiEntries := [
+    Map("Name", "GeForceNOW.exe::WARDOGS",
+        "Value", "ahk|C:\Tools\WARDOGS-Hammer.ahk|stop"),
+    Map("Name", "geforcenow.EXE::wardogs",
+        "Value", "ahk|C:\Tools\WARDOGS-Dodge.ahk|run"),
+    Map("Name", "GeForceNOW.exe::WARDOGS",
+        "Value", "ahk|C:\Tools\WARDOGS-Run.ahk|ensure")
+]
+multiRules := ProcessWatcher.FromIniEntries(multiEntries)
+Assert(multiRules.Length = 3,
+    "multiple distinct helpers must be accepted on one process/title trigger")
+multiSaved := ProcessWatcher.ToIniEntries(multiRules)
+Assert(multiSaved.Length = 3
+    && multiSaved[1]["Name"] = multiSaved[3]["Name"]
+    && multiSaved[1]["Value"] != multiSaved[3]["Value"],
+    "different helpers on identical keys must be preserved in INI serialization")
+Assert(InStr(ConfiguratorProcessWatcherTab.EntryLabel(multiRules[1]),
+        "WARDOGS-Hammer.ahk (stop)")
+    && InStr(ConfiguratorProcessWatcherTab.EntryLabel(multiRules[2]),
+        "WARDOGS-Dodge.ahk (run)"),
+    "Configurator list must distinguish entries with the same trigger")
+AssertThrows(
+    () => ProcessWatcher.ValidateEntries([multiRules[1], multiRules[1]]),
+    "a repeated helper on the same trigger must still be rejected"
+)
+
+multiWatcher := IndependentProcessWatcher(multiRules)
+multiWatcher.WindowList := [123]
+multiWatcher.WindowTitles[123] := "WARDOGS via GeForce NOW"
+multiWatcher.Tick()
+Assert(multiWatcher.StartedPaths.Length = 3
+    && multiWatcher.Notifications.Length = 3,
+    "all three helpers must start and notify independently")
+Assert(multiWatcher.Rules[1]["OwnedPid"] != multiWatcher.Rules[2]["OwnedPid"]
+    && multiWatcher.Rules[2]["OwnedPid"] != multiWatcher.Rules[3]["OwnedPid"],
+    "helpers must keep distinct owned process IDs")
+multiWatcher.Tick()
+Assert(multiWatcher.StartedPaths.Length = 3,
+    "shared trigger must not start any duplicate helpers on subsequent polls")
+runPath := StrLower(multiRules[3]["Path"])
+multiWatcher.ActivePaths[runPath] := false
+multiWatcher.Tick()
+Assert(multiWatcher.StartedPaths.Length = 4
+    && multiWatcher.StartedPaths[4] = runPath,
+    "ensure must restart only its own helper when it closes")
+multiWatcher.WindowList := []
+multiWatcher.Tick()
+Assert(multiWatcher.StoppedPaths.Length = 1
+    && multiWatcher.StoppedPaths[1] = StrLower(multiRules[1]["Path"]),
+    "only stop-policy helper must close when the common trigger disappears")
+Assert(multiWatcher.ActivePaths[StrLower(multiRules[2]["Path"])]
+    && multiWatcher.ActivePaths[StrLower(multiRules[3]["Path"])],
+    "run and ensure helpers must remain running on trigger disappearance")
+multiWatcher.Shutdown()
+Assert(multiWatcher.StoppedPaths.Length = 1,
+    "shutdown must not stop run/ensure helpers from the shared trigger")
 
 ; Short EXE names must go straight to Windows, not through FileExist or
 ; an incorrectly inferred working directory.
@@ -321,9 +412,9 @@ AssertThrows(
 AssertThrows(
     () => ProcessWatcher.FromIniEntries([
         Map("Name", "game.exe", "Value", "ahk|C:\Tools\one.ahk|stop"),
-        Map("Name", "GAME.EXE", "Value", "exe|C:\Tools\two.exe|run")
+        Map("Name", "GAME.EXE", "Value", "ahk|c:\tools\ONE.ahk|run")
     ]),
-    "duplicate trigger names must fail case-insensitively"
+    "duplicate actions must fail case-insensitively despite different modes"
 )
 AssertThrows(
     () => ProcessWatcher.FromIniEntries([
@@ -624,6 +715,21 @@ try
         "Configurator INI save must preserve distinct game title filters")
     Assert(reloaded.Get("Settings", "Email") = "test@example.com",
         "watcher save must preserve unrelated settings")
+
+    ; Duplicate key lines must survive Configurator -> INI -> loader.
+    tab.Entries := multiRules
+    Assert(tab.Validate(), "Configurator should accept several helpers per trigger")
+    tab.ApplyToDocument()
+    doc.SaveWithBackup()
+    repeated := ConfiguratorIniDocument(tempIni)
+    repeatedEntries := repeated.GetSectionEntries("ProcessWatcher", false)
+    Assert(repeatedEntries.Length = 3
+        && repeatedEntries[1]["Name"] = repeatedEntries[3]["Name"]
+        && repeatedEntries[1]["Value"] != repeatedEntries[3]["Value"],
+        "Configurator must persist multiple helpers using the same INI key")
+    Assert(ProcessWatcher.FromIniEntries(
+        TasksRegistry.ReadRawSection(tempIni, "ProcessWatcher")).Length = 3,
+        "startup raw INI reader must load all helpers with identical triggers")
 }
 catch Error as e
 {

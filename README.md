@@ -109,10 +109,11 @@ Game.exe = ahk|C:\Scripts\GameHelper.ahk|stop
 ShareX.exe = exe|notepad.exe|ensure
 Editor.exe = exe|C:\Tools\EditorHelper.exe|run
 GeForceNOW.exe::Watch_Dogs = ahk|C:\Scripts\WatchDogsHelper.ahk|stop
+GeForceNOW.exe::Watch_Dogs = ahk|C:\Scripts\WatchDogsDodge.ahk|stop
 GeForceNOW.exe::Cyberpunk = exe|notepad.exe|ensure
 ```
 
-Rules can use either a process-only trigger (`WatchedProcess.exe`) or an optional **window-title substring filter** (`WatchedProcess.exe::Title fragment`). The two forms can coexist, and different title fragments for the same executable are separate rules. For example, `GeForceNOW.exe::Watch_Dogs` matches when any non-hidden window owned by `GeForceNOW.exe` contains `Watch_Dogs` in its title (case-insensitively), even when the window is minimized or not active. A game-title change is treated as the original trigger disappearing and another matching trigger appearing. Existing process-only rules remain unchanged.
+Rules can use either a process-only trigger (`WatchedProcess.exe`) or an optional **window-title substring filter** (`WatchedProcess.exe::Title fragment`). The two forms can coexist, and different title fragments for the same executable are separate rules. **The exact same process/title trigger can also appear on multiple lines**, each with a different AHK script or EXE. All matching helpers start independently and their `run`, `stop`, or `ensure` lifecycle modes apply per helper. Repeating the same helper for the same trigger is rejected even if the mode differs. For example, `GeForceNOW.exe::Watch_Dogs` matches when any non-hidden window owned by `GeForceNOW.exe` contains `Watch_Dogs` in its title (case-insensitively), even when the window is minimized or not active. A game-title change is treated as the original trigger disappearing and another matching trigger appearing. Existing process-only rules remain unchanged. The Configurator lists the helper filename and mode beside the trigger to distinguish rules with matching names. MyWinToolbox parses `[ProcessWatcher]` line by line rather than using Windows `IniRead`, so it preserves repeated INI key names.
 
 This is useful for cloud gaming clients like NVIDIA GeForce NOW **only when the title of a local client window actually exposes the game name**. It does not inspect remote game processes. Use `Win + Alt + C` on the client/game window to inspect the executable and window title before configuring a rule. INI title fragments must not contain `=`; the `::` suffix is omitted entirely when no title filter is needed.
 
