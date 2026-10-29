@@ -528,6 +528,4 @@ class ConfiguratorDiagnosticsTab
 
         return Round(size / (1024 * 1024), 1) " MB"
     }
-
-
 }
