@@ -101,7 +101,6 @@ class ConfiguratorDiagnosticsTab
 
     Refresh()
     {
-        global MainScriptName
         global IsNoSleepTimerOn
         global ClipboardTrimEnabled
         global DebugLogging
@@ -109,8 +108,11 @@ class ConfiguratorDiagnosticsTab
         this.HealthList.Delete()
         this.Snapshot := []
 
-        profileName := MainScriptName
         profilePath := this.Owner.SettingsTab.ProfileConfigPath
+        profileName := ConfiguratorDiagnosticsTab.GetProfileName(profilePath)
+        noSleepActive := IsSet(IsNoSleepTimerOn) ? !!IsNoSleepTimerOn : false
+        clipboardTrimActive := IsSet(ClipboardTrimEnabled) ? !!ClipboardTrimEnabled : false
+        debugLoggingActive := IsSet(DebugLogging) ? !!DebugLogging : false
         taskInfo := ConfiguratorDiagnosticsTab.GetScheduledTaskInfo(
             "MyWinToolbox"
         )
@@ -184,13 +186,13 @@ class ConfiguratorDiagnosticsTab
 
         this.AddHealthRow(
             "NoSleep",
-            IsNoSleepTimerOn ? "ON" : "OFF",
+            noSleepActive ? "ON" : "OFF",
             "Runtime state"
         )
 
         this.AddHealthRow(
             "Clipboard Trim",
-            ClipboardTrimEnabled ? "ON" : "OFF",
+            clipboardTrimActive ? "ON" : "OFF",
             "Runtime state"
         )
 
@@ -214,7 +216,7 @@ class ConfiguratorDiagnosticsTab
 
         this.AddHealthRow(
             "Debug logging",
-            DebugLogging ? "ON" : "OFF",
+            debugLoggingActive ? "ON" : "OFF",
             "Logger level configuration"
         )
 
@@ -245,6 +247,15 @@ class ConfiguratorDiagnosticsTab
         this.TestStatusText.Value := "Tests: " this.LastTestStatus
         this.RunTestsButton.Enabled := testPresent
         this.OpenLogButton.Enabled := !!FileExist(logPath)
+    }
+
+    static GetProfileName(profileConfigPath)
+    {
+        SplitPath(profileConfigPath, &fileName)
+        if (fileName = "")
+            return A_ScriptName
+
+        return RegExReplace(fileName, "i)\.config$")
     }
 
     AddHealthRow(checkName, status, details)

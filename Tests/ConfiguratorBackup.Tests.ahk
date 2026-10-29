@@ -57,8 +57,8 @@ DirCreate(backupDir)
 
 FileAppend("[Settings] Email=test@example.com", profilePath, "UTF-8")
 FileAppend("[Settings] SpacesPerIndent=4", sharedPath, "UTF-8")
-FileAppend("{""Test"":[]}", snippetsPath, "UTF-8")
-FileAppend("{""Version"":1,""HotStrings"":[]}", hotStringsPath, "UTF-8")
+FileAppend('{"Test":[]}', snippetsPath, "UTF-8")
+FileAppend('{"Version":1,"HotStrings":[]}', hotStringsPath, "UTF-8")
 FileAppend("[]", autoPastesPath, "UTF-8")
 
 files := [
