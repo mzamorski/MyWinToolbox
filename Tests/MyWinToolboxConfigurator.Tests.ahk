@@ -38,6 +38,12 @@ AssertThrows(callback, message)
     }
 }
 
+AssertEqual(
+    1,
+    AutoPaste_GetActions(Map("text", "hello")).Length,
+    "Configurator must load AutoPaste_GetActions from its own module dependency"
+)
+
 parsed := ConfiguratorJsonStore.ParseList("one, two`nthree")
 AssertEqual(3, parsed.Length, "ParseList should split commas and newlines")
 AssertEqual("one, two, three", ConfiguratorJsonStore.JoinList(parsed), "JoinList should join values")

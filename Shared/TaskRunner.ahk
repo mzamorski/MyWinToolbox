@@ -3,6 +3,7 @@
 #Include ..\Libs\Constants.ahk
 #Include ..\Libs\WinAPI.ahk
 #Include ..\Libs\AutoPaste.ahk
+#Include ..\Libs\TasksRegistry.ahk
 
 ; Standalone TaskRunner tests do not load Shared/Startup.ahk.
 ; Do not overwrite per-profile startup settings if Startup already set them.

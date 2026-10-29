@@ -1,5 +1,7 @@
 #Requires AutoHotkey v2.0
 
+#Include AutoPaste.ahk
+
 class ConfiguratorAutoPasteTab
 {
     __New(window, data, filePath, onDirtyCallback := 0, onSavedCallback := 0)
