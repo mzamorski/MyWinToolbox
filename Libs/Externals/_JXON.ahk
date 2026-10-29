@@ -1,4 +1,7 @@
 ﻿;;;; AHK v2
+
+; The parser creates OrderedMap instances; include their definition explicitly.
+#Include ..\Collections.ahk
 ; Example ===================================================================================
 ; ===========================================================================================
 

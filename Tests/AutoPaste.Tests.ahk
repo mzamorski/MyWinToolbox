@@ -3,6 +3,10 @@
 #Include ..\Libs\Logger.ahk
 #Include ..\Libs\AutoPaste.ahk
 
+; Standalone test has no Shared/Startup.ahk to initialize profile globals.
+global ConfigFilePath := ""
+global Secret := ""
+
 global TestFailures := []
 
 AssertTrue(condition, message)

@@ -1,5 +1,9 @@
 #Requires AutoHotkey v2.0
 
+#Include Logger.ahk
+#Include WindowKeepAlive.ahk
+#Include AutoPaste.ahk
+
 class ConfiguratorDiagnosticsTab
 {
     __New(window, owner)

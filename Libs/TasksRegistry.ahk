@@ -1,5 +1,10 @@
 #Requires AutoHotkey v2.0
 
+#Include Std.ahk
+#Include ScheduledTasksManager.ahk
+#Include AhkScriptManager.ahk
+#Include Logger.ahk
+
 ; One ordered [Tasks] section for heterogeneous task types. A type-specific
 ; handler defines how a task is validated and operated; the menu and editor do
 ; not divide entries into separate categories.
