@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 
 #Include ConfigUtils.ahk
+#Include CryptoUtils.ahk
 
 class ConfiguratorIniDocument
 {
