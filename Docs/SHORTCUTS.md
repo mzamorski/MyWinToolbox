@@ -360,7 +360,7 @@ The **Settings** tab in `Win + Ctrl + Shift + S` edits known shared/profile INI 
 
 The **Backup / Restore** tab creates versioned ZIP snapshots in `Documents\MyWinToolbox\Backups` containing the active profile config, shared config, Text Snippets, HotStrings, AutoPaste, and a manifest. Pending Configurator edits must be saved before Backup all. Restore validates the active profile and allowed filenames, makes a `pre-restore` safety backup, restores only files present in the ZIP, and reloads MyWinToolbox. DPAPI password blobs can be restored only under the Windows user context that created them.
 
-The **Diagnostics / Health** tab shows the active profile, AHK version, installation path, Scheduled Task state, live AutoPaste/NoSleep/Clipboard Trim/KeepAlive state, config counts, logging state, and recent `[ERROR]` log entries. Its actions are **Refresh**, **Open log**, **Open install folder**, **Run tests**, **Copy report**, and **Reload**. Production deployment includes `Test.ps1` and the `Tests` directory so regression tests can be launched directly from this tab.
+The **Diagnostics / Health** tab shows the active profile, AHK version, installation path, Scheduled Task state, live AutoPaste/NoSleep/Clipboard Trim/KeepAlive state, config counts, logging state, and recent `[ERROR]` log entries. Its actions are **Refresh**, **Open log**, **Open install folder**, **Copy report**, and **Reload**.
 
 These parts of the cheat sheet can change without editing the AHK code:
 
