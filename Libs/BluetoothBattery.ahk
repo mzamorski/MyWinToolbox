@@ -29,7 +29,7 @@ class BluetoothBatteryTracker
         SetTimer(this.Timer, this.IntervalMs)
     }
 
-    Stop()
+    Stop(*)
     {
         SetTimer(this.Timer, 0)
     }
@@ -91,8 +91,8 @@ class BluetoothBatteryTracker
                 else
                     labels[name] := 1
 
-                status := device.Connected = 1 ? " [Connected]"
-                    : device.Connected = 0 ? " [Paired]" : ""
+                status := Type(device.Connected) = "Integer"
+                    ? (device.Connected ? " [Connected]" : " [Paired]") : ""
                 label := StrReplace(name, "&", "&&")
                     " - " device.Level "%" status
                 this.AddDisabled(label)
