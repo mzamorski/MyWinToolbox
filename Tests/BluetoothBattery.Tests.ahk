@@ -11,6 +11,8 @@ BB_Assert(condition, message)
     }
 }
 
+BB_Assert(IsObject(Logger), "BluetoothBattery must load its Logger dependency")
+
 ; Battery and display name are on separate PnP nodes of one container.
 nodes := [
     {Id:"BTHENUM\SERVICE_A", Container:"A1", Address:"", Name:"Redmi Buds 3 Lite Hands-Free AG", Class:"System", Battery:70, Connected:""},
