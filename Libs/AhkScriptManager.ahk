@@ -71,12 +71,12 @@ class AhkScriptManager
         }
 
         ; Resolve paths containing . or .. for exact AHK window matching.
-        buffer := Buffer(32768 * 2, 0)
+        pathBuffer := Buffer(32768 * 2, 0)
         length := DllCall(
             "Kernel32\GetFullPathNameW",
             "Str", path,
             "UInt", 32768,
-            "Ptr", buffer.Ptr,
+            "Ptr", pathBuffer.Ptr,
             "Ptr", 0,
             "UInt"
         )
@@ -85,7 +85,7 @@ class AhkScriptManager
             throw Error("Unable to resolve AHK script path: " path)
         }
 
-        return StrGet(buffer.Ptr)
+        return StrGet(pathBuffer.Ptr)
     }
 
     static MainWindowMatches(windowTitle, fullPath)
