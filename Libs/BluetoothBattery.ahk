@@ -93,8 +93,7 @@ class BluetoothBatteryTracker
 
                 status := Type(device.Connected) = "Integer"
                     ? (device.Connected ? " [Connected]" : " [Paired]") : ""
-                label := StrReplace(name, "&", "&&")
-                    " - " device.Level "%" status
+                label := StrReplace(name, "&", "&&") " - " device.Level "%" status
                 this.AddDisabled(label)
             }
         }
