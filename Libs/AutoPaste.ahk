@@ -6,6 +6,11 @@
 #Include ConfigUtils.ahk
 #Include CryptoUtils.ahk
 
+; Provide safe standalone defaults when a module is loaded without Shared/Startup.
+; Shared/Startup.ahk overrides these with the active profile's values.
+global ConfigFilePath := ""
+global Secret := ""
+
 global TimerIntervalInMs := 500
 
 global AutoPasteEntries := []
