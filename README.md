@@ -20,7 +20,7 @@ Run `Install.ps1` from PowerShell to deploy the scripts to `C:\Program Files\MyW
 .\Install.ps1
 ```
 
-The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. Before copying files it stops the Windows Scheduled Task named `MyWinToolbox`; after a successful deployment it starts the task again. It deploys the selected profile entry script, `MyWinShared.ahk`, `Test.ps1`, the required `Libs`, `Shared`, and `Tests` trees, and the shortcut-sheet PDF. Files are compared by SHA-256, so unchanged files are skipped.
+The installer asks for the `Home` or `Work` profile and requests administrator permission when the destination is under `Program Files`. Before copying files it stops the Windows Scheduled Task named `MyWinToolbox`; after a successful deployment it starts the task again. It deploys the selected profile entry script, `MyWinShared.ahk`, the required `Libs` and `Shared` trees, and the shortcut-sheet PDF. Files are compared by SHA-256, so unchanged files are skipped.
 
 Before requesting administrator elevation, the installer performs a **read-only check of the invoking user's notification settings**. It warns if `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\EnableBalloonTips` is explicitly `0` or if any `Microsoft.Explorer.Notification.*` sender has `Enabled = 0` under `HKCU\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings`. These GUIDs identify per-user Windows notification sender registrations and **must not be hard-coded as an AutoHotkey identifier**: they may be different for another installation or user, and a disabled entry can belong to another sender. The check never automatically changes Windows notification preferences or interferes with installation. If `TrayTip` remains invisible, review the reported sender and test AutoHotkey separately; a warning is a diagnostic clue, not proof of a specific cause.
 
@@ -39,16 +39,6 @@ Use `-Verify` to compare SHA-256 hashes after deployment. Restarting is automati
 .\Install.ps1 -Profile Work -Verify
 ```
 
-
-### Tests
-
-Run the lightweight AutoHotkey regression tests with:
-
-```powershell
-.\Test.ps1
-```
-
-If AutoHotkey v2 is installed in a non-standard location, pass `-AutoHotkeyPath`. The current suite checks AutoPaste configuration/default state, profile startup boolean parsing, legacy focus normalization, trigger-mode keys, browser URL normalization, DPAPI/legacy-RC4 password compatibility, Configurator JSON/INI validation, Diagnostics helpers, batched INI save/backup behavior, and configuration ZIP backup/manifest round-trips without interacting with browser UI.
 
 ## Shared functionality
 
@@ -325,10 +315,9 @@ The Configurator **Diagnostics / Health** tab provides one runtime overview for 
 - Windows Scheduled Task `MyWinToolbox` state;
 - live AutoPaste, NoSleep, Clipboard Trim, and KeepAlive state;
 - loaded HotString, Text Snippet, and AutoPaste rule counts;
-- debug logging state, log path/size, and the latest `[ERROR]` entries;
-- regression test status.
+- debug logging state, log path/size, and the latest `[ERROR]` entries.
 
-The tab includes **Refresh**, **Open log**, **Open install folder**, **Run tests**, **Copy report**, and **Reload**. **Run tests** executes the deployed `Test.ps1` against the deployed `Tests\*.Tests.ahk` suites and reports PASS/FAIL without restarting the toolbox. Reload warns before discarding unsaved Configurator changes.
+The tab includes **Refresh**, **Open log**, **Open install folder**, **Copy report**, and **Reload**. Reload warns before discarding unsaved Configurator changes.
 
 Runtime diagnostics are written to `%LOCALAPPDATA%\MyWinToolbox\MyWinToolbox.log` (rotated at 2 MB). Set `[Logging] Debug = true` in `MyWinShared.ahk.config` for additional debug-level entries. Logging failures are intentionally non-fatal.
 
