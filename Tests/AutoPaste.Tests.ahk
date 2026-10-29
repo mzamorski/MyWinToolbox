@@ -3,11 +3,9 @@
 #Include ..\Libs\Logger.ahk
 #Include ..\Libs\AutoPaste.ahk
 
-; Standalone test has no Shared/Startup.ahk to initialize profile globals.
-global ConfigFilePath := ""
-global Secret := ""
-
 global TestFailures := []
+
+; Module defaults should be available without Shared/Startup.ahk.
 
 AssertTrue(condition, message)
 {
@@ -37,6 +35,15 @@ AssertThrows(callback, message)
     {
         return
     }
+}
+
+Test_DefaultRuntimeGlobals()
+{
+    global ConfigFilePath, Secret
+    AssertTrue(IsSet(ConfigFilePath) && ConfigFilePath = "",
+        "AutoPaste should initialize a safe empty config path")
+    AssertTrue(IsSet(Secret) && Secret = "",
+        "AutoPaste should initialize an empty fallback legacy secret")
 }
 
 Test_ValidSimpleRule()
@@ -211,6 +218,7 @@ Test_TriggerKeys()
 }
 
 tests := [
+    Test_DefaultRuntimeGlobals,
     Test_ValidSimpleRule,
     Test_RegisterDefaultsDisabled,
     Test_ValidActionsRule,
