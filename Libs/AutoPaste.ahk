@@ -3,6 +3,8 @@
 #Include Std.ahk
 #Include Browser.ahk
 #Include Logger.ahk
+#Include ConfigUtils.ahk
+#Include CryptoUtils.ahk
 
 global TimerIntervalInMs := 500
 
