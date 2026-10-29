@@ -80,6 +80,17 @@ AssertTrue(
 )
 
 AssertEqual(
+    "MyWinHome.ahk",
+    ConfiguratorDiagnosticsTab.GetProfileName("C:\\Tools\\MyWinHome.ahk.config"),
+    "Diagnostics should derive the active profile from its config path"
+)
+AssertEqual(
+    "MyWinWork.ahk",
+    ConfiguratorDiagnosticsTab.GetProfileName("E:\\Scripts\\MyWinWork.ahk.config"),
+    "Diagnostics should support profile paths on other drives"
+)
+
+AssertEqual(
     "Disabled",
     ConfiguratorDiagnosticsTab.DescribeTaskState(1),
     "Scheduled Task state 1 should be Disabled"
