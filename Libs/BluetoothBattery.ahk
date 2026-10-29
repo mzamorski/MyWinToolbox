@@ -4,8 +4,6 @@
 ; No PowerShell process or Bluetooth GATT polling is needed.
 class BluetoothBatteryTracker
 {
-    static PresentFlag := 0x100
-    static BufferSmall := 0x1A
     static LastScanSummary := "Not scanned yet."
 
     __New(enabled := true, refreshMinutes := 5, threshold := 20, notify := true)
@@ -146,55 +144,91 @@ class BluetoothBatteryTracker
                 "{83DA6326-97A6-4088-9453-A1923F573B29}", 15)
         }
 
+        ; SetupAPI keeps the device information element and its property reads
+        ; in the same HDEVINFO set. This avoids invalid DEVINST handles from
+        ; the previous CfgMgr32 implementation (CR_INVALID_DEVNODE / CR_5).
+        static DIGCF_PRESENT := 0x2
+        static DIGCF_ALLCLASSES := 0x4
+        static ERROR_NO_MORE_ITEMS := 259
+
+        deviceSet := DllCall("Setupapi\SetupDiGetClassDevsW",
+            "Ptr", 0, "Ptr", 0, "Ptr", 0,
+            "UInt", DIGCF_PRESENT | DIGCF_ALLCLASSES, "Ptr")
+        if (deviceSet = -1 || deviceSet = 0)
+            throw Error("SetupDiGetClassDevsW failed (Win32 " A_LastError ").")
+
         nodes := []
-        ids := BluetoothBatteryTracker.GetPresentIds()
+        scannedCount := 0
         bluetoothCount := 0
-        locatedCount := 0
         batteryCount := 0
         propertyResults := Map()
-
-        for id in ids
+        try
         {
-            ; The battery might be on a child service such as Hands-Free AG.
-            ; Do not restrict to the Bluetooth device setup class.
-            if (!RegExMatch(id, "i)^BTH"))
-                continue
-
-            bluetoothCount++
-            devInst := 0
-            if (DllCall("CfgMgr32\CM_Locate_DevNodeW", "UIntP", &devInst,
-                "WStr", id, "UInt", 0, "UInt") != 0)
-                continue
-
-            locatedCount++
-            batteryDiagnostic := Map()
-            battery := BluetoothBatteryTracker.Read(devInst,
-                keys.Battery, "byte", batteryDiagnostic)
-            if (batteryDiagnostic.Has("status"))
+            index := 0
+            Loop
             {
-                status := batteryDiagnostic["status"]
-                if (!propertyResults.Has(status))
-                    propertyResults[status] := 0
-                propertyResults[status] += 1
+                ; SP_DEVINFO_DATA: DWORD + GUID + DWORD + ULONG_PTR.
+                info := Buffer(A_PtrSize = 8 ? 32 : 28, 0)
+                NumPut("UInt", info.Size, info, 0)
+                if (!DllCall("Setupapi\SetupDiEnumDeviceInfo",
+                    "Ptr", deviceSet, "UInt", index,
+                    "Ptr", info.Ptr, "Int"))
+                {
+                    errorCode := A_LastError
+                    if (errorCode = ERROR_NO_MORE_ITEMS)
+                        break
+                    throw Error("SetupDiEnumDeviceInfo failed (index "
+                        index ", Win32 " errorCode ").")
+                }
+                index++
+                scannedCount++
+
+                idBuffer := Buffer(2048, 0) ; 1024 UTF-16 code units
+                idSize := 0
+                if (!DllCall("Setupapi\SetupDiGetDeviceInstanceIdW",
+                    "Ptr", deviceSet, "Ptr", info.Ptr,
+                    "Ptr", idBuffer.Ptr, "UInt", 1024,
+                    "UIntP", &idSize, "Int"))
+                    continue
+
+                id := StrGet(idBuffer.Ptr, "UTF-16")
+                if (!RegExMatch(id, "i)^BTH"))
+                    continue
+
+                bluetoothCount++
+                diagnostic := Map()
+                battery := BluetoothBatteryTracker.Read(
+                    deviceSet, info, keys.Battery, "byte", diagnostic)
+
+                if (diagnostic.Has("status"))
+                {
+                    status := diagnostic["status"]
+                    propertyResults[status] := propertyResults.Has(status)
+                        ? propertyResults[status] + 1 : 1
+                }
+                if (Type(battery) = "Integer" && battery >= 0 && battery <= 100)
+                    batteryCount++
+
+                container := BluetoothBatteryTracker.Read(deviceSet, info, keys.Container, "guid")
+                address := BluetoothBatteryTracker.Read(deviceSet, info, keys.Address, "string")
+                name := BluetoothBatteryTracker.Read(deviceSet, info, keys.Name, "string")
+                if (name = "")
+                    name := BluetoothBatteryTracker.Read(deviceSet, info, keys.FriendlyName, "string")
+
+                nodes.Push({
+                    Id: id,
+                    Container: container,
+                    Address: address,
+                    Name: name,
+                    Class: BluetoothBatteryTracker.Read(deviceSet, info, keys.Class, "string"),
+                    Battery: battery,
+                    Connected: BluetoothBatteryTracker.Read(deviceSet, info, keys.Connected, "bool")
+                })
             }
-            if (Type(battery) = "Integer" && battery >= 0 && battery <= 100)
-                batteryCount++
-
-            container := BluetoothBatteryTracker.Read(devInst, keys.Container, "guid")
-            address := BluetoothBatteryTracker.Read(devInst, keys.Address, "string")
-            name := BluetoothBatteryTracker.Read(devInst, keys.Name, "string")
-            if (name = "")
-                name := BluetoothBatteryTracker.Read(devInst, keys.FriendlyName, "string")
-
-            nodes.Push({
-                Id: id,
-                Container: container,
-                Address: address,
-                Name: name,
-                Class: BluetoothBatteryTracker.Read(devInst, keys.Class, "string"),
-                Battery: battery,
-                Connected: BluetoothBatteryTracker.Read(devInst, keys.Connected, "bool")
-            })
+        }
+        finally
+        {
+            DllCall("Setupapi\SetupDiDestroyDeviceInfoList", "Ptr", deviceSet)
         }
 
         summaries := []
@@ -202,51 +236,12 @@ class BluetoothBatteryTracker
             summaries.Push(status "=" count)
         statusText := summaries.Length ? BluetoothBatteryTracker.JoinSummary(summaries) : "none"
 
-        BluetoothBatteryTracker.LastScanSummary := "PnP present: " ids.Length
+        BluetoothBatteryTracker.LastScanSummary := "SetupAPI present: " scannedCount
             . ", BTH candidates: " bluetoothCount
-            . ", located: " locatedCount
             . ", valid battery: " batteryCount
             . ". Battery property results: " statusText
+
         return nodes
-    }
-
-    static GetPresentIds()
-    {
-        ids := []
-        Loop 3
-        {
-            chars := 0
-            result := DllCall("CfgMgr32\CM_Get_Device_ID_List_SizeW",
-                "UIntP", &chars, "Ptr", 0,
-                "UInt", BluetoothBatteryTracker.PresentFlag, "UInt")
-            if (result != 0)
-                throw Error("CM_Get_Device_ID_List_SizeW failed: " result)
-
-            if (chars <= 1)
-                return ids
-
-            idListBuffer := Buffer(chars * 2, 0)
-            result := DllCall("CfgMgr32\CM_Get_Device_ID_ListW",
-                "Ptr", 0, "Ptr", idListBuffer.Ptr, "UInt", chars,
-                "UInt", BluetoothBatteryTracker.PresentFlag, "UInt")
-            if (result = BluetoothBatteryTracker.BufferSmall)
-                continue
-            if (result != 0)
-                throw Error("CM_Get_Device_ID_ListW failed: " result)
-
-            offset := 0
-            while (offset < chars)
-            {
-                id := StrGet(idListBuffer.Ptr + offset * 2, "UTF-16")
-                if (id = "")
-                    break
-
-                ids.Push(id)
-                offset += StrLen(id) + 1
-            }
-            return ids
-        }
-        throw Error("Device list changed repeatedly during enumeration.")
     }
 
     static Key(guid, pid)
@@ -260,32 +255,35 @@ class BluetoothBatteryTracker
         return key
     }
 
-    static Read(devInst, key, expected, diagnostic := 0)
+    static Read(deviceSet, deviceInfo, key, expected, diagnostic := 0)
     {
         data := Buffer(256, 0)
-        propertyType := 0
         Loop 2
         {
-            required := data.Size
-            result := DllCall("CfgMgr32\CM_Get_DevNode_PropertyW",
-                "UInt", devInst, "Ptr", key.Ptr, "UIntP", &propertyType,
-                "Ptr", data.Ptr, "UIntP", &required, "UInt", 0, "UInt")
-            if (result = BluetoothBatteryTracker.BufferSmall
+            propertyType := 0
+            required := 0
+            success := DllCall("Setupapi\SetupDiGetDevicePropertyW",
+                "Ptr", deviceSet, "Ptr", deviceInfo.Ptr,
+                "Ptr", key.Ptr, "UIntP", &propertyType,
+                "Ptr", data.Ptr, "UInt", data.Size,
+                "UIntP", &required, "UInt", 0, "Int")
+            errorCode := A_LastError
+
+            if (!success && errorCode = 122
                 && required > data.Size && required <= 65536)
             {
                 data := Buffer(required, 0)
                 continue
             }
             if (IsObject(diagnostic))
-                diagnostic["status"] := (result = 0)
-                    ? "TYPE_" propertyType : "CR_" result
+                diagnostic["status"] := success
+                    ? "TYPE_" propertyType : "WIN32_" errorCode
 
-            if (result != 0)
+            if (!success)
                 return ""
 
             if (expected = "byte" && propertyType = 3 && required >= 1)
                 return NumGet(data, 0, "UChar")
-            ; Some drivers expose a numeric level with a wider value type.
             if (expected = "byte" && propertyType = 7 && required >= 4)
                 return NumGet(data, 0, "UInt")
             if (expected = "bool" && propertyType = 17 && required >= 1)
@@ -294,7 +292,6 @@ class BluetoothBatteryTracker
                 return StrGet(data.Ptr, "UTF-16")
             if (expected = "guid" && propertyType = 13 && required = 16)
             {
-                ; The 16 raw GUID bytes form a stable deduplication key.
                 hex := ""
                 Loop 16
                     hex .= Format("{:02X}", NumGet(data, A_Index - 1, "UChar"))

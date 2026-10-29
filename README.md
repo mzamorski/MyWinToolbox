@@ -99,7 +99,7 @@ The supported types are currently `scheduler` and `ahk`. The typed entry format 
 
 **Bluetooth Battery** is a submenu in the regular AutoHotkey tray menu for both Home and Work profiles. It lists **one entry per physical Bluetooth device** when Windows exposes a battery percentage. For example: `Redmi Buds 3 Lite - 70% [Paired]`. Choose **Refresh now** for an immediate scan; otherwise values refresh every five minutes.
 
-The monitor uses native Windows Configuration Manager (`CfgMgr32`) APIs to read the PnP battery property `{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2`, without starting PowerShell or querying the GATT service. Related AVRCP, Stereo and Hands-Free nodes are grouped using the PnP `ContainerId`, with a Bluetooth address or instance-ID fallback. Identically named physical devices remain separate. A missing or unsupported battery property is shown by omitting the device (no invented percentage).
+The monitor uses native Windows SetupAPI (`SetupDiGetDevicePropertyW`) to read the PnP battery property `{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2`, without starting PowerShell or querying the GATT service. Related AVRCP, Stereo and Hands-Free nodes are grouped using the PnP `ContainerId`, with a Bluetooth address or instance-ID fallback. Identically named physical devices remain separate. A missing or unsupported battery property is shown by omitting the device (no invented percentage).
 
 Configure the shared `MyWinShared.ahk.config`:
 

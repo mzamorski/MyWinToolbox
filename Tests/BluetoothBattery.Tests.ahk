@@ -43,13 +43,16 @@ devices[3].Level := 10
 BB_Assert(BluetoothBatteryTracker.CollectLowAlerts(devices, alerted, 20).Length = 1,
     "Re-arm alerts after charging above the threshold")
 
-; Regression: enumerate present device IDs even if no Bluetooth devices are paired.
-; Previously a local variable named "buffer" shadowed the built-in Buffer class.
-ids := BluetoothBatteryTracker.GetPresentIds()
-BB_Assert(Type(ids) = "Array", "PnP device ID enumeration returns an array")
+; Integration smoke test: SetupAPI enumeration and property reads should not
+; throw on a Windows host, even when no Bluetooth devices are present.
+scannedDevices := BluetoothBatteryTracker.Scan()
+BB_Assert(Type(scannedDevices) = "Array",
+    "SetupAPI Bluetooth scan returns an array")
+BB_Assert(InStr(BluetoothBatteryTracker.LastScanSummary, "SetupAPI present: ") = 1,
+    "Scan diagnostics identify the SetupAPI backend")
 
-BB_Assert(BluetoothBatteryTracker.JoinSummary(["CR_37=2", "TYPE_3=1"])
-    = "CR_37=2, TYPE_3=1", "PnP status summary formatting")
+BB_Assert(BluetoothBatteryTracker.JoinSummary(["WIN32_1168=2", "TYPE_3=1"])
+    = "WIN32_1168=2, TYPE_3=1", "PnP status summary formatting")
 
 FileAppend("BluetoothBattery grouping and alert tests passed." Chr(10), "*")
 ExitApp(0)
