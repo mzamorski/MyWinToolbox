@@ -43,5 +43,10 @@ devices[3].Level := 10
 BB_Assert(BluetoothBatteryTracker.CollectLowAlerts(devices, alerted, 20).Length = 1,
     "Re-arm alerts after charging above the threshold")
 
+; Regression: enumerate present device IDs even if no Bluetooth devices are paired.
+; Previously a local variable named "buffer" shadowed the built-in Buffer class.
+ids := BluetoothBatteryTracker.GetPresentIds()
+BB_Assert(Type(ids) = "Array", "PnP device ID enumeration returns an array")
+
 FileAppend("BluetoothBattery grouping and alert tests passed." Chr(10), "*")
 ExitApp(0)
