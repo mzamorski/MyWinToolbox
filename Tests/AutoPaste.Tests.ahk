@@ -154,6 +154,35 @@ Test_LegacyFocusNormalization()
     AssertEqual("ExamplePassword", actions[3]["passwordKey"], "password should remain last")
 }
 
+Test_PasswordKeyResolution()
+{
+    global ConfigFilePath, Secret
+
+    tempIni := A_Temp "\MyWinToolbox-AutoPaste-password-" A_TickCount ".ini"
+    ConfigFilePath := tempIni
+    Secret := ""
+
+    try
+    {
+        plaintext := "AutoPaste DPAPI regression test"
+        protectedValue := CryptoUtils.Protect(plaintext)
+        FileAppend("[Passwords]`r`nExample = " protectedValue "`r`n",
+            tempIni, "UTF-8")
+
+        AssertEqual(plaintext,
+            AutoPaste_GetText(Map("passwordKey", "Example")),
+            "passwordKey action should resolve its INI key using DPAPI")
+        AssertEqual("literal",
+            AutoPaste_GetText(Map("text", "literal")),
+            "text action should continue returning the literal text")
+    }
+    finally
+    {
+        if (FileExist(tempIni))
+            FileDelete(tempIni)
+    }
+}
+
 Test_TriggerKeys()
 {
     context := Map("url", "https://example.com/login?id=1")
@@ -185,7 +214,8 @@ tests := [
     Test_InvalidUnknownField,
     Test_OncePerUrlRequiresUrl,
     Test_LegacyFocusNormalization,
-    Test_TriggerKeys
+    Test_TriggerKeys,
+    Test_PasswordKeyResolution
 ]
 
 for test in tests
