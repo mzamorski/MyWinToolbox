@@ -10,8 +10,6 @@ class ConfiguratorDiagnosticsTab
     {
         this.Window := window
         this.Owner := owner
-        this.LastTestStatus := "Not run"
-        this.LastTestDetails := "Regression tests have not been run from this session."
         this.Snapshot := []
 
         this.Build()
@@ -70,17 +68,8 @@ class ConfiguratorDiagnosticsTab
             ObjBindMethod(this, "OnOpenInstallFolder")
         )
 
-        this.RunTestsButton := this.Window.AddButton(
-            "x400 y575 w105 h32",
-            "Run tests"
-        )
-        this.RunTestsButton.OnEvent(
-            "Click",
-            ObjBindMethod(this, "OnRunTests")
-        )
-
         this.CopyReportButton := this.Window.AddButton(
-            "x515 y575 w115 h32",
+            "x400 y575 w115 h32",
             "Copy report"
         )
         this.CopyReportButton.OnEvent(
@@ -89,7 +78,7 @@ class ConfiguratorDiagnosticsTab
         )
 
         this.ReloadButton := this.Window.AddButton(
-            "x640 y575 w95 h32",
+            "x525 y575 w95 h32",
             "Reload"
         )
         this.ReloadButton.OnEvent(
@@ -97,10 +86,6 @@ class ConfiguratorDiagnosticsTab
             ObjBindMethod(this, "OnReload")
         )
 
-        this.TestStatusText := this.Window.AddText(
-            "x755 y580 w380 h24",
-            ""
-        )
     }
 
     Refresh()
@@ -152,9 +137,6 @@ class ConfiguratorDiagnosticsTab
                 ) ")"
             }
         }
-
-        testPath := A_ScriptDir "\Test.ps1"
-        testPresent := !!FileExist(testPath)
 
         this.AddHealthRow(
             "Active profile",
@@ -230,14 +212,6 @@ class ConfiguratorDiagnosticsTab
             logDetails
         )
 
-        this.AddHealthRow(
-            "Regression tests",
-            this.LastTestStatus,
-            testPresent
-                ? this.LastTestDetails
-                : "Test.ps1 is not deployed in " A_ScriptDir
-        )
-
         this.HealthList.ModifyCol(1, 205)
         this.HealthList.ModifyCol(2, 120)
         this.HealthList.ModifyCol(3, 760)
@@ -248,8 +222,6 @@ class ConfiguratorDiagnosticsTab
         )
         this.ErrorEdit.Value := errorText
 
-        this.TestStatusText.Value := "Tests: " this.LastTestStatus
-        this.RunTestsButton.Enabled := testPresent
         this.OpenLogButton.Enabled := !!FileExist(logPath)
     }
 
@@ -320,134 +292,6 @@ class ConfiguratorDiagnosticsTab
                 "MyWinToolbox Diagnostics",
                 "Iconx"
             )
-        }
-    }
-
-    OnRunTests(*)
-    {
-        testPath := A_ScriptDir "\Test.ps1"
-
-        if !FileExist(testPath)
-        {
-            MsgBox(
-                "Test.ps1 is not available in this installation.",
-                "MyWinToolbox Diagnostics",
-                "Icon!"
-            )
-            this.Refresh()
-            return
-        }
-
-        this.RunTestsButton.Enabled := false
-        this.TestStatusText.Value := "Tests: running..."
-
-        outputPath := A_Temp
-            . "\MyWinToolbox-TestOutput-"
-            . A_TickCount
-            . "-"
-            . Random(100000, 999999)
-            . ".txt"
-
-        wrapperPath := A_Temp
-            . "\MyWinToolbox-TestRunner-"
-            . A_TickCount
-            . "-"
-            . Random(100000, 999999)
-            . ".ps1"
-
-        wrapper := "$ErrorActionPreference = 'Stop'`r`n"
-            . "try {`r`n"
-            . "    & "
-            . ConfiguratorDiagnosticsTab.PsQuote(testPath)
-            . " *>&1 | Out-File -LiteralPath "
-            . ConfiguratorDiagnosticsTab.PsQuote(outputPath)
-            . " -Encoding utf8`r`n"
-            . "    exit 0`r`n"
-            . "} catch {`r`n"
-            . "    ($_ | Out-String) | Add-Content -LiteralPath "
-            . ConfiguratorDiagnosticsTab.PsQuote(outputPath)
-            . " -Encoding utf8`r`n"
-            . "    exit 1`r`n"
-            . "}`r`n"
-
-        FileAppend(wrapper, wrapperPath, "UTF-8")
-
-        try
-        {
-            powerShellPath := A_WinDir
-                . "\System32\WindowsPowerShell\v1.0\powershell.exe"
-
-            if !FileExist(powerShellPath)
-            {
-                powerShellPath := "powershell.exe"
-            }
-
-            quote := Chr(34)
-            command := quote powerShellPath quote
-                . " -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "
-                . quote wrapperPath quote
-
-            exitCode := RunWait(command, , "Hide")
-
-            output := FileExist(outputPath)
-                ? FileRead(outputPath, "UTF-8")
-                : ""
-
-            if (exitCode = 0)
-            {
-                this.LastTestStatus := "PASS"
-                this.LastTestDetails := "All deployed regression tests passed."
-            }
-            else
-            {
-                this.LastTestStatus := "FAIL"
-                this.LastTestDetails := "One or more regression tests failed."
-            }
-
-            this.Refresh()
-
-            resultMessage := exitCode = 0
-                ? "Regression tests passed."
-                : "Regression tests failed."
-
-            resultOptions := exitCode = 0
-                ? "Iconi"
-                : "Iconx"
-
-            MsgBox(
-                resultMessage
-                    . "`n`n"
-                    . ConfiguratorDiagnosticsTab.TailText(output, 3500),
-                "MyWinToolbox Diagnostics",
-                resultOptions
-            )
-        }
-        catch Error as e
-        {
-            this.LastTestStatus := "ERROR"
-            this.LastTestDetails := e.Message
-            this.Refresh()
-
-            MsgBox(
-                "Unable to run regression tests:`n" e.Message,
-                "MyWinToolbox Diagnostics",
-                "Iconx"
-            )
-        }
-        finally
-        {
-            for tempPath in [wrapperPath, outputPath]
-            {
-                try
-                {
-                    if FileExist(tempPath)
-                    {
-                        FileDelete(tempPath)
-                    }
-                }
-            }
-
-            this.RunTestsButton.Enabled := !!FileExist(testPath)
         }
     }
 
@@ -670,23 +514,6 @@ class ConfiguratorDiagnosticsTab
         return result
     }
 
-    static TailText(text, maxLength)
-    {
-        text := Trim("" text)
-
-        if (text = "")
-        {
-            return "(no test output)"
-        }
-
-        if (StrLen(text) <= maxLength)
-        {
-            return text
-        }
-
-        return "... " SubStr(text, -maxLength)
-    }
-
     static FormatBytes(size)
     {
         if (size < 1024)
@@ -702,8 +529,5 @@ class ConfiguratorDiagnosticsTab
         return Round(size / (1024 * 1024), 1) " MB"
     }
 
-    static PsQuote(value)
-    {
-        return "'" StrReplace("" value, "'", "''") "'"
-    }
+
 }
