@@ -81,12 +81,12 @@ AssertTrue(
 
 AssertEqual(
     "MyWinHome.ahk",
-    ConfiguratorDiagnosticsTab.GetProfileName("C:\\Tools\\MyWinHome.ahk.config"),
+    ConfiguratorDiagnosticsTab.GetProfileName("C:\Tools\MyWinHome.ahk.config"),
     "Diagnostics should derive the active profile from its config path"
 )
 AssertEqual(
     "MyWinWork.ahk",
-    ConfiguratorDiagnosticsTab.GetProfileName("E:\\Scripts\\MyWinWork.ahk.config"),
+    ConfiguratorDiagnosticsTab.GetProfileName("E:\Scripts\MyWinWork.ahk.config"),
     "Diagnostics should support profile paths on other drives"
 )
 
