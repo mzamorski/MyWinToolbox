@@ -4,6 +4,15 @@
 #Include ..\Libs\WinAPI.ahk
 #Include ..\Libs\AutoPaste.ahk
 
+; Standalone TaskRunner tests do not load Shared/Startup.ahk.
+; Do not overwrite per-profile startup settings if Startup already set them.
+if (!IsSet(StartupNoSleepEnabled))
+    StartupNoSleepEnabled := false
+if (!IsSet(StartupAutoPasteEnabled))
+    StartupAutoPasteEnabled := false
+if (!IsSet(StartupClipboardTrimEnabled))
+    StartupClipboardTrimEnabled := false
+
 global IsNoSleepTimerOn := false
 global NoSleepNextMouseNudgeTick := 0
 global ClipboardTrimEnabled := false
