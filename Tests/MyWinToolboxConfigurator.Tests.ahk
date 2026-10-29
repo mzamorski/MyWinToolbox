@@ -263,16 +263,14 @@ if FileExist(tempIniPath)
     FileDelete(tempIniPath)
 }
 
-FileAppend(
-    "[Settings]`r`n"
-        . "Secret = old-secret ; keep-readable-comment`r`n"
-        . "Email = old@example.com`r`n"
-        . "`r`n"
-        . "[Unknown]`r`n"
-        . "KeepMe = yes`r`n",
-    tempIniPath,
-    "UTF-8"
-)
+; Construct the fixture statement by statement: no fragile multi-line
+; quote continuation or inline semicolon parsing in the AHK v2 parser.
+iniFixture := "[Settings]`r`n"
+iniFixture .= "Secret = old-secret " Chr(59) " keep-readable-comment`r`n"
+iniFixture .= "Email = old@example.com`r`n"
+iniFixture .= "`r`n[Unknown]`r`n"
+iniFixture .= "KeepMe = yes`r`n"
+FileAppend(iniFixture, tempIniPath, "UTF-8")
 
 try
 {
