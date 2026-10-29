@@ -36,6 +36,11 @@ AssertThrows(callback, message)
     }
 }
 
+missingFileError := IOError()
+AssertEqual("", missingFileError.FilePath, "IOError should default to an empty path")
+AssertEqual("File not found.", missingFileError.Message,
+    "IOError should retain its default message")
+
 AssertTrue(Config_ParseBoolean("true"), "true should parse as enabled")
 AssertTrue(Config_ParseBoolean("YES"), "YES should parse as enabled")
 AssertTrue(Config_ParseBoolean("on"), "on should parse as enabled")
@@ -62,6 +67,12 @@ try
             "AutoPaste = false`r`n",
         tempPath,
         "UTF-8"
+    )
+
+    AssertEqual(
+        "<unknown>",
+        Ini_ReadOrDefault(tempPath, "Startup", "MissingKey"),
+        "omitted INI default should keep the legacy UNKNOWN marker"
     )
 
     AssertTrue(
