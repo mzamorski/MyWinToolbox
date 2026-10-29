@@ -46,7 +46,7 @@ Ini_GetUtf8Section(filePath, section)
     return entries
 }
 
-Ini_ReadOrDefault(filePath, section, key := "", defaultValue := UNKNOWN)
+Ini_ReadOrDefault(filePath, section, key := "", defaultValue := "<unknown>")
 {
     entries := Ini_GetUtf8Section(filePath, section)
     value := entries.Has(key) ? entries[key] : defaultValue
