@@ -1,5 +1,7 @@
 #Requires AutoHotkey v2.0
 
+#Include Logger.ahk
+
 ; Read the battery percentage published by Windows PnP.
 ; No PowerShell process or Bluetooth GATT polling is needed.
 class BluetoothBatteryTracker
