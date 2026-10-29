@@ -4,6 +4,11 @@
 
 global TestFailures := []
 
+; Diagnostics includes AutoPaste without running the full profile startup.
+; This must not trigger #Warn for missing profile globals.
+if (!IsSet(ConfigFilePath) || !IsSet(Secret))
+    throw Error("AutoPaste module must declare standalone profile defaults.")
+
 AssertTrue(condition, message)
 {
     global TestFailures
