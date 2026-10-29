@@ -95,6 +95,25 @@ The supported types are currently `scheduler` and `ahk`. The typed entry format 
 
 **Legacy migration:** earlier experimental builds used `[ScheduledTasks]`, `[AhkScripts]` and optionally `[AhkScriptsSettings]`. MyWinToolbox can still read them until migrated. Opening and saving Configurator → Tasks converts the entries to one `[Tasks]` section and removes the old sections. Normal changes apply on next menu opening without restarting the toolbox.
 
+### Bluetooth Battery (system tray)
+
+**Bluetooth Battery** is a submenu in the regular AutoHotkey tray menu for both Home and Work profiles. It lists **one entry per physical Bluetooth device** when Windows exposes a battery percentage. For example: `Redmi Buds 3 Lite - 70% [Paired]`. Choose **Refresh now** for an immediate scan; otherwise values refresh every five minutes.
+
+The monitor uses native Windows Configuration Manager (`CfgMgr32`) APIs to read the PnP battery property `{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2`, without starting PowerShell or querying the GATT service. Related AVRCP, Stereo and Hands-Free nodes are grouped using the PnP `ContainerId`, with a Bluetooth address or instance-ID fallback. Identically named physical devices remain separate. A missing or unsupported battery property is shown by omitting the device (no invented percentage).
+
+Configure the shared `MyWinShared.ahk.config`:
+
+```ini
+[BluetoothBattery]
+Enabled = true
+RefreshMinutes = 5
+LowBatteryThreshold = 20
+NotifyLowBattery = true
+```
+
+`RefreshMinutes` accepts 1–60 and `LowBatteryThreshold` accepts 0–100. Windows can preserve the last battery percentage for a paired but disconnected device. Therefore low-battery alerts are sent only when Windows *confirms* a connected device; each alert fires once until the level rises above the threshold. Connection labels appear only when Windows exposes the related property. This monitor requires no administrator rights. Dedicated GUI settings controls are not yet provided; edit the shared INI directly and reload the script.
+
+
 ### Process Watcher
 
 Process Watcher automatically starts a helper when a named Windows executable appears, and optionally stops it when the last matching process exits. Unlike AutoPaste, the watched application does **not** need to have focus or an open window. It checks every 3 seconds and also checks immediately when MyWinToolbox starts.
