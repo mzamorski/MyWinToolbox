@@ -265,11 +265,11 @@ if FileExist(tempIniPath)
 
 FileAppend(
     "[Settings]`r`n"
-        "Secret = old-secret ; keep-readable-comment`r`n"
-        "Email = old@example.com`r`n"
-        "`r`n"
-        "[Unknown]`r`n"
-        "KeepMe = yes`r`n",
+        . "Secret = old-secret ; keep-readable-comment`r`n"
+        . "Email = old@example.com`r`n"
+        . "`r`n"
+        . "[Unknown]`r`n"
+        . "KeepMe = yes`r`n",
     tempIniPath,
     "UTF-8"
 )
