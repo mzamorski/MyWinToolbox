@@ -14,6 +14,7 @@
 #Include Libs\AhkScriptManager.ahk
 #Include Libs\TasksRegistry.ahk
 #Include Libs\ProcessWatcher.ahk
+#Include Libs\BluetoothBattery.ahk
 #include Libs\Externals\_JXON.ahk
 #Include Libs\Externals\XHotstring.ahk
 #Include Libs\IOUtils.ahk
@@ -41,6 +42,7 @@ Persistent
 
 ; Shared feature modules are included in execution order.
 #Include Shared\Startup.ahk
+#Include Shared\BluetoothBattery.ahk
 #Include Shared\Menus.ahk
 #Include Shared\TaskRunner.ahk
 #Include Shared\Hotkeys.ahk
