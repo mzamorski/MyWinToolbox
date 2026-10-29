@@ -167,6 +167,7 @@ $obsoleteDeploymentFiles = @(
     'Libs\TextSnippetsEditor.ahk'
     'Libs\ConfiguratorScheduledTasksTab.ahk'
     'Libs\ConfiguratorAhkScriptsTab.ahk'
+    'Test.ps1'
 )
 
 foreach ($relativePath in $obsoleteDeploymentFiles) {
@@ -177,11 +178,25 @@ foreach ($relativePath in $obsoleteDeploymentFiles) {
     }
 }
 
+# Remove previously deployed standalone test suites without touching any
+# unrelated files someone may have placed in the installation's Tests folder.
+$oldTestsPath = Join-Path $destinationPath 'Tests'
+if (Test-Path -LiteralPath $oldTestsPath -PathType Container) {
+    Get-ChildItem -LiteralPath $oldTestsPath -Filter '*.Tests.ahk' -File -Recurse |
+        ForEach-Object {
+            Remove-Item -LiteralPath $_.FullName -Force
+            Write-Host "Removed obsolete test: $($_.Name)"
+        }
+
+    if (-not (Get-ChildItem -LiteralPath $oldTestsPath -Force | Select-Object -First 1)) {
+        Remove-Item -LiteralPath $oldTestsPath -Force
+    }
+}
+
 $entryScript = "MyWin$Profile.ahk"
 $files = @(
     $entryScript
     'MyWinShared.ahk'
-    'Test.ps1'
     'Docs\SHORTCUTS.pdf'
 )
 
@@ -192,11 +207,6 @@ $files += $libFiles | ForEach-Object {
 
 $sharedFiles = Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'Shared') -File -Recurse -Filter '*.ahk'
 $files += $sharedFiles | ForEach-Object {
-    $_.FullName.Substring($sourceRoot.TrimEnd('\').Length + 1)
-}
-
-$testFiles = Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'Tests') -File -Recurse -Filter '*.ahk'
-$files += $testFiles | ForEach-Object {
     $_.FullName.Substring($sourceRoot.TrimEnd('\').Length + 1)
 }
 
