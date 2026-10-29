@@ -18,7 +18,7 @@ class IOError extends Error
 {
 	static DEFAULT_MESSAGE := "File not found."
 
-    __New(filePath := STRING_EMPTY, message := IOError.DEFAULT_MESSAGE) 
+    __New(filePath := "", message := IOError.DEFAULT_MESSAGE) 
 	{
         this.Message := message
 		this.FilePath := filePath
