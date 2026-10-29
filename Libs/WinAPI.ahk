@@ -61,7 +61,7 @@ WinAPI_SetThreadExecutionState_SystemRequired()
 global MAX_PATH := 260 * 2
 global MAX_TEMP_FILE_PREFIX_LEN := 3
 
-WinAPI_GetTempFilePath(directoryPath := A_Temp, prefix := STRING_EMPTY)
+WinAPI_GetTempFilePath(directoryPath := A_Temp, prefix := "")
 {
 	; if (StrLen(prefix) > MAX_TEMP_FILE_PREFIX_LEN)
 	; {
