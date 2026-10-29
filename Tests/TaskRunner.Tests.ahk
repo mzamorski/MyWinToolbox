@@ -5,6 +5,13 @@ global StartupNoSleepEnabled := true
 
 #Include ..\Shared\TaskRunner.ahk
 
+parsedTask := TasksRegistry.Parse("Example", "ahk|C:\Tools\Example.ahk")
+if (parsedTask["Type"] != TasksRegistry.AHK)
+{
+    FileAppend("FAIL: TaskRunner did not load TasksRegistry.`n", "**")
+    ExitApp(1)
+}
+
 if (!(taskRunnerMenu is Menu))
 {
 	FileAppend("FAIL: Task Runner menu was not created.`n", "**")
