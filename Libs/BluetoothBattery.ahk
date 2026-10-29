@@ -6,6 +6,7 @@ class BluetoothBatteryTracker
 {
     static PresentFlag := 0x100
     static BufferSmall := 0x1A
+    static LastScanSummary := "Not scanned yet."
 
     __New(enabled := true, refreshMinutes := 5, threshold := 20, notify := true)
     {
@@ -54,7 +55,12 @@ class BluetoothBatteryTracker
                         "MyWinToolbox - Bluetooth Battery", 2)
                 }
             }
-            Logger.Debug("Battery scan: " devices.Length " devices.", "BluetoothBattery")
+            if (devices.Length = 0)
+                Logger.Warning("No battery data. "
+                    BluetoothBatteryTracker.LastScanSummary, "BluetoothBattery")
+            else
+                Logger.Debug("Battery scan: " devices.Length " devices. "
+                    BluetoothBatteryTracker.LastScanSummary, "BluetoothBattery")
         }
         catch Error as e
         {
@@ -100,6 +106,9 @@ class BluetoothBatteryTracker
 
         this.Menu.Add()
         this.Menu.Add("Refresh now", this.Timer)
+        this.Menu.Add("Show scan diagnostics", (*) => MsgBox(
+            BluetoothBatteryTracker.LastScanSummary,
+            "MyWinToolbox - Bluetooth Battery"))
     }
 
     ShowMenuMessage(message)
@@ -138,19 +147,39 @@ class BluetoothBatteryTracker
         }
 
         nodes := []
-        for id in BluetoothBatteryTracker.GetPresentIds()
+        ids := BluetoothBatteryTracker.GetPresentIds()
+        bluetoothCount := 0
+        locatedCount := 0
+        batteryCount := 0
+        propertyResults := Map()
+
+        for id in ids
         {
-            ; Battery is commonly on a Hands-Free node, the display name and
-            ; connection state on the separate Bluetooth DEV_ node.
+            ; The battery might be on a child service such as Hands-Free AG.
+            ; Do not restrict to the Bluetooth device setup class.
             if (!RegExMatch(id, "i)^BTH"))
                 continue
 
+            bluetoothCount++
             devInst := 0
             if (DllCall("CfgMgr32\CM_Locate_DevNodeW", "UIntP", &devInst,
                 "WStr", id, "UInt", 0, "UInt") != 0)
                 continue
 
-            battery := BluetoothBatteryTracker.Read(devInst, keys.Battery, "byte")
+            locatedCount++
+            batteryDiagnostic := Map()
+            battery := BluetoothBatteryTracker.Read(devInst,
+                keys.Battery, "byte", batteryDiagnostic)
+            if (batteryDiagnostic.Has("status"))
+            {
+                status := batteryDiagnostic["status"]
+                if (!propertyResults.Has(status))
+                    propertyResults[status] := 0
+                propertyResults[status] += 1
+            }
+            if (Type(battery) = "Integer" && battery >= 0 && battery <= 100)
+                batteryCount++
+
             container := BluetoothBatteryTracker.Read(devInst, keys.Container, "guid")
             address := BluetoothBatteryTracker.Read(devInst, keys.Address, "string")
             name := BluetoothBatteryTracker.Read(devInst, keys.Name, "string")
@@ -167,6 +196,17 @@ class BluetoothBatteryTracker
                 Connected: BluetoothBatteryTracker.Read(devInst, keys.Connected, "bool")
             })
         }
+
+        summaries := []
+        for status, count in propertyResults
+            summaries.Push(status "=" count)
+        statusText := summaries.Length ? BluetoothBatteryTracker.JoinSummary(summaries) : "none"
+
+        BluetoothBatteryTracker.LastScanSummary := "PnP present: " ids.Length
+            . ", BTH candidates: " bluetoothCount
+            . ", located: " locatedCount
+            . ", valid battery: " batteryCount
+            . ". Battery property results: " statusText
         return nodes
     }
 
@@ -220,7 +260,7 @@ class BluetoothBatteryTracker
         return key
     }
 
-    static Read(devInst, key, expected)
+    static Read(devInst, key, expected, diagnostic := 0)
     {
         data := Buffer(256, 0)
         propertyType := 0
@@ -236,11 +276,18 @@ class BluetoothBatteryTracker
                 data := Buffer(required, 0)
                 continue
             }
+            if (IsObject(diagnostic))
+                diagnostic["status"] := (result = 0)
+                    ? "TYPE_" propertyType : "CR_" result
+
             if (result != 0)
                 return ""
 
             if (expected = "byte" && propertyType = 3 && required >= 1)
                 return NumGet(data, 0, "UChar")
+            ; Some drivers expose a numeric level with a wider value type.
+            if (expected = "byte" && propertyType = 7 && required >= 4)
+                return NumGet(data, 0, "UInt")
             if (expected = "bool" && propertyType = 17 && required >= 1)
                 return NumGet(data, 0, "UChar") ? 1 : 0
             if (expected = "string" && propertyType = 18 && required >= 2)
@@ -256,6 +303,14 @@ class BluetoothBatteryTracker
             return ""
         }
         return ""
+    }
+
+    static JoinSummary(entries)
+    {
+        text := ""
+        for entry in entries
+            text .= (text = "" ? "" : ", ") entry
+        return text
     }
 
     static GroupKey(node)

@@ -48,5 +48,8 @@ BB_Assert(BluetoothBatteryTracker.CollectLowAlerts(devices, alerted, 20).Length 
 ids := BluetoothBatteryTracker.GetPresentIds()
 BB_Assert(Type(ids) = "Array", "PnP device ID enumeration returns an array")
 
+BB_Assert(BluetoothBatteryTracker.JoinSummary(["CR_37=2", "TYPE_3=1"])
+    = "CR_37=2, TYPE_3=1", "PnP status summary formatting")
+
 FileAppend("BluetoothBattery grouping and alert tests passed." Chr(10), "*")
 ExitApp(0)
