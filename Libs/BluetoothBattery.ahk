@@ -185,9 +185,9 @@ class BluetoothBatteryTracker
             if (chars <= 1)
                 return ids
 
-            buffer := Buffer(chars * 2, 0)
+            idListBuffer := Buffer(chars * 2, 0)
             result := DllCall("CfgMgr32\CM_Get_Device_ID_ListW",
-                "Ptr", 0, "Ptr", buffer.Ptr, "UInt", chars,
+                "Ptr", 0, "Ptr", idListBuffer.Ptr, "UInt", chars,
                 "UInt", BluetoothBatteryTracker.PresentFlag, "UInt")
             if (result = BluetoothBatteryTracker.BufferSmall)
                 continue
@@ -197,7 +197,7 @@ class BluetoothBatteryTracker
             offset := 0
             while (offset < chars)
             {
-                id := StrGet(buffer.Ptr + offset * 2, "UTF-16")
+                id := StrGet(idListBuffer.Ptr + offset * 2, "UTF-16")
                 if (id = "")
                     break
 
