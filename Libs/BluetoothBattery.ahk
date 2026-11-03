@@ -2,6 +2,10 @@
 
 #Include Logger.ahk
 
+; DllCall otherwise unloads SetupAPI between calls, invalidating HDEVINFO and
+; SP_DEVINFO_DATA.Reserved before the instance ID/property reads (0xE000020B).
+#DllLoad Setupapi.dll
+
 ; Read the battery percentage published by Windows PnP.
 ; No PowerShell process or Bluetooth GATT polling is needed.
 class BluetoothBatteryTracker
@@ -106,9 +110,6 @@ class BluetoothBatteryTracker
 
         this.Menu.Add()
         this.Menu.Add("Refresh now", this.Timer)
-        this.Menu.Add("Show scan diagnostics", (*) => MsgBox(
-            BluetoothBatteryTracker.LastScanSummary,
-            "MyWinToolbox - Bluetooth Battery"))
     }
 
     ShowMenuMessage(message)
@@ -163,6 +164,7 @@ class BluetoothBatteryTracker
         scannedCount := 0
         bluetoothCount := 0
         batteryCount := 0
+        idFailures := Map()
         propertyResults := Map()
         try
         {
@@ -191,7 +193,12 @@ class BluetoothBatteryTracker
                     "Ptr", deviceSet, "Ptr", info.Ptr,
                     "Ptr", idBuffer.Ptr, "UInt", 1024,
                     "UIntP", &idSize, "Int"))
+                {
+                    errorCode := A_LastError
+                    idFailures[errorCode] := idFailures.Has(errorCode)
+                        ? idFailures[errorCode] + 1 : 1
                     continue
+                }
 
                 id := StrGet(idBuffer.Ptr, "UTF-16")
                 if (!RegExMatch(id, "i)^BTH"))
@@ -237,11 +244,17 @@ class BluetoothBatteryTracker
         for status, count in propertyResults
             summaries.Push(status "=" count)
         statusText := summaries.Length ? BluetoothBatteryTracker.JoinSummary(summaries) : "none"
+        idSummaries := []
+        for errorCode, count in idFailures
+            idSummaries.Push(Format("WIN32_{}={}", errorCode, count))
+        idStatusText := idSummaries.Length
+            ? BluetoothBatteryTracker.JoinSummary(idSummaries) : "none"
 
         BluetoothBatteryTracker.LastScanSummary := "SetupAPI present: " scannedCount
             . ", BTH candidates: " bluetoothCount
             . ", valid battery: " batteryCount
             . ". Battery property results: " statusText
+            . ". Instance ID failures: " idStatusText
 
         return nodes
     }
