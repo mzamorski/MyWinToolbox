@@ -2,6 +2,29 @@
 ; MENUS
 ;========================================================================================================================
 
+; Insert custom entries before the separator and Exit created by MinimizeToTray.
+A_TrayMenu.Insert("3&", "Help", OpenShortcutSheet)
+
+OpenShortcutSheet(*)
+{
+    shortcutSheetPath := A_ScriptDir "\Docs\SHORTCUTS.pdf"
+
+    if !FileExist(shortcutSheetPath)
+    {
+        MsgBox("Shortcut sheet PDF was not found:`n" shortcutSheetPath, "MyWinToolbox", "Iconx")
+        return
+    }
+
+    try
+    {
+        Run(shortcutSheetPath)
+    }
+    catch Error as e
+    {
+        MsgBox("Unable to open shortcut sheet:`n" e.Message, "MyWinToolbox", "Iconx")
+    }
+}
+
 Menu_StringGenerator_RandomGuid(*)
 {
 	guid := ComObject("Scriptlet.TypeLib").GUID

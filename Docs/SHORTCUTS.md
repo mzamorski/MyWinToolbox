@@ -27,7 +27,7 @@ Both profiles include everything from `MyWinShared.ahk`.
 
 | Shortcut | Action |
 | --- | --- |
-| `Ctrl + Win + F1` | Open the bundled **PDF Shortcut Sheet** (`Docs/SHORTCUTS.pdf`). |
+| `Ctrl + Win + F1` | Open the bundled **PDF Shortcut Sheet** (`Docs/SHORTCUTS.pdf`). Also available as **Help** in the system tray context menu. |
 | `Win + Ctrl + F` | Open **Format** menu. |
 | `Win + Ctrl + I` | Open **String Generator** menu. |
 | `Win + Ctrl + S` | Open **Text Snippets** menu. |

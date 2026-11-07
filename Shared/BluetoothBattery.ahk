@@ -23,7 +23,7 @@ try
 
     global gBluetoothBattery := BluetoothBatteryTracker(
         enabled, refreshText + 0, thresholdText + 0, notify)
-    A_TrayMenu.Add("Bluetooth Battery", gBluetoothBattery.Menu)
+    A_TrayMenu.Insert("2&", "Bluetooth Battery", gBluetoothBattery.Menu)
     gBluetoothBattery.Start()
     OnExit(ObjBindMethod(gBluetoothBattery, "Stop"))
 }
@@ -31,6 +31,6 @@ catch Error as e
 {
     Logger.Error(e.Message, "BluetoothBattery")
     unavailable := "Bluetooth Battery (unavailable)"
-    A_TrayMenu.Add(unavailable, (*) => 0)
+    A_TrayMenu.Insert("2&", unavailable, (*) => 0)
     A_TrayMenu.Disable(unavailable)
 }

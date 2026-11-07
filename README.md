@@ -46,7 +46,7 @@ Use `-Verify` to compare SHA-256 hashes after deployment. Restarting is automati
 
 | Shortcut | Function |
 | --- | --- |
-| `Ctrl + Win + F1` | Opens the bundled **PDF Shortcut Sheet**. |
+| `Ctrl + Win + F1` | Opens the bundled **PDF Shortcut Sheet**. Also available as **Help** in the system tray context menu. |
 | `Ctrl + Win + F` | Opens the **Format** menu. |
 | `Ctrl + Win + I` | Opens the **String Generator** menu. |
 | `Ctrl + Win + S` | Opens the **Text Snippets** menu. |
