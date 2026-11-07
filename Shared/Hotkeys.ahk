@@ -296,8 +296,8 @@ HotKey_CloseAllWindows(withSameTitle := false)
 
 ; Fn is handled by the keyboard firmware and usually emits the corresponding
 ; Numpad key. Register both NumLock states so the shortcuts work in either mode.
-^Numpad4::
-^NumpadLeft::
+^Numpad2::
+^NumpadDown::
 {
     Sound.SetDefaultDevice(AudioDeviceHeadphones, "Headphones")
 }

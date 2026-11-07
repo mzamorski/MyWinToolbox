@@ -88,7 +88,7 @@ Startup defaults for **NoSleep**, **AutoPaste**, and **Clipboard Trim** are conf
 
 | Shortcut | Action |
 | --- | --- |
-| `Ctrl + Numpad 4` / `Ctrl + Numpad Left` | Switch default audio output to configured **Headphones**. |
+| `Ctrl + Numpad 2` / `Ctrl + Numpad Down` | Switch default audio output to configured **Headphones**. |
 | `Ctrl + Numpad 8` / `Ctrl + Numpad Up` | Switch default audio output to configured **Monitor**. |
 | `Ctrl + Numpad 6` / `Ctrl + Numpad Right` | Switch default audio output to configured **Laptop** speakers/device. |
 | `Win + Ctrl + Volume Mute` | Toggle mute for the **active application's audio sessions** on the default output device. |
